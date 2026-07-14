@@ -22,3 +22,32 @@ Smart Medicine Availability and OCR-Based Pharmacy Coordination System.
 - Express.js
 - MongoDB
 - Socket.io
+
+## Local Setup
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/malith06/curelink.git
+   cd curelink
+   ```
+
+2. **Install all dependencies**
+   We use a convenient root script to install dependencies for both the client and server simultaneously.
+   ```bash
+   npm run install:all
+   ```
+
+3. **Configure Environment Variables**
+   - In `server/.env`, set up your `MONGODB_URI` and `JWT_SECRET`.
+   - In `client/.env` (if applicable), configure your `VITE_API_URL`.
+
+4. **Start the Development Servers**
+   This command uses `concurrently` to run both the Vite frontend and the Express backend.
+   ```bash
+   npm run dev
+   ```
+
+5. **Run Tests**
+   ```bash
+   npm test
+   ```
