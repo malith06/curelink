@@ -8,3 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Project initialized with foundational auth and documentation.
+- Root workspace development scripts (concurrently).
+- Helmet security headers to Express backend.
+- Centralized Axios API client.
+- React Router with public placeholders.
+- Health endpoint integration tests using Jest and Supertest.
