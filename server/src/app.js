@@ -4,6 +4,8 @@ const helmet = require("helmet");
 const cookieParser = require("cookie-parser");
 const errorHandler = require("./middleware/error.middleware");
 
+const notFound = require("./middleware/notFound.middleware");
+
 // Route files
 const auth = require("./routes/auth.routes");
 
@@ -30,6 +32,9 @@ app.get("/api/v1/health", (req, res) => {
     message: "CureLink API is running",
   });
 });
+
+// Handle undefined routes
+app.use("*", notFound);
 
 app.use(errorHandler);
 
