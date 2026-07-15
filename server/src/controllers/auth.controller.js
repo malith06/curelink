@@ -70,11 +70,6 @@ exports.login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
-    // Validate email & password
-    if (!email || !password) {
-      return next(new ApiError("Please provide an email and password", 400));
-    }
-
     // Check for user
     const user = await User.findOne({ email }).select("+passwordHash");
 
@@ -93,6 +88,10 @@ exports.login = async (req, res, next) => {
     if (!user.isActive) {
       return next(new ApiError("User account is suspended", 403));
     }
+
+    // Update lastLoginAt
+    user.lastLoginAt = Date.now();
+    await user.save();
 
     sendTokenResponse(user, 200, res);
   } catch (error) {
