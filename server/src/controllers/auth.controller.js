@@ -102,17 +102,11 @@ exports.login = async (req, res, next) => {
 exports.getMe = async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id);
-    
-    let pharmacyProfile = null;
-    if (user.role === "PHARMACY") {
-      pharmacyProfile = await Pharmacy.findOne({ ownerUserId: user._id });
-    }
 
     res.status(200).json({
       success: true,
       data: {
-        user,
-        pharmacy: pharmacyProfile,
+        user: user.toJSON(),
       },
     });
   } catch (error) {
