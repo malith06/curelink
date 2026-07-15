@@ -1,4 +1,4 @@
-const jwt = require("jsonwebtoken");
+const { verifyToken } = require("../utils/jwt");
 const User = require("../modules/users/user.model");
 const ApiError = require("../utils/ApiError");
 
@@ -24,7 +24,7 @@ exports.protect = async (req, res, next) => {
 
   try {
     // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = verifyToken(token);
 
     req.user = await User.findById(decoded.id);
 

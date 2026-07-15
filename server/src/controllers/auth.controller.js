@@ -2,10 +2,12 @@ const User = require("../modules/users/user.model");
 const Pharmacy = require("../models/pharmacy.model");
 const ApiError = require("../utils/ApiError");
 
+const { generateToken } = require("../utils/jwt");
+
 // Get token from model, create cookie and send response
 const sendTokenResponse = (user, statusCode, res) => {
   // Create token
-  const token = user.getSignedJwtToken();
+  const token = generateToken({ id: user._id, role: user.role });
 
   const options = {
     expires: new Date(

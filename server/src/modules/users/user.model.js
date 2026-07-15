@@ -78,12 +78,6 @@ userSchema.pre("save", async function (next) {
   this.passwordHash = await bcrypt.hash(this.passwordHash, salt);
 });
 
-// Sign JWT and return
-userSchema.methods.getSignedJwtToken = function () {
-  return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE || "30d",
-  });
-};
 
 // Match user entered password to hashed password in database
 userSchema.methods.matchPassword = async function (enteredPassword) {
