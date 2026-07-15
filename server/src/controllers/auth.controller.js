@@ -1,5 +1,4 @@
 const User = require("../modules/users/user.model");
-const Pharmacy = require("../models/pharmacy.model");
 const ApiError = require("../utils/ApiError");
 
 const { generateToken } = require("../utils/jwt");
@@ -50,15 +49,7 @@ exports.registerCustomer = async (req, res, next) => {
 
 exports.registerPharmacy = async (req, res, next) => {
   try {
-    const {
-      fullName,
-      email,
-      phone,
-      password,
-      pharmacyName,
-      registrationNumber,
-      address,
-    } = req.body;
+    const { fullName, email, phone, password } = req.body;
 
     // Create user for pharmacy owner
     const user = await User.create({
@@ -67,17 +58,6 @@ exports.registerPharmacy = async (req, res, next) => {
       phone,
       passwordHash: password,
       role: "PHARMACY",
-    });
-
-    // Create pending pharmacy profile
-    const pharmacy = await Pharmacy.create({
-      ownerUserId: user._id,
-      name: pharmacyName,
-      registrationNumber,
-      email,
-      phone,
-      address,
-      verificationStatus: "PENDING",
     });
 
     sendTokenResponse(user, 201, res);
