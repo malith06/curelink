@@ -22,12 +22,9 @@ const sendTokenResponse = (user, statusCode, res) => {
 
   res.status(statusCode).cookie("token", token, options).json({
     success: true,
-    token,
-    user: {
-      id: user._id,
-      fullName: user.fullName,
-      email: user.email,
-      role: user.role,
+    data: {
+      token,
+      user: user.toJSON(),
     },
   });
 };
