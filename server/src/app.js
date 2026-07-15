@@ -8,6 +8,7 @@ const notFound = require("./middleware/notFound.middleware");
 
 // Route files
 const auth = require("./routes/auth.routes");
+const health = require("./routes/health.routes");
 
 const app = express();
 
@@ -25,13 +26,7 @@ app.use(cookieParser());
 
 // Mount routers
 app.use("/api/v1/auth", auth);
-
-app.get("/api/v1/health", (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: "CureLink API is running",
-  });
-});
+app.use("/api/v1/health", health);
 
 // Handle undefined routes
 app.use("*", notFound);
