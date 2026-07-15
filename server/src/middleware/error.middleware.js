@@ -30,8 +30,8 @@ const errorHandler = (err, req, res, next) => {
 
   const response = {
     success: false,
-    status: error.status,
     message: error.message,
+    ...(error.errors && error.errors.length > 0 && { errors: error.errors }),
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
   };
 
