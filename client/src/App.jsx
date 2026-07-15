@@ -1,27 +1,31 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import './App.css'
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+
+// Layouts
+import PublicLayout from './layouts/PublicLayout';
+
+// Pages
+import HomePage from './pages/HomePage';
+import AboutPage from './pages/AboutPage';
+import LoginPlaceholderPage from './pages/LoginPlaceholderPage';
+import NotFoundPage from './pages/NotFoundPage';
 
 function App() {
   return (
     <Router>
-      <div className="app-container">
-        <header>
-          <nav>
-            <h1>CureLink</h1>
-          </nav>
-        </header>
-        
-        <main>
-          <Routes>
-            <Route path="/" element={<h2>Welcome to CureLink (Home Placeholder)</h2>} />
-            <Route path="/login" element={<h2>Login Placeholder</h2>} />
-            <Route path="/register" element={<h2>Register Placeholder</h2>} />
-            <Route path="/pharmacies" element={<h2>Nearby Pharmacies Placeholder</h2>} />
-          </Routes>
-        </main>
-      </div>
+      <Routes>
+        {/* Public Routes wrapped in PublicLayout */}
+        <Route path="/" element={<PublicLayout />}>
+          <Route index element={<HomePage />} />
+          <Route path="about" element={<AboutPage />} />
+          <Route path="login" element={<LoginPlaceholderPage />} />
+          
+          {/* Catch-all 404 Route */}
+          <Route path="*" element={<NotFoundPage />} />
+        </Route>
+      </Routes>
     </Router>
-  )
+  );
 }
 
-export default App
+export default App;
