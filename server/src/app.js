@@ -9,8 +9,15 @@ const auth = require("./routes/auth.routes");
 
 const app = express();
 
+const config = require("./config/env");
+
 app.use(helmet());
-app.use(cors());
+app.use(
+  cors({
+    origin: config.CLIENT_URL,
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(cookieParser());
 
