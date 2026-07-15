@@ -1,36 +1,45 @@
-const ErrorResponse = require("../utils/errorResponse");
+const ApiError = require('../utils/ApiError');
 
 const errorHandler = (err, req, res, next) => {
-  let error = { ...err };
-  error.message = err.message;
-
-  // Log to console for dev
-  if (process.env.NODE_ENV !== "production") {
-    console.error(err);
-  }
+  let error = err;
 
   // Mongoose bad ObjectId
-  if (err.name === "CastError") {
+  if (err.name === 'CastError') {
     const message = `Resource not found`;
-    error = new ErrorResponse(message, 404);
+    error = new ApiError(message, 404);
   }
 
   // Mongoose duplicate key
   if (err.code === 11000) {
-    const message = "Duplicate field value entered";
-    error = new ErrorResponse(message, 400);
+    const message = `Duplicate field value entered`;
+    error = new ApiError(message, 400);
   }
 
   // Mongoose validation error
-  if (err.name === "ValidationError") {
-    const message = Object.values(err.errors).map((val) => val.message).join(", ");
-    error = new ErrorResponse(message, 400);
+  if (err.name === 'ValidationError') {
+    const message = Object.values(err.errors).map((val) => val.message).join(', ');
+    error = new ApiError(message, 400);
   }
 
-  res.status(error.statusCode || 500).json({
+  // If error is not an instance of ApiError after Mongoose checks
+  if (!(error instanceof ApiError)) {
+    const statusCode = error.statusCode || 500;
+    const message = error.message || 'Internal Server Error';
+    error = new ApiError(message, statusCode);
+  }
+
+  const response = {
     success: false,
-    error: error.message || "Server Error",
-  });
+    status: error.status,
+    message: error.message,
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+  };
+
+  if (process.env.NODE_ENV === 'development') {
+    console.error(err);
+  }
+
+  res.status(error.statusCode).json(response);
 };
 
 module.exports = errorHandler;

@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/user.model");
-const ErrorResponse = require("../utils/errorResponse");
+const ApiError = require("../utils/ApiError");
 
 // Protect routes
 exports.protect = async (req, res, next) => {
@@ -19,7 +19,7 @@ exports.protect = async (req, res, next) => {
 
   // Make sure token exists
   if (!token) {
-    return next(new ErrorResponse("Not authorized to access this route", 401));
+    return next(new ApiError("Not authorized to access this route", 401));
   }
 
   try {
@@ -29,17 +29,17 @@ exports.protect = async (req, res, next) => {
     req.user = await User.findById(decoded.id);
 
     if (!req.user) {
-      return next(new ErrorResponse("Not authorized to access this route", 401));
+      return next(new ApiError("Not authorized to access this route", 401));
     }
     
     // Check if user is active
     if (!req.user.isActive) {
-      return next(new ErrorResponse("User account is suspended", 403));
+      return next(new ApiError("User account is suspended", 403));
     }
 
     next();
   } catch (err) {
-    return next(new ErrorResponse("Not authorized to access this route", 401));
+    return next(new ApiError("Not authorized to access this route", 401));
   }
 };
 
@@ -48,7 +48,7 @@ exports.authorize = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {
       return next(
-        new ErrorResponse(
+        new ApiError(
           `User role ${req.user.role} is not authorized to access this route`,
           403
         )

@@ -1,11 +1,40 @@
 # CureLink Tasks
 
-- [x] Phase 1 - 4: Planning, Architecture, Setup, and Authentication
-- [ ] Phase 5: Medicine and Pharmacy Availability
-- [ ] Phase 6: Multi-Medicine Request Cart
-- [ ] Phase 7: Prescription Upload and OCR
-- [ ] Phase 8: Pharmacy Request and Quotation System
-- [ ] Phase 9: Order Management
-- [ ] Phase 10: Card Payment and COD
-- [ ] Phase 11: Notifications and Dashboards
-- [ ] Phase 12: Testing & Deployment
+## Day 1 Tasks (Foundation)
+| Status | Task | Description |
+| :---: | :--- | :--- |
+| ✅ | 1. Initialize repository files | GitHub templates, agent rules |
+| ✅ | 2. Add Git ignore rules | Standard `.gitignore` |
+| ✅ | 3. Add initial README | Project README |
+| ✅ | 4. Add project context | Define business rules and context |
+| ✅ | 5. Add task and changelog files | Document tracker and changelog |
+| ✅ | 6. Scaffold Vite React client | React foundation setup |
+| ✅ | 7. Add React Router dependency | Frontend routing logic |
+| ✅ | 8. Add public layout | Base UI layout |
+| ✅ | 9. Add Home page | UI placeholder |
+| ✅ | 10. Add About page | UI placeholder |
+| ✅ | 11. Add login placeholder | UI placeholder |
+| ✅ | 12. Add not-found page | UI placeholder |
+| ✅ | 13. Configure application routes | React router wiring |
+| ✅ | 14. Add client environment template | Client config env file |
+| ✅ | 15. Add Axios client | Centralized API client |
+| ✅ | 16. Initialize Express server | Node.js backend structure |
+| ✅ | 17. Add server dependencies | Express, Mongoose, etc. |
+| ✅ | 18. Configure server scripts | Nodemon, Jest configs |
+| ✅ | 19. Add server environment template | Backend config env file |
+| ✅ | 20. Add environment validation | Env runtime validation (zod) |
+| ✅ | 21. Add MongoDB connection | Database connection logic |
+| ✅ | 22. Configure Express middleware | Helmet, cors, express.json |
+| ✅ | 23. Add API error utility | Reusable error wrapper |
+| ✅ | 24. Add async-handler utility | Async catch block wrapper |
+| ✅ | 25. Add not-found middleware | 404 endpoint catch-all |
+| ✅ | 26. Add error middleware | Global error handler |
+| ✅ | 27. Add health controller | System status logic |
+| ✅ | 28. Add health route | Status endpoint |
+| ✅ | 29. Add health integration test | Supertest validation |
+| ✅ | 30. Add root monorepo scripts | Run both client and server |
+
+## Next-Day Items
+- Design global database schemas.
+- Set up authentication flows.
+- Implement pharmacy and customer profiles.
