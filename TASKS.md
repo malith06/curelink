@@ -34,7 +34,25 @@
 | ✅ | 29. Add health integration test | Supertest validation |
 | ✅ | 30. Add root monorepo scripts | Run both client and server |
 
+## Day 2 Tasks (Authentication)
+| Status | Task | Description |
+| :---: | :--- | :--- |
+| ✅ | 1. Add authentication role constants | RBAC configuration |
+| ✅ | 2. Create user schema | Centralize users for customers and pharmacies |
+| ✅ | 3. Enforce unique normalized email | Prevent dupes, use lowercase |
+| ✅ | 4. Exclude password hash from responses | Security via `toJSON` transform |
+| ✅ | 5. Add backend validation middleware | Global Zod validation interceptor |
+| ✅ | 6. Add registration validation schemas | Zod rules for customer/pharmacy |
+| ✅ | 7. Add login validation schemas | Zod rules for login payloads |
+| ✅ | 8. Add central jwt utility | Token generation and verification |
+| ✅ | 9. Implement customer registration | `POST /register/customer` |
+| ✅ | 10. Implement pharmacy registration | `POST /register/pharmacy` |
+| ✅ | 11. Implement login endpoint | `POST /login` |
+| ✅ | 12. Implement get me endpoint | `GET /me` |
+| ✅ | 13. Implement logout endpoint | `POST /logout` |
+| ✅ | 14. Add auth integration tests | Jest coverage for auth |
+| ✅ | 15. Update api documentation | Postman collection |
+
 ## Next-Day Items
-- Design global database schemas.
-- Set up authentication flows.
 - Implement pharmacy and customer profiles.
+- Set up medicine inventory models.
