@@ -59,6 +59,15 @@ const userSchema = new mongoose.Schema(
 // Explicitly define unique index on email
 userSchema.index({ email: 1 }, { unique: true });
 
+// Remove sensitive fields when converting to JSON
+userSchema.set("toJSON", {
+  transform: function (doc, ret) {
+    delete ret.passwordHash;
+    delete ret.__v;
+    return ret;
+  },
+});
+
 // Encrypt password using bcrypt
 userSchema.pre("save", async function (next) {
   if (!this.isModified("passwordHash")) {
