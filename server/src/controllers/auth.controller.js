@@ -1,6 +1,6 @@
 const User = require("../models/user.model");
 const Pharmacy = require("../models/pharmacy.model");
-const ErrorResponse = require("../utils/errorResponse");
+const ApiError = require("../utils/ApiError");
 
 // Get token from model, create cookie and send response
 const sendTokenResponse = (user, statusCode, res) => {
@@ -93,26 +93,26 @@ exports.login = async (req, res, next) => {
 
     // Validate email & password
     if (!email || !password) {
-      return next(new ErrorResponse("Please provide an email and password", 400));
+      return next(new ApiError("Please provide an email and password", 400));
     }
 
     // Check for user
     const user = await User.findOne({ email }).select("+passwordHash");
 
     if (!user) {
-      return next(new ErrorResponse("Invalid credentials", 401));
+      return next(new ApiError("Invalid credentials", 401));
     }
 
     // Check if password matches
     const isMatch = await user.matchPassword(password);
 
     if (!isMatch) {
-      return next(new ErrorResponse("Invalid credentials", 401));
+      return next(new ApiError("Invalid credentials", 401));
     }
 
     // Check if active
     if (!user.isActive) {
-      return next(new ErrorResponse("User account is suspended", 403));
+      return next(new ApiError("User account is suspended", 403));
     }
 
     sendTokenResponse(user, 200, res);
