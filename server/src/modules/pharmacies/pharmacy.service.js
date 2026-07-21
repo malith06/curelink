@@ -82,9 +82,39 @@ const submitForVerification = async (userId) => {
   return profile;
 };
 
+// --- ADMIN SERVICES ---
+
+const getPharmacies = async (filters, options = {}) => {
+  const { page = 1, limit = 10 } = options;
+  const skip = (page - 1) * limit;
+
+  const query = {};
+  if (filters.status) query.verificationStatus = filters.status;
+  if (filters.search) {
+    query.$or = [
+      { name: { $regex: filters.search, $options: 'i' } },
+      { registrationNumber: { $regex: filters.search, $options: 'i' } },
+    ];
+  }
+
+  const items = await Pharmacy.find(query).skip(skip).limit(limit).sort({ createdAt: -1 });
+  const total = await Pharmacy.countDocuments(query);
+
+  return {
+    items,
+    pagination: {
+      page: Number(page),
+      limit: Number(limit),
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+};
+
 module.exports = {
   createPharmacyProfile,
   getPharmacyProfileByUserId,
   updatePharmacyProfile,
   submitForVerification,
+  getPharmacies,
 };
