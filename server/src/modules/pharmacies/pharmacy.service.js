@@ -63,8 +63,28 @@ const updatePharmacyProfile = async (userId, updateData) => {
   return profile;
 };
 
+const submitForVerification = async (userId) => {
+  const profile = await Pharmacy.findOne({ ownerUserId: userId });
+  if (!profile) {
+    throw new ApiError(404, 'Pharmacy profile not found');
+  }
+
+  if (
+    profile.verificationStatus !== PHARMACY_VERIFICATION_STATUS.DRAFT &&
+    profile.verificationStatus !== PHARMACY_VERIFICATION_STATUS.REJECTED
+  ) {
+    throw new ApiError(400, 'Profile cannot be submitted for verification from current status');
+  }
+
+  profile.verificationStatus = PHARMACY_VERIFICATION_STATUS.PENDING;
+  profile.verificationNote = ''; // Clear previous rejection notes
+  await profile.save();
+  return profile;
+};
+
 module.exports = {
   createPharmacyProfile,
   getPharmacyProfileByUserId,
   updatePharmacyProfile,
+  submitForVerification,
 };

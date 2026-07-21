@@ -29,4 +29,11 @@ router.patch(
   pharmacyController.updatePharmacyProfile
 );
 
+router.post(
+  '/me/submit-verification',
+  protect,
+  authorize('PHARMACY'),
+  pharmacyController.submitForVerification
+);
+
 module.exports = router;
