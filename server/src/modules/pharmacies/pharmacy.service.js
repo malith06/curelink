@@ -1,5 +1,6 @@
 const Pharmacy = require('./pharmacy.model');
 const ApiError = require('../../utils/ApiError');
+const { PHARMACY_VERIFICATION_STATUS } = require('./pharmacy.constants');
 
 const createPharmacyProfile = async (userId, profileData) => {
   const existingProfile = await Pharmacy.findOne({ ownerUserId: userId });
@@ -28,7 +29,42 @@ const getPharmacyProfileByUserId = async (userId) => {
   return profile;
 };
 
+const updatePharmacyProfile = async (userId, updateData) => {
+  const profile = await Pharmacy.findOne({ ownerUserId: userId });
+  if (!profile) {
+    throw new ApiError(404, 'Pharmacy profile not found');
+  }
+
+  if (profile.verificationStatus === PHARMACY_VERIFICATION_STATUS.PENDING) {
+    throw new ApiError(400, 'Cannot edit profile while verification is pending');
+  }
+
+  if (
+    profile.verificationStatus === PHARMACY_VERIFICATION_STATUS.APPROVED ||
+    profile.verificationStatus === PHARMACY_VERIFICATION_STATUS.SUSPENDED
+  ) {
+    const allowedFields = ['phone', 'openingHours', 'deliveryAvailable', 'pickupAvailable'];
+    const keys = Object.keys(updateData);
+    const hasDisallowed = keys.some((key) => !allowedFields.includes(key));
+    if (hasDisallowed) {
+      throw new ApiError(400, 'Cannot update critical fields after approval. Please contact support.');
+    }
+  }
+
+  if (updateData.registrationNumber && updateData.registrationNumber !== profile.registrationNumber) {
+    const existingRegistration = await Pharmacy.findOne({ registrationNumber: updateData.registrationNumber });
+    if (existingRegistration) {
+      throw new ApiError(400, 'Registration number is already in use');
+    }
+  }
+
+  Object.assign(profile, updateData);
+  await profile.save();
+  return profile;
+};
+
 module.exports = {
   createPharmacyProfile,
   getPharmacyProfileByUserId,
+  updatePharmacyProfile,
 };

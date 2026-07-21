@@ -17,7 +17,16 @@ const getMyPharmacyProfile = catchAsync(async (req, res) => {
   });
 });
 
+const updatePharmacyProfile = catchAsync(async (req, res) => {
+  const profile = await pharmacyService.updatePharmacyProfile(req.user._id, req.body);
+  res.status(200).json({
+    success: true,
+    data: profile,
+  });
+});
+
 module.exports = {
   createPharmacyProfile,
   getMyPharmacyProfile,
+  updatePharmacyProfile,
 };
