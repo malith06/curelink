@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Day 2 Authentication & Authorization (JWT based)
+- User Schema mapping Customer and Pharmacy roles
+- Zod validation for schemas and global validation middleware
+- Full authentication API suite (`/register/customer`, `/register/pharmacy`, `/login`, `/me`, `/logout`)
+- Postman API Documentation (`CureLink.postman_collection.json`)
+- Secure password hashing hook (`bcrypt`)
 - Day 1 Foundation Setup (Complete MERN monorepo initialization)
 - React Vite Client with standard React Router public pages (Home, About, Login, 404)
 - Express Server configured with core middleware (Helmet, CORS), API Error Handler, and MongoDB connection
@@ -17,7 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Project README, context, task tracking, and changelog
 
 ### Changed
+- Shifted away from separate Patient and Pharmacy models to unified `User` model with `role`
 - Refined `.gitignore` to match project standards
 
 ### Fixed
-- (None yet)
+- Fixed bug in global error handler to safely intercept Zod validation errors (400 vs 500)
+- Fixed duplicate query and unnecessary validation execution in `/me` and `/login` routes
