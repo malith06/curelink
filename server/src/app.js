@@ -9,6 +9,7 @@ const notFound = require("./middleware/notFound.middleware");
 // Route files
 const auth = require("./routes/auth.routes");
 const health = require("./routes/health.routes");
+const pharmacy = require("./modules/pharmacies/pharmacy.routes");
 
 const app = express();
 
@@ -27,6 +28,7 @@ app.use(cookieParser());
 // Mount routers
 app.use("/api/v1/auth", auth);
 app.use("/api/v1/health", health);
+app.use("/api/v1/pharmacies", pharmacy);
 
 // Handle undefined routes
 app.use(notFound);

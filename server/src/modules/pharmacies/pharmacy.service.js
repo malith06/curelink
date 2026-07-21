@@ -20,6 +20,15 @@ const createPharmacyProfile = async (userId, profileData) => {
   return profile;
 };
 
+const getPharmacyProfileByUserId = async (userId) => {
+  const profile = await Pharmacy.findOne({ ownerUserId: userId });
+  if (!profile) {
+    throw new ApiError(404, 'Pharmacy profile not found');
+  }
+  return profile;
+};
+
 module.exports = {
   createPharmacyProfile,
+  getPharmacyProfileByUserId,
 };
