@@ -26,7 +26,16 @@ const getPharmacyById = catchAsync(async (req, res) => {
   });
 });
 
+const approvePharmacy = catchAsync(async (req, res) => {
+  const profile = await pharmacyService.approvePharmacy(req.params.pharmacyId, req.user._id);
+  res.status(200).json({
+    success: true,
+    data: profile,
+  });
+});
+
 module.exports = {
   getPharmacies,
   getPharmacyById,
+  approvePharmacy,
 };

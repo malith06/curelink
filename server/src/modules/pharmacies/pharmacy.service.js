@@ -119,6 +119,25 @@ const getPharmacyById = async (pharmacyId) => {
   return profile;
 };
 
+const approvePharmacy = async (pharmacyId, adminId) => {
+  const profile = await Pharmacy.findById(pharmacyId);
+  if (!profile) {
+    throw new ApiError(404, 'Pharmacy not found');
+  }
+  
+  if (profile.verificationStatus !== PHARMACY_VERIFICATION_STATUS.PENDING) {
+    throw new ApiError(400, 'Can only approve pharmacies that are in PENDING status');
+  }
+
+  profile.verificationStatus = PHARMACY_VERIFICATION_STATUS.APPROVED;
+  profile.verificationNote = '';
+  profile.verifiedBy = adminId;
+  profile.verifiedAt = new Date();
+  
+  await profile.save();
+  return profile;
+};
+
 module.exports = {
   createPharmacyProfile,
   getPharmacyProfileByUserId,
@@ -126,4 +145,5 @@ module.exports = {
   submitForVerification,
   getPharmacies,
   getPharmacyById,
+  approvePharmacy,
 };
