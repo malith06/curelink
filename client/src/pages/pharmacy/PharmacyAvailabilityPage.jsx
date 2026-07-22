@@ -3,6 +3,7 @@ import { toast } from 'react-toastify';
 import availabilityApi from '../../features/availability/availabilityApi';
 import api from '../../api/axios'; // Direct call for medicine search
 import pharmacyService from '../../features/pharmacy/pharmacyService';
+import AvailabilityStatusBadge from '../../components/availability/AvailabilityStatusBadge';
 
 const STATUS_OPTIONS = [
   { value: 'AVAILABLE', label: 'Available', color: 'bg-green-100 text-green-800' },
@@ -229,9 +230,7 @@ const PharmacyAvailabilityPage = () => {
                             {record.medicineId?.genericName || 'Unknown Medicine'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusOpt?.color || 'bg-gray-100'}`}>
-                              {statusOpt?.label || record.status}
-                            </span>
+                            <AvailabilityStatusBadge status={record.status} />
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {new Date(record.lastUpdatedAt).toLocaleDateString()}
