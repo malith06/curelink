@@ -20,11 +20,17 @@ const submitForVerification = async () => {
   return response.data;
 };
 
+const updateLocation = async (latitude, longitude) => {
+  const response = await api.patch('/pharmacies/me/location', { latitude, longitude });
+  return response.data;
+};
+
 const pharmacyService = {
   getMyPharmacyProfile,
   createPharmacyProfile,
   updatePharmacyProfile,
   submitForVerification,
+  updateLocation,
 };
 
 export default pharmacyService;
