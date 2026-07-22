@@ -1,7 +1,7 @@
 const pharmacyService = require('./pharmacy.service');
-const catchAsync = require('../../utils/catchAsync');
+const asyncHandler = require('../../utils/asyncHandler');
 
-const createPharmacyProfile = catchAsync(async (req, res) => {
+const createPharmacyProfile = asyncHandler(async (req, res) => {
   const profile = await pharmacyService.createPharmacyProfile(req.user._id, req.body);
   res.status(201).json({
     success: true,
@@ -9,7 +9,7 @@ const createPharmacyProfile = catchAsync(async (req, res) => {
   });
 });
 
-const getMyPharmacyProfile = catchAsync(async (req, res) => {
+const getMyPharmacyProfile = asyncHandler(async (req, res) => {
   const profile = await pharmacyService.getPharmacyProfileByUserId(req.user._id);
   res.status(200).json({
     success: true,
@@ -17,7 +17,7 @@ const getMyPharmacyProfile = catchAsync(async (req, res) => {
   });
 });
 
-const updatePharmacyProfile = catchAsync(async (req, res) => {
+const updatePharmacyProfile = asyncHandler(async (req, res) => {
   const profile = await pharmacyService.updatePharmacyProfile(req.user._id, req.body);
   res.status(200).json({
     success: true,
@@ -25,7 +25,7 @@ const updatePharmacyProfile = catchAsync(async (req, res) => {
   });
 });
 
-const submitForVerification = catchAsync(async (req, res) => {
+const submitForVerification = asyncHandler(async (req, res) => {
   const profile = await pharmacyService.submitForVerification(req.user._id);
   res.status(200).json({
     success: true,

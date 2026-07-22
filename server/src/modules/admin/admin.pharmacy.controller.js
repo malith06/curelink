@@ -1,7 +1,7 @@
 const pharmacyService = require('../pharmacies/pharmacy.service');
-const catchAsync = require('../../utils/catchAsync');
+const asyncHandler = require('../../utils/asyncHandler');
 
-const getPharmacies = catchAsync(async (req, res) => {
+const getPharmacies = asyncHandler(async (req, res) => {
   const filters = {
     status: req.query.status,
     search: req.query.search,
@@ -18,7 +18,7 @@ const getPharmacies = catchAsync(async (req, res) => {
   });
 });
 
-const getPharmacyById = catchAsync(async (req, res) => {
+const getPharmacyById = asyncHandler(async (req, res) => {
   const profile = await pharmacyService.getPharmacyById(req.params.pharmacyId);
   res.status(200).json({
     success: true,
@@ -26,7 +26,7 @@ const getPharmacyById = catchAsync(async (req, res) => {
   });
 });
 
-const approvePharmacy = catchAsync(async (req, res) => {
+const approvePharmacy = asyncHandler(async (req, res) => {
   const profile = await pharmacyService.approvePharmacy(req.params.pharmacyId, req.user._id);
   res.status(200).json({
     success: true,
@@ -34,7 +34,7 @@ const approvePharmacy = catchAsync(async (req, res) => {
   });
 });
 
-const rejectPharmacy = catchAsync(async (req, res) => {
+const rejectPharmacy = asyncHandler(async (req, res) => {
   const profile = await pharmacyService.rejectPharmacy(req.params.pharmacyId, req.body.reason, req.user._id);
   res.status(200).json({
     success: true,
@@ -42,7 +42,7 @@ const rejectPharmacy = catchAsync(async (req, res) => {
   });
 });
 
-const suspendPharmacy = catchAsync(async (req, res) => {
+const suspendPharmacy = asyncHandler(async (req, res) => {
   const profile = await pharmacyService.suspendPharmacy(req.params.pharmacyId, req.body.reason, req.user._id);
   res.status(200).json({
     success: true,
@@ -50,7 +50,7 @@ const suspendPharmacy = catchAsync(async (req, res) => {
   });
 });
 
-const reactivatePharmacy = catchAsync(async (req, res) => {
+const reactivatePharmacy = asyncHandler(async (req, res) => {
   const profile = await pharmacyService.reactivatePharmacy(req.params.pharmacyId, req.user._id);
   res.status(200).json({
     success: true,

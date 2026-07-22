@@ -1,6 +1,6 @@
 const express = require('express');
 const { protect, authorize } = require('../../middleware/auth.middleware');
-const validate = require('../../middleware/validate');
+const { validate } = require('../../middleware/validate');
 const pharmacyController = require('./pharmacy.controller');
 const { createPharmacyProfileSchema, updatePharmacyProfileSchema } = require('./pharmacy.validation');
 

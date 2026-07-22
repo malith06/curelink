@@ -1,7 +1,7 @@
 const medicineService = require('./medicine.service');
-const catchAsync = require('../../utils/catchAsync');
+const asyncHandler = require('../../utils/asyncHandler');
 
-const createMedicine = catchAsync(async (req, res) => {
+const createMedicine = asyncHandler(async (req, res) => {
   const medicine = await medicineService.createMedicine(req.body, req.user._id);
   res.status(201).json({
     success: true,
@@ -9,7 +9,7 @@ const createMedicine = catchAsync(async (req, res) => {
   });
 });
 
-const getMedicines = catchAsync(async (req, res) => {
+const getMedicines = asyncHandler(async (req, res) => {
   const filters = {
     search: req.query.search,
     category: req.query.category,
@@ -30,7 +30,7 @@ const getMedicines = catchAsync(async (req, res) => {
   });
 });
 
-const getMedicineById = catchAsync(async (req, res) => {
+const getMedicineById = asyncHandler(async (req, res) => {
   const medicine = await medicineService.getMedicineById(req.params.id);
   res.status(200).json({
     success: true,
@@ -38,7 +38,7 @@ const getMedicineById = catchAsync(async (req, res) => {
   });
 });
 
-const updateMedicine = catchAsync(async (req, res) => {
+const updateMedicine = asyncHandler(async (req, res) => {
   const medicine = await medicineService.updateMedicine(req.params.id, req.body);
   res.status(200).json({
     success: true,
@@ -46,7 +46,7 @@ const updateMedicine = catchAsync(async (req, res) => {
   });
 });
 
-const deleteMedicine = catchAsync(async (req, res) => {
+const deleteMedicine = asyncHandler(async (req, res) => {
   await medicineService.deleteMedicine(req.params.id);
   res.status(200).json({
     success: true,

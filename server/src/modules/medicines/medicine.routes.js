@@ -1,6 +1,6 @@
 const express = require('express');
 const { protect, authorize } = require('../../middleware/auth.middleware');
-const validate = require('../../middleware/validate');
+const { validate } = require('../../middleware/validate');
 const medicineController = require('./medicine.controller');
 const { createMedicineSchema, updateMedicineSchema } = require('./medicine.validation');
 
