@@ -9,6 +9,14 @@ const addressSchema = z.object({
   country: z.string().min(1, 'Country is required').trim().default('Sri Lanka'),
 });
 
+const locationSchema = z.object({
+  type: z.literal('Point'),
+  coordinates: z.tuple([
+    z.number().min(-180, 'Longitude must be at least -180').max(180, 'Longitude must be at most 180'),
+    z.number().min(-90, 'Latitude must be at least -90').max(90, 'Latitude must be at most 90'),
+  ]),
+});
+
 const openingHourSchema = z.object({
   isOpen: z.boolean().default(false),
   openTime: z.string().nullable().optional().default(null),
@@ -41,6 +49,7 @@ const createPharmacyProfileSchema = z.object({
   deliveryAvailable: z.boolean().optional().default(false),
   pickupAvailable: z.boolean().optional().default(true),
   serviceRadiusKm: z.number().min(1, 'Radius must be at least 1km').max(100, 'Radius must be at most 100km').optional().default(10),
+  location: locationSchema.optional(),
 });
 
 const updatePharmacyProfileSchema = z.object({
@@ -61,6 +70,7 @@ const updatePharmacyProfileSchema = z.object({
   deliveryAvailable: z.boolean().optional(),
   pickupAvailable: z.boolean().optional(),
   serviceRadiusKm: z.number().min(1, 'Radius must be at least 1km').max(100, 'Radius must be at most 100km').optional(),
+  location: locationSchema.optional(),
 });
 
 module.exports = {
