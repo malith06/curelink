@@ -161,6 +161,44 @@ const rejectPharmacy = async (pharmacyId, reason, adminId) => {
   return profile;
 };
 
+const suspendPharmacy = async (pharmacyId, reason, adminId) => {
+  if (!reason || reason.trim() === '') {
+    throw new ApiError(400, 'Suspension reason is required');
+  }
+
+  const profile = await Pharmacy.findById(pharmacyId);
+  if (!profile) {
+    throw new ApiError(404, 'Pharmacy not found');
+  }
+  
+  if (profile.verificationStatus !== PHARMACY_VERIFICATION_STATUS.APPROVED) {
+    throw new ApiError(400, 'Can only suspend pharmacies that are currently APPROVED');
+  }
+
+  profile.verificationStatus = PHARMACY_VERIFICATION_STATUS.SUSPENDED;
+  profile.verificationNote = reason;
+  
+  await profile.save();
+  return profile;
+};
+
+const reactivatePharmacy = async (pharmacyId, adminId) => {
+  const profile = await Pharmacy.findById(pharmacyId);
+  if (!profile) {
+    throw new ApiError(404, 'Pharmacy not found');
+  }
+  
+  if (profile.verificationStatus !== PHARMACY_VERIFICATION_STATUS.SUSPENDED) {
+    throw new ApiError(400, 'Can only reactivate pharmacies that are currently SUSPENDED');
+  }
+
+  profile.verificationStatus = PHARMACY_VERIFICATION_STATUS.APPROVED;
+  profile.verificationNote = ''; // Clear suspension reason
+  
+  await profile.save();
+  return profile;
+};
+
 module.exports = {
   createPharmacyProfile,
   getPharmacyProfileByUserId,
@@ -170,4 +208,6 @@ module.exports = {
   getPharmacyById,
   approvePharmacy,
   rejectPharmacy,
+  suspendPharmacy,
+  reactivatePharmacy,
 };

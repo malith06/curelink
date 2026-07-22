@@ -42,9 +42,27 @@ const rejectPharmacy = catchAsync(async (req, res) => {
   });
 });
 
+const suspendPharmacy = catchAsync(async (req, res) => {
+  const profile = await pharmacyService.suspendPharmacy(req.params.pharmacyId, req.body.reason, req.user._id);
+  res.status(200).json({
+    success: true,
+    data: profile,
+  });
+});
+
+const reactivatePharmacy = catchAsync(async (req, res) => {
+  const profile = await pharmacyService.reactivatePharmacy(req.params.pharmacyId, req.user._id);
+  res.status(200).json({
+    success: true,
+    data: profile,
+  });
+});
+
 module.exports = {
   getPharmacies,
   getPharmacyById,
   approvePharmacy,
   rejectPharmacy,
+  suspendPharmacy,
+  reactivatePharmacy,
 };
