@@ -1,4 +1,5 @@
 const Pharmacy = require('./pharmacy.model');
+const MedicineAvailability = require('../availability/availability.model');
 const ApiError = require('../../utils/ApiError');
 const { PHARMACY_VERIFICATION_STATUS } = require('./pharmacy.constants');
 
@@ -199,6 +200,48 @@ const reactivatePharmacy = async (pharmacyId, adminId) => {
   return profile;
 };
 
+// --- PUBLIC SERVICES ---
+
+const findNearbyPharmacies = async (lng, lat, radiusKm = 10, medicineId = null) => {
+  const radiusInRadians = radiusKm / 6378.1; // Earth's equatorial radius in km
+
+  const query = {
+    verificationStatus: PHARMACY_VERIFICATION_STATUS.APPROVED,
+    location: {
+      $geoWithin: {
+        $centerSphere: [[lng, lat], radiusInRadians]
+      }
+    }
+  };
+
+  // If we only need pharmacies near a location
+  if (!medicineId) {
+    return await Pharmacy.find(query).select('-ownerUserId -verificationNote -verifiedBy -verifiedAt').lean();
+  }
+
+  // If we need to filter by medicine availability, we find available pharmacies first
+  const availabilityRecords = await MedicineAvailability.find({
+    medicineId,
+    status: { $in: ['AVAILABLE', 'LIMITED', 'CONFIRMATION_REQUIRED'] }
+  }).select('pharmacyId status lastUpdated');
+
+  const availablePharmacyIds = availabilityRecords.map(record => record.pharmacyId);
+  
+  query._id = { $in: availablePharmacyIds };
+
+  const nearbyPharmacies = await Pharmacy.find(query).select('-ownerUserId -verificationNote -verifiedBy -verifiedAt').lean();
+
+  // Attach availability status to each pharmacy
+  return nearbyPharmacies.map(pharmacy => {
+    const record = availabilityRecords.find(r => r.pharmacyId.toString() === pharmacy._id.toString());
+    return {
+      ...pharmacy,
+      availabilityStatus: record.status,
+      availabilityLastUpdated: record.lastUpdated
+    };
+  });
+};
+
 module.exports = {
   createPharmacyProfile,
   getPharmacyProfileByUserId,
@@ -210,4 +253,5 @@ module.exports = {
   rejectPharmacy,
   suspendPharmacy,
   reactivatePharmacy,
+  findNearbyPharmacies,
 };
