@@ -54,5 +54,29 @@
 | ✅ | 15. Update api documentation | Postman collection |
 
 ## Next-Day Items
-- Implement pharmacy and customer profiles.
-- Set up medicine inventory models.
+- Implement medicine catalogue frontend.
+- Implement customer prescription uploads and quote requests.
+- Implement nearby pharmacy search (Geospatial).
+
+## Day 3 Tasks (Pharmacy Profiles & Medicine Catalogue)
+| Status | Task | Description |
+| :---: | :--- | :--- |
+| ✅ | 1. Add Pharmacy role check middleware | Ensure users have PHARMACY role |
+| ✅ | 2. Add Pharmacy verification state enums | Status: DRAFT, PENDING, APPROVED, etc. |
+| ✅ | 3. Create Pharmacy model | Schema for pharmacy profiles |
+| ✅ | 4. Validate Pharmacy Profile schema | Zod validation rules |
+| ✅ | 5. Implement create Pharmacy Profile | `POST /pharmacies/me/profile` |
+| ✅ | 6. Implement get my Pharmacy Profile | `GET /pharmacies/me/profile` |
+| ✅ | 7. Implement update Pharmacy Profile | `PATCH /pharmacies/me/profile` |
+| ✅ | 8. Implement submit Pharmacy verification | `POST /pharmacies/me/submit-verification` |
+| ✅ | 9. Add Pharmacy routes to app | Wire pharmacy endpoints |
+| ✅ | 10. Add Admin list Pharmacies | `GET /admin/pharmacies` |
+| ✅ | 11. Add Admin get Pharmacy | `GET /admin/pharmacies/:id` |
+| ✅ | 12. Add Admin approve Pharmacy | `PATCH /admin/pharmacies/:id/approve` |
+| ✅ | 13. Add Admin reject Pharmacy | `PATCH /admin/pharmacies/:id/reject` |
+| ✅ | 14. Add Admin suspend/reactivate Pharmacy | Admin moderation routes |
+| ✅ | 15. Create Pharmacy frontend form | React component for profile management |
+| ✅ | 16. Create Medicine model | Schema for medicine catalogue |
+| ✅ | 17. Implement Admin Medicine CRUD | Routes for medicine catalogue |
+| ✅ | 18. Add Medicine Seeder script | Pre-fill 10-15 sample medicines |
+| ✅ | 19. End-of-day testing & cleanup | Verification of features and tests |
