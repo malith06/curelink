@@ -18,6 +18,15 @@ const getPharmacies = catchAsync(async (req, res) => {
   });
 });
 
+const getPharmacyById = catchAsync(async (req, res) => {
+  const profile = await pharmacyService.getPharmacyById(req.params.pharmacyId);
+  res.status(200).json({
+    success: true,
+    data: profile,
+  });
+});
+
 module.exports = {
   getPharmacies,
+  getPharmacyById,
 };

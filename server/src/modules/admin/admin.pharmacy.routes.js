@@ -8,5 +8,6 @@ const router = express.Router();
 router.use(protect, authorize('ADMIN'));
 
 router.get('/', adminPharmacyController.getPharmacies);
+router.get('/:pharmacyId', adminPharmacyController.getPharmacyById);
 
 module.exports = router;

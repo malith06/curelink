@@ -111,10 +111,19 @@ const getPharmacies = async (filters, options = {}) => {
   };
 };
 
+const getPharmacyById = async (pharmacyId) => {
+  const profile = await Pharmacy.findById(pharmacyId).populate('ownerUserId', 'name email role');
+  if (!profile) {
+    throw new ApiError(404, 'Pharmacy not found');
+  }
+  return profile;
+};
+
 module.exports = {
   createPharmacyProfile,
   getPharmacyProfileByUserId,
   updatePharmacyProfile,
   submitForVerification,
   getPharmacies,
+  getPharmacyById,
 };
