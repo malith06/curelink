@@ -138,6 +138,29 @@ const approvePharmacy = async (pharmacyId, adminId) => {
   return profile;
 };
 
+const rejectPharmacy = async (pharmacyId, reason, adminId) => {
+  if (!reason || reason.trim() === '') {
+    throw new ApiError(400, 'Rejection reason is required');
+  }
+
+  const profile = await Pharmacy.findById(pharmacyId);
+  if (!profile) {
+    throw new ApiError(404, 'Pharmacy not found');
+  }
+  
+  if (profile.verificationStatus !== PHARMACY_VERIFICATION_STATUS.PENDING) {
+    throw new ApiError(400, 'Can only reject pharmacies that are in PENDING status');
+  }
+
+  profile.verificationStatus = PHARMACY_VERIFICATION_STATUS.REJECTED;
+  profile.verificationNote = reason;
+  profile.verifiedBy = adminId;
+  profile.verifiedAt = new Date();
+  
+  await profile.save();
+  return profile;
+};
+
 module.exports = {
   createPharmacyProfile,
   getPharmacyProfileByUserId,
@@ -146,4 +169,5 @@ module.exports = {
   getPharmacies,
   getPharmacyById,
   approvePharmacy,
+  rejectPharmacy,
 };

@@ -10,5 +10,6 @@ router.use(protect, authorize('ADMIN'));
 router.get('/', adminPharmacyController.getPharmacies);
 router.get('/:pharmacyId', adminPharmacyController.getPharmacyById);
 router.patch('/:pharmacyId/approve', adminPharmacyController.approvePharmacy);
+router.patch('/:pharmacyId/reject', adminPharmacyController.rejectPharmacy);
 
 module.exports = router;
