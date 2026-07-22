@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Day 3 Pharmacy Profiles & Medicine Catalogue
+- Pharmacy verification workflow (Draft, Pending, Approved, Rejected, Suspended)
+- Full Admin moderation API for Pharmacies
+- Frontend Pharmacy Profile management API service and React Form
+- Medicine model and Admin-only CRUD operations for the catalogue
+- Pharmacy and Medicine validation schemas (Zod)
+- MongoDB compound text index for Medicine search
+- Database seeder script for Medicines (`npm run seed:medicines`)
 - Day 2 Authentication & Authorization (JWT based)
 - User Schema mapping Customer and Pharmacy roles
 - Zod validation for schemas and global validation middleware
