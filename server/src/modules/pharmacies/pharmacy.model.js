@@ -126,4 +126,7 @@ const pharmacySchema = new mongoose.Schema(
 
 const Pharmacy = mongoose.model('Pharmacy', pharmacySchema);
 
+// Add geospatial index for location-based search
+pharmacySchema.index({ location: '2dsphere' });
+
 module.exports = Pharmacy;
