@@ -6,9 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-
 ### Added
-- Day 3 Pharmacy Profiles & Medicine Catalogue
+- Feature (Day 4): Pharmacy profile location fields with 2dsphere geospatial index.
+- Feature (Day 4): Medicine Availability schema with strict unique compound index.
+- Feature (Day 4): Backend services, controllers, and routes to update and query Medicine Availability.
+- Feature (Day 4): Backend service, controller, and route (`/api/v1/pharmacies/nearby`) to find pharmacies by location and medicine availability.
+
+## [0.3.0] - 2026-07-22 Day 3 Pharmacy Profiles & Medicine Catalogue
 - Pharmacy verification workflow (Draft, Pending, Approved, Rejected, Suspended)
 - Full Admin moderation API for Pharmacies
 - Frontend Pharmacy Profile management API service and React Form

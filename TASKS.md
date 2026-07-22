@@ -54,9 +54,23 @@
 | ✅ | 15. Update api documentation | Postman collection |
 
 ## Next-Day Items
-- Implement medicine catalogue frontend.
 - Implement customer prescription uploads and quote requests.
-- Implement nearby pharmacy search (Geospatial).
+
+## Day 4 Tasks (Medicine Availability and Nearby Map)
+| Status | Task | Description |
+| :---: | :--- | :--- |
+| ✅ | 1. Add pharmacy location fields | Add GeoJSON `location` and `locationUpdatedAt` to Pharmacy schema |
+| ✅ | 2. Add geospatial index | Add `2dsphere` index to Pharmacy schema |
+| ✅ | 3. Add location validation | Add `locationSchema` Zod validation |
+| ✅ | 4. Create MedicineAvailability schema | PharmacyID, MedicineID, status, notes |
+| ✅ | 5. Add availability validation schema | Zod rules for availability updates |
+| ✅ | 6. Add availability service | Service to update availability and get inventory |
+| ✅ | 7. Add availability controller | Controller handlers for availability |
+| ✅ | 8. Add availability routes | Express routes for availability management |
+| ✅ | 9. Register availability routes | Mount availability routes in `app.js` |
+| ✅ | 10. Implement nearby pharmacy service | Geospatial query with `$geoWithin` and medicine availability filter |
+| ✅ | 11. Implement nearby pharmacy controller | Controller for nearby query |
+| ✅ | 12. Implement nearby pharmacy routes | Expose `GET /api/v1/pharmacies/nearby` public endpoint |
 
 ## Day 3 Tasks (Pharmacy Profiles & Medicine Catalogue)
 | Status | Task | Description |
