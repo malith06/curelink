@@ -13,6 +13,7 @@ import CustomerRegisterPage from './pages/auth/CustomerRegisterPage';
 import PharmacyRegisterPage from './pages/auth/PharmacyRegisterPage';
 import PharmacyProfilePage from './pages/pharmacy/PharmacyProfilePage';
 import PharmacyLocationPage from './pages/pharmacy/PharmacyLocationPage';
+import PharmacyAvailabilityPage from './pages/pharmacy/PharmacyAvailabilityPage';
 import ProtectedRoute from './components/common/ProtectedRoute';
 
 function App() {
@@ -40,6 +41,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['PHARMACY']}>
                 <PharmacyLocationPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/pharmacy/availability" 
+            element={
+              <ProtectedRoute allowedRoles={['PHARMACY']}>
+                <PharmacyAvailabilityPage />
               </ProtectedRoute>
             } 
           />
