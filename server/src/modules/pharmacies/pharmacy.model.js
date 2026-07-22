@@ -75,6 +75,26 @@ const pharmacySchema = new mongoose.Schema(
       max: 100,
       default: 10,
     },
+    location: {
+      type: {
+        type: String,
+        enum: ['Point'],
+        default: 'Point',
+      },
+      coordinates: {
+        type: [Number],
+        validate: {
+          validator: function (value) {
+            return Array.isArray(value) && value.length === 2;
+          },
+          message: 'Location must contain longitude and latitude',
+        },
+      },
+    },
+    locationUpdatedAt: {
+      type: Date,
+      default: null,
+    },
     verificationStatus: {
       type: String,
       enum: VERIFICATION_STATUS_ARRAY,
