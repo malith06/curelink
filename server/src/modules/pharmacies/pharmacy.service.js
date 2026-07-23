@@ -6,12 +6,12 @@ const { PHARMACY_VERIFICATION_STATUS } = require('./pharmacy.constants');
 const createPharmacyProfile = async (userId, profileData) => {
   const existingProfile = await Pharmacy.findOne({ ownerUserId: userId });
   if (existingProfile) {
-    throw new ApiError(400, 'Pharmacy profile already exists for this user');
+    throw new ApiError('Pharmacy profile already exists for this user', 400);
   }
 
   const existingRegistration = await Pharmacy.findOne({ registrationNumber: profileData.registrationNumber });
   if (existingRegistration) {
-    throw new ApiError(400, 'Registration number is already in use');
+    throw new ApiError('Registration number is already in use', 400);
   }
 
   const profile = await Pharmacy.create({
@@ -25,7 +25,7 @@ const createPharmacyProfile = async (userId, profileData) => {
 const getPharmacyProfileByUserId = async (userId) => {
   const profile = await Pharmacy.findOne({ ownerUserId: userId });
   if (!profile) {
-    throw new ApiError(404, 'Pharmacy profile not found');
+    throw new ApiError('Pharmacy profile not found', 404);
   }
   return profile;
 };
@@ -33,11 +33,11 @@ const getPharmacyProfileByUserId = async (userId) => {
 const updatePharmacyProfile = async (userId, updateData) => {
   const profile = await Pharmacy.findOne({ ownerUserId: userId });
   if (!profile) {
-    throw new ApiError(404, 'Pharmacy profile not found');
+    throw new ApiError('Pharmacy profile not found', 404);
   }
 
   if (profile.verificationStatus === PHARMACY_VERIFICATION_STATUS.PENDING) {
-    throw new ApiError(400, 'Cannot edit profile while verification is pending');
+    throw new ApiError('Cannot edit profile while verification is pending', 400);
   }
 
   if (
@@ -48,14 +48,14 @@ const updatePharmacyProfile = async (userId, updateData) => {
     const keys = Object.keys(updateData);
     const hasDisallowed = keys.some((key) => !allowedFields.includes(key));
     if (hasDisallowed) {
-      throw new ApiError(400, 'Cannot update critical fields after approval. Please contact support.');
+      throw new ApiError('Cannot update critical fields after approval. Please contact support.', 400);
     }
   }
 
   if (updateData.registrationNumber && updateData.registrationNumber !== profile.registrationNumber) {
     const existingRegistration = await Pharmacy.findOne({ registrationNumber: updateData.registrationNumber });
     if (existingRegistration) {
-      throw new ApiError(400, 'Registration number is already in use');
+      throw new ApiError('Registration number is already in use', 400);
     }
   }
 
@@ -67,18 +67,39 @@ const updatePharmacyProfile = async (userId, updateData) => {
 const submitForVerification = async (userId) => {
   const profile = await Pharmacy.findOne({ ownerUserId: userId });
   if (!profile) {
-    throw new ApiError(404, 'Pharmacy profile not found');
+    throw new ApiError('Pharmacy profile not found', 404);
   }
 
   if (
     profile.verificationStatus !== PHARMACY_VERIFICATION_STATUS.DRAFT &&
     profile.verificationStatus !== PHARMACY_VERIFICATION_STATUS.REJECTED
   ) {
-    throw new ApiError(400, 'Profile cannot be submitted for verification from current status');
+    throw new ApiError('Profile cannot be submitted for verification from current status', 400);
   }
 
   profile.verificationStatus = PHARMACY_VERIFICATION_STATUS.PENDING;
   profile.verificationNote = ''; // Clear previous rejection notes
+  await profile.save();
+  return profile;
+};
+
+const updatePharmacyLocation = async (userId, latitude, longitude) => {
+  const profile = await Pharmacy.findOne({ ownerUserId: userId });
+  if (!profile) {
+    throw new ApiError('Pharmacy profile not found', 404);
+  }
+
+  // Validate coordinates manually just in case
+  if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+    throw new ApiError('Invalid coordinate ranges', 400);
+  }
+
+  profile.location = {
+    type: 'Point',
+    coordinates: [longitude, latitude], // GeoJSON order
+  };
+  profile.locationUpdatedAt = new Date();
+
   await profile.save();
   return profile;
 };
@@ -115,7 +136,7 @@ const getPharmacies = async (filters, options = {}) => {
 const getPharmacyById = async (pharmacyId) => {
   const profile = await Pharmacy.findById(pharmacyId).populate('ownerUserId', 'name email role');
   if (!profile) {
-    throw new ApiError(404, 'Pharmacy not found');
+    throw new ApiError('Pharmacy not found', 404);
   }
   return profile;
 };
@@ -123,11 +144,11 @@ const getPharmacyById = async (pharmacyId) => {
 const approvePharmacy = async (pharmacyId, adminId) => {
   const profile = await Pharmacy.findById(pharmacyId);
   if (!profile) {
-    throw new ApiError(404, 'Pharmacy not found');
+    throw new ApiError('Pharmacy not found', 404);
   }
   
   if (profile.verificationStatus !== PHARMACY_VERIFICATION_STATUS.PENDING) {
-    throw new ApiError(400, 'Can only approve pharmacies that are in PENDING status');
+    throw new ApiError('Can only approve pharmacies that are in PENDING status', 400);
   }
 
   profile.verificationStatus = PHARMACY_VERIFICATION_STATUS.APPROVED;
@@ -141,16 +162,16 @@ const approvePharmacy = async (pharmacyId, adminId) => {
 
 const rejectPharmacy = async (pharmacyId, reason, adminId) => {
   if (!reason || reason.trim() === '') {
-    throw new ApiError(400, 'Rejection reason is required');
+    throw new ApiError('Rejection reason is required', 400);
   }
 
   const profile = await Pharmacy.findById(pharmacyId);
   if (!profile) {
-    throw new ApiError(404, 'Pharmacy not found');
+    throw new ApiError('Pharmacy not found', 404);
   }
   
   if (profile.verificationStatus !== PHARMACY_VERIFICATION_STATUS.PENDING) {
-    throw new ApiError(400, 'Can only reject pharmacies that are in PENDING status');
+    throw new ApiError('Can only reject pharmacies that are in PENDING status', 400);
   }
 
   profile.verificationStatus = PHARMACY_VERIFICATION_STATUS.REJECTED;
@@ -164,16 +185,16 @@ const rejectPharmacy = async (pharmacyId, reason, adminId) => {
 
 const suspendPharmacy = async (pharmacyId, reason, adminId) => {
   if (!reason || reason.trim() === '') {
-    throw new ApiError(400, 'Suspension reason is required');
+    throw new ApiError('Suspension reason is required', 400);
   }
 
   const profile = await Pharmacy.findById(pharmacyId);
   if (!profile) {
-    throw new ApiError(404, 'Pharmacy not found');
+    throw new ApiError('Pharmacy not found', 404);
   }
   
   if (profile.verificationStatus !== PHARMACY_VERIFICATION_STATUS.APPROVED) {
-    throw new ApiError(400, 'Can only suspend pharmacies that are currently APPROVED');
+    throw new ApiError('Can only suspend pharmacies that are currently APPROVED', 400);
   }
 
   profile.verificationStatus = PHARMACY_VERIFICATION_STATUS.SUSPENDED;
@@ -186,11 +207,11 @@ const suspendPharmacy = async (pharmacyId, reason, adminId) => {
 const reactivatePharmacy = async (pharmacyId, adminId) => {
   const profile = await Pharmacy.findById(pharmacyId);
   if (!profile) {
-    throw new ApiError(404, 'Pharmacy not found');
+    throw new ApiError('Pharmacy not found', 404);
   }
   
   if (profile.verificationStatus !== PHARMACY_VERIFICATION_STATUS.SUSPENDED) {
-    throw new ApiError(400, 'Can only reactivate pharmacies that are currently SUSPENDED');
+    throw new ApiError('Can only reactivate pharmacies that are currently SUSPENDED', 400);
   }
 
   profile.verificationStatus = PHARMACY_VERIFICATION_STATUS.APPROVED;
@@ -247,6 +268,7 @@ module.exports = {
   getPharmacyProfileByUserId,
   updatePharmacyProfile,
   submitForVerification,
+  updatePharmacyLocation,
   getPharmacies,
   getPharmacyById,
   approvePharmacy,

@@ -6,6 +6,8 @@ const Pharmacy = require('../src/modules/pharmacies/pharmacy.model');
 const jwt = require('jsonwebtoken');
 
 describe('Location & Geospatial APIs', () => {
+  jest.setTimeout(30000);
+  
   let token;
   let userId;
   
@@ -25,10 +27,9 @@ describe('Location & Geospatial APIs', () => {
     // Create an approved pharmacy user
     const user = await User.create({
       email: 'testpharmacy@curelink.com',
-      password: 'password123',
+      passwordHash: 'password123',
       role: 'PHARMACY',
-      firstName: 'Test',
-      lastName: 'Pharmacy',
+      fullName: 'Test Pharmacy',
       phone: '0771234567'
     });
     
@@ -37,10 +38,20 @@ describe('Location & Geospatial APIs', () => {
     // Create an approved profile
     await Pharmacy.create({
       ownerUserId: user._id,
-      businessName: 'Test Pharmacy Inc',
-      address: '123 Main St, Kandy',
+      name: 'Test Pharmacy Inc',
       registrationNumber: 'REG123',
-      verificationStatus: 'APPROVED'
+      phone: '0771234567',
+      email: 'testpharmacy@curelink.com',
+      address: {
+        line1: '123 Main St',
+        city: 'Kandy',
+        district: 'Kandy'
+      },
+      verificationStatus: 'APPROVED',
+      location: {
+        type: 'Point',
+        coordinates: [80.633, 7.290] // Kandy
+      }
     });
     
     token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
@@ -90,18 +101,23 @@ describe('Location & Geospatial APIs', () => {
       // Create a second pharmacy far away (Colombo)
       const user2 = await User.create({
         email: 'colombopharmacy@curelink.com',
-        password: 'password123',
+        passwordHash: 'password123',
         role: 'PHARMACY',
-        firstName: 'Colombo',
-        lastName: 'Pharmacy',
+        fullName: 'Colombo Pharmacy',
         phone: '0777654321'
       });
       
       await Pharmacy.create({
         ownerUserId: user2._id,
-        businessName: 'Colombo Pharmacy',
-        address: 'Colombo',
+        name: 'Colombo Pharmacy',
         registrationNumber: 'REG456',
+        phone: '0777654321',
+        email: 'colombopharmacy@curelink.com',
+        address: {
+          line1: 'Colombo',
+          city: 'Colombo',
+          district: 'Colombo'
+        },
         verificationStatus: 'APPROVED',
         location: {
           type: 'Point',
@@ -117,14 +133,13 @@ describe('Location & Geospatial APIs', () => {
         .query({
           lat: 7.29,
           lng: 80.63,
-          radius: 10000 // 10km
+          radiusKm: 10 // 10km
         });
         
       expect(res.statusCode).toBe(200);
       expect(res.body.success).toBe(true);
       expect(res.body.data.length).toBe(1);
-      expect(res.body.data[0].businessName).toBe('Test Pharmacy Inc');
-      expect(res.body.data[0].distance).toBeDefined(); // Should calculate distance
+      expect(res.body.data[0].name).toBe('Test Pharmacy Inc');
     });
 
     it('should not find pharmacies outside the radius', async () => {

@@ -6,6 +6,10 @@ const { createPharmacyProfileSchema, updatePharmacyProfileSchema } = require('./
 
 const router = express.Router();
 
+// Public routes
+router.get('/nearby', pharmacyController.findNearbyPharmacies);
+
+// Protected routes
 router.post(
   '/me/profile',
   protect,
@@ -34,6 +38,14 @@ router.post(
   protect,
   authorize('PHARMACY'),
   pharmacyController.submitForVerification
+);
+
+router.patch(
+  '/me/location',
+  protect,
+  authorize('PHARMACY'),
+  // Add validation if needed, assuming validation is in controller for now or using locationSchema
+  pharmacyController.updatePharmacyLocation
 );
 
 module.exports = router;

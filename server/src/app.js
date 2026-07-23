@@ -12,6 +12,7 @@ const health = require("./routes/health.routes");
 const pharmacy = require("./modules/pharmacies/pharmacy.routes");
 const adminPharmacy = require("./modules/admin/admin.pharmacy.routes");
 const medicine = require("./modules/medicines/medicine.routes");
+const availability = require("./modules/availability/availability.routes");
 
 const app = express();
 
@@ -33,6 +34,7 @@ app.use("/api/v1/health", health);
 app.use("/api/v1/pharmacies", pharmacy);
 app.use("/api/v1/admin/pharmacies", adminPharmacy);
 app.use("/api/v1/medicines", medicine);
+app.use("/api/v1/availability", availability);
 
 // Handle undefined routes
 app.use(notFound);

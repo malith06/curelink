@@ -7,20 +7,20 @@ const updateAvailability = async (userId, medicineId, updateData) => {
   // Find pharmacy by user ID
   const pharmacy = await Pharmacy.findOne({ ownerUserId: userId });
   if (!pharmacy) {
-    throw new ApiError(404, 'Pharmacy profile not found');
+    throw new ApiError('Pharmacy profile not found', 404);
   }
   
   if (pharmacy.verificationStatus !== 'APPROVED') {
-    throw new ApiError(403, 'Your pharmacy profile must be approved to manage inventory');
+    throw new ApiError('Your pharmacy profile must be approved to manage inventory', 403);
   }
 
   // Ensure medicine exists and is active
   const medicine = await Medicine.findById(medicineId);
   if (!medicine) {
-    throw new ApiError(404, 'Medicine not found in the catalogue');
+    throw new ApiError('Medicine not found in the catalogue', 404);
   }
   if (!medicine.isActive) {
-    throw new ApiError(400, 'Cannot update availability for a deactivated medicine');
+    throw new ApiError('Cannot update availability for a deactivated medicine', 400);
   }
 
   // Update or create the availability record
@@ -42,11 +42,11 @@ const updateAvailability = async (userId, medicineId, updateData) => {
 const getPharmacyInventory = async (userId) => {
   const pharmacy = await Pharmacy.findOne({ ownerUserId: userId });
   if (!pharmacy) {
-    throw new ApiError(404, 'Pharmacy profile not found');
+    throw new ApiError('Pharmacy profile not found', 404);
   }
 
   const inventory = await MedicineAvailability.find({ pharmacyId: pharmacy._id })
-    .populate('medicineId', 'genericName brandName strength dosageForm category')
+    .populate('medicineId', 'name brand category manufacturer')
     .sort({ lastUpdated: -1 });
 
   return inventory;

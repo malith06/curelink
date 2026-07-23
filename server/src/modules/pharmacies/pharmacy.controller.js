@@ -34,17 +34,36 @@ const submitForVerification = asyncHandler(async (req, res) => {
   });
 });
 
+const updatePharmacyLocation = asyncHandler(async (req, res) => {
+  const { latitude, longitude } = req.body;
+
+  if (latitude === undefined || longitude === undefined) {
+    throw new ApiError('Latitude and longitude are required', 400);
+  }
+
+  const profile = await pharmacyService.updatePharmacyLocation(
+    req.user._id,
+    parseFloat(latitude),
+    parseFloat(longitude)
+  );
+
+  res.status(200).json({
+    success: true,
+    data: profile,
+  });
+});
+
 const findNearbyPharmacies = asyncHandler(async (req, res) => {
   const { lng, lat, radiusKm, medicineId } = req.query;
 
   if (!lng || !lat) {
-    throw new ApiError(400, 'Longitude and latitude are required');
+    throw new ApiError('Longitude and latitude are required', 400);
   }
 
   const radius = radiusKm ? parseFloat(radiusKm) : 10;
   
   if (isNaN(radius) || radius <= 0 || radius > 100) {
-    throw new ApiError(400, 'Radius must be a positive number up to 100km');
+    throw new ApiError('Radius must be a positive number up to 100km', 400);
   }
 
   const pharmacies = await pharmacyService.findNearbyPharmacies(
@@ -66,5 +85,6 @@ module.exports = {
   getMyPharmacyProfile,
   updatePharmacyProfile,
   submitForVerification,
+  updatePharmacyLocation,
   findNearbyPharmacies,
 };

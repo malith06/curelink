@@ -57,7 +57,7 @@ const getMedicines = async (filters, options = {}) => {
 const getMedicineById = async (id) => {
   const medicine = await Medicine.findById(id);
   if (!medicine) {
-    throw new ApiError(404, 'Medicine not found');
+    throw new ApiError('Medicine not found', 404);
   }
   return medicine;
 };
@@ -65,7 +65,7 @@ const getMedicineById = async (id) => {
 const updateMedicine = async (id, updateData) => {
   const medicine = await Medicine.findById(id);
   if (!medicine) {
-    throw new ApiError(404, 'Medicine not found');
+    throw new ApiError('Medicine not found', 404);
   }
   
   Object.assign(medicine, updateData);
@@ -76,7 +76,7 @@ const updateMedicine = async (id, updateData) => {
 const deleteMedicine = async (id) => {
   const medicine = await Medicine.findById(id);
   if (!medicine) {
-    throw new ApiError(404, 'Medicine not found');
+    throw new ApiError('Medicine not found', 404);
   }
   await medicine.deleteOne();
   return medicine;
