@@ -9,6 +9,7 @@ import HomePage from './pages/HomePage';
 import AboutPage from './pages/AboutPage';
 import LoginPlaceholderPage from './pages/LoginPlaceholderPage';
 import NotFoundPage from './pages/NotFoundPage';
+import NearbyPharmacySearchPage from './pages/NearbyPharmacySearchPage';
 import CustomerRegisterPage from './pages/auth/CustomerRegisterPage';
 import PharmacyRegisterPage from './pages/auth/PharmacyRegisterPage';
 import PharmacyProfilePage from './pages/pharmacy/PharmacyProfilePage';
@@ -25,6 +26,7 @@ function App() {
           <Route index element={<HomePage />} />
           <Route path="about" element={<AboutPage />} />
           <Route path="login" element={<LoginPlaceholderPage />} />
+          <Route path="/pharmacies/nearby" element={<NearbyPharmacySearchPage />} />
           <Route path="/register/customer" element={<CustomerRegisterPage />} />
           <Route path="/register/pharmacy" element={<PharmacyRegisterPage />} />
           
