@@ -1,4 +1,5 @@
 const pharmacyService = require('./pharmacy.service');
+const requestService = require('../requests/request.service');
 const asyncHandler = require('../../utils/asyncHandler');
 const ApiError = require('../../utils/ApiError');
 
@@ -80,6 +81,21 @@ const findNearbyPharmacies = asyncHandler(async (req, res) => {
   });
 });
 
+const getPharmacyInboxRequests = asyncHandler(async (req, res) => {
+  const profile = await pharmacyService.getPharmacyProfileByUserId(req.user._id);
+  if (!profile) {
+    throw new ApiError('Pharmacy profile not found', 404);
+  }
+  
+  const { status } = req.query;
+  const requests = await requestService.getPharmacyInbox(profile._id, { status });
+  
+  res.status(200).json({
+    success: true,
+    data: requests,
+  });
+});
+
 module.exports = {
   createPharmacyProfile,
   getMyPharmacyProfile,
@@ -87,4 +103,5 @@ module.exports = {
   submitForVerification,
   updatePharmacyLocation,
   findNearbyPharmacies,
+  getPharmacyInboxRequests
 };

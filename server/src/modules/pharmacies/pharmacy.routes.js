@@ -48,4 +48,11 @@ router.patch(
   pharmacyController.updatePharmacyLocation
 );
 
+router.get(
+  '/me/requests',
+  protect,
+  authorize('PHARMACY'),
+  pharmacyController.getPharmacyInboxRequests
+);
+
 module.exports = router;

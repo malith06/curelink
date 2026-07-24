@@ -248,6 +248,26 @@ const getCustomerRequestById = async (requestId, customerId) => {
   return request;
 };
 
+/**
+ * Gets inbox requests for a pharmacy
+ * @param {String} pharmacyId - The ID of the pharmacy
+ * @param {Object} filters - Query filters (e.g., status)
+ * @returns {Promise<Array>} List of requests
+ */
+const getPharmacyInbox = async (pharmacyId, filters = {}) => {
+  const query = { selectedPharmacyIds: pharmacyId };
+  if (filters.status) {
+    query.status = filters.status;
+  } else {
+    query.status = { $in: [REQUEST_STATUS.PENDING, REQUEST_STATUS.QUOTED, REQUEST_STATUS.CONFIRMED] };
+  }
+  
+  return MedicineRequest.find(query)
+    .sort({ submittedAt: -1 })
+    .populate('customerId', 'name') // We only need basic customer info
+    .lean();
+};
+
 module.exports = {
   buildMedicineSnapshot,
   calculatePrescriptionRequirement,
@@ -257,5 +277,6 @@ module.exports = {
   removeRequestItem,
   submitRequest,
   getCustomerRequests,
-  getCustomerRequestById
+  getCustomerRequestById,
+  getPharmacyInbox
 };
