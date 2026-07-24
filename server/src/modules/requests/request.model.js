@@ -62,7 +62,17 @@ const medicineRequestSchema = new mongoose.Schema({
   cancellationReason: {
     type: String,
     maxlength: 300
-  }
+  },
+  statusTimeline: [{
+    status: {
+      type: String,
+      required: true
+    },
+    changedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }]
 }, { timestamps: true });
 
 medicineRequestSchema.pre('validate', function(next) {
@@ -70,6 +80,16 @@ medicineRequestSchema.pre('validate', function(next) {
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     const randomStr = crypto.randomBytes(3).toString('hex').toUpperCase();
     this.requestNumber = `REQ-${dateStr}-${randomStr}`;
+  }
+  next();
+});
+
+medicineRequestSchema.pre('save', function(next) {
+  if (this.isModified('status')) {
+    this.statusTimeline.push({
+      status: this.status,
+      changedAt: new Date()
+    });
   }
   next();
 });
