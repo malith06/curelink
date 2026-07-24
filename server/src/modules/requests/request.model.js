@@ -62,7 +62,14 @@ const medicineRequestSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-// We'll add indexes in the next commit (Unit 4)
+// Index for a customer querying their own requests efficiently
+medicineRequestSchema.index({ customerId: 1, createdAt: -1 });
+
+// Index for pharmacies checking their inbox for specific status
+medicineRequestSchema.index({ selectedPharmacyIds: 1, status: 1, createdAt: -1 });
+
+// Geospatial index for future analytics or location-based request routing
+medicineRequestSchema.index({ customerLocation: '2dsphere' });
 
 const MedicineRequest = mongoose.model('MedicineRequest', medicineRequestSchema);
 
