@@ -87,12 +87,13 @@ const getPharmacyInboxRequests = asyncHandler(async (req, res) => {
     throw new ApiError('Pharmacy profile not found', 404);
   }
   
-  const { status } = req.query;
-  const requests = await requestService.getPharmacyInbox(profile._id, { status });
+  const { status, page, limit, sort } = req.query;
+  const result = await requestService.getPharmacyInbox(profile._id, { status, page, limit, sort });
   
   res.status(200).json({
     success: true,
-    data: requests,
+    data: result.data,
+    pagination: result.pagination
   });
 });
 

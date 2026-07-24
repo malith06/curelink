@@ -112,20 +112,23 @@ const submitRequest = async (req, res, next) => {
 };
 
 /**
- * @desc    Get all requests for the logged-in customer
+ * @desc    Get all requests for a customer
  * @route   GET /api/v1/requests
  * @access  Private (Customer only)
  */
 const getCustomerRequests = async (req, res, next) => {
   try {
     const customerId = req.user.id;
-    const { status } = req.query;
+    const { status, page, limit, sort } = req.query;
 
-    const requests = await requestService.getCustomerRequests(customerId, { status });
+    const result = await requestService.getCustomerRequests(customerId, {
+      status, page, limit, sort
+    });
     
     res.status(200).json({
       success: true,
-      data: requests
+      data: result.data,
+      pagination: result.pagination
     });
   } catch (error) {
     next(error);

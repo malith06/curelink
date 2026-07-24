@@ -213,21 +213,40 @@ const submitRequest = async (requestId, customerId, pharmacyIds, customerLocatio
 };
 
 /**
- * Gets all requests for a customer, optionally filtered by status
+ * Gets all requests for a customer, optionally filtered by status, with pagination
  * @param {String} customerId - The ID of the customer
- * @param {Object} filters - Query filters (e.g., status)
- * @returns {Promise<Array>} List of requests
+ * @param {Object} queryParams - Query parameters (status, page, limit, sort)
+ * @returns {Promise<Object>} Paginated list of requests
  */
-const getCustomerRequests = async (customerId, filters = {}) => {
-  const query = { customerId };
-  if (filters.status) {
-    query.status = filters.status;
+const getCustomerRequests = async (customerId, queryParams = {}) => {
+  const page = parseInt(queryParams.page, 10) || 1;
+  const limit = parseInt(queryParams.limit, 10) || 10;
+  const skip = (page - 1) * limit;
+  const sort = queryParams.sort || '-createdAt';
+
+  const filter = { customerId };
+  if (queryParams.status) {
+    filter.status = queryParams.status;
   }
   
-  return MedicineRequest.find(query)
-    .sort({ createdAt: -1 })
+  const requests = await MedicineRequest.find(filter)
+    .sort(sort)
+    .skip(skip)
+    .limit(limit)
     .populate('selectedPharmacyIds', 'name address city')
     .lean();
+
+  const total = await MedicineRequest.countDocuments(filter);
+
+  return {
+    data: requests,
+    pagination: {
+      total,
+      page,
+      limit,
+      pages: Math.ceil(total / limit)
+    }
+  };
 };
 
 /**
@@ -249,23 +268,51 @@ const getCustomerRequestById = async (requestId, customerId) => {
 };
 
 /**
- * Gets inbox requests for a pharmacy
+ * Gets inbox requests for a pharmacy with pagination
  * @param {String} pharmacyId - The ID of the pharmacy
- * @param {Object} filters - Query filters (e.g., status)
- * @returns {Promise<Array>} List of requests
+ * @param {Object} queryParams - Query parameters (status, page, limit, sort)
+ * @returns {Promise<Object>} Paginated list of requests
  */
-const getPharmacyInbox = async (pharmacyId, filters = {}) => {
-  const query = { selectedPharmacyIds: pharmacyId };
-  if (filters.status) {
-    query.status = filters.status;
+const getPharmacyInbox = async (pharmacyId, queryParams = {}) => {
+  const page = parseInt(queryParams.page, 10) || 1;
+  const limit = parseInt(queryParams.limit, 10) || 10;
+  const skip = (page - 1) * limit;
+  const sort = queryParams.sort || '-createdAt';
+
+  const filter = { selectedPharmacyIds: pharmacyId };
+  if (queryParams.status) {
+    filter.status = queryParams.status;
   } else {
-    query.status = { $in: [REQUEST_STATUS.PENDING, REQUEST_STATUS.QUOTED, REQUEST_STATUS.CONFIRMED] };
+    filter.status = { $in: [
+      REQUEST_STATUS.SUBMITTED, 
+      REQUEST_STATUS.QUOTATIONS_RECEIVED, 
+      REQUEST_STATUS.QUOTATION_ACCEPTED,
+      REQUEST_STATUS.CONVERTED_TO_ORDER,
+      REQUEST_STATUS.PROCESSING,
+      REQUEST_STATUS.READY_FOR_PICKUP,
+      REQUEST_STATUS.DISPATCHED,
+      REQUEST_STATUS.COMPLETED
+    ] };
   }
   
-  return MedicineRequest.find(query)
-    .sort({ submittedAt: -1 })
+  const requests = await MedicineRequest.find(filter)
+    .sort(sort)
+    .skip(skip)
+    .limit(limit)
     .populate('customerId', 'name') // We only need basic customer info
     .lean();
+
+  const total = await MedicineRequest.countDocuments(filter);
+
+  return {
+    data: requests,
+    pagination: {
+      total,
+      page,
+      limit,
+      pages: Math.ceil(total / limit)
+    }
+  };
 };
 
 /**
