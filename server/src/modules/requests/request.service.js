@@ -525,6 +525,26 @@ const updatePharmacyRequestStatus = async (requestId, pharmacyId, newStatus) => 
   return request;
 };
 
+/**
+ * Cron job handler to expire requests past their valid date
+ * @returns {Promise<Number>} Number of expired requests
+ */
+const expireOldRequests = async () => {
+  const now = new Date();
+  
+  const requests = await MedicineRequest.find({
+    status: { $in: [REQUEST_STATUS.SUBMITTED, REQUEST_STATUS.QUOTATIONS_RECEIVED] },
+    expiresAt: { $lt: now }
+  });
+
+  for (const request of requests) {
+    request.status = REQUEST_STATUS.EXPIRED;
+    await request.save();
+  }
+
+  return requests.length;
+};
+
 module.exports = {
   buildMedicineSnapshot,
   calculatePrescriptionRequirement,
@@ -542,5 +562,6 @@ module.exports = {
   acceptQuotation,
   declineQuotation,
   processPaymentForRequest,
-  updatePharmacyRequestStatus
+  updatePharmacyRequestStatus,
+  expireOldRequests
 };

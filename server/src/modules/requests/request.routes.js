@@ -70,4 +70,10 @@ router.post(
   requestController.processPayment
 );
 
+// Trigger expiry cron job manually
+router.post(
+  '/system/expire',
+  requestController.triggerExpiry
+);
+
 module.exports = router;

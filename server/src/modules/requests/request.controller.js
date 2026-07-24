@@ -243,6 +243,25 @@ const processPayment = async (req, res, next) => {
   }
 };
 
+/**
+ * @desc    Trigger expiration of old requests (Usually called via Cron)
+ * @route   POST /api/v1/requests/system/expire
+ * @access  Public (In production, protect with an API key or Admin role)
+ */
+const triggerExpiry = async (req, res, next) => {
+  try {
+    const expiredCount = await requestService.expireOldRequests();
+    
+    res.status(200).json({
+      success: true,
+      message: `Expired ${expiredCount} requests`,
+      data: { expiredCount }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createDraftRequest,
   addItemToRequest,
@@ -254,5 +273,6 @@ module.exports = {
   cancelRequest,
   acceptQuotation,
   declineQuotation,
-  processPayment
+  processPayment,
+  triggerExpiry
 };
