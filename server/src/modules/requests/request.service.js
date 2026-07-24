@@ -1,5 +1,6 @@
 const MedicineRequest = require('./request.model');
 const Medicine = require('../medicines/medicine.model');
+const Pharmacy = require('../pharmacies/pharmacy.model');
 const { REQUEST_STATUS } = require('./request.constants');
 const ApiError = require('../../utils/ApiError');
 
@@ -157,11 +158,61 @@ const removeRequestItem = async (requestId, customerId, medicineId) => {
   return request;
 };
 
+/**
+ * Submits a draft request to the selected pharmacies.
+ * @param {String} requestId - The ID of the request
+ * @param {String} customerId - The ID of the customer
+ * @param {Array<String>} pharmacyIds - Array of pharmacy IDs to send the request to
+ * @returns {Promise<Object>} The submitted request
+ */
+const submitRequest = async (requestId, customerId, pharmacyIds) => {
+  const request = await MedicineRequest.findOne({ _id: requestId, customerId });
+  if (!request) {
+    throw new ApiError(404, 'Request not found or unauthorized');
+  }
+  if (request.status !== REQUEST_STATUS.DRAFT) {
+    throw new ApiError(400, 'Only draft requests can be submitted');
+  }
+  if (request.items.length === 0) {
+    throw new ApiError(400, 'Cannot submit an empty request');
+  }
+  if (request.requiresPrescription && !request.prescriptionId) {
+    throw new ApiError(400, 'A prescription is required for one or more items in this request');
+  }
+
+  if (!pharmacyIds || pharmacyIds.length === 0) {
+    throw new ApiError(400, 'At least one pharmacy must be selected');
+  }
+
+  // Validate pharmacies exist and are verified
+  const pharmacies = await Pharmacy.find({
+    _id: { $in: pharmacyIds },
+    verificationStatus: 'VERIFIED'
+  });
+
+  if (pharmacies.length !== pharmacyIds.length) {
+    throw new ApiError(400, 'One or more selected pharmacies are invalid or not verified');
+  }
+
+  request.selectedPharmacyIds = pharmacyIds;
+  request.status = REQUEST_STATUS.PENDING;
+  request.submittedAt = new Date();
+  
+  // Set expiration to 24 hours from submission
+  const expiresAt = new Date();
+  expiresAt.setHours(expiresAt.getHours() + 24);
+  request.expiresAt = expiresAt;
+
+  await request.save();
+  return request;
+};
+
 module.exports = {
   buildMedicineSnapshot,
   calculatePrescriptionRequirement,
   createDraftRequest,
   addItemToRequest,
   updateRequestItem,
-  removeRequestItem
+  removeRequestItem,
+  submitRequest
 };
