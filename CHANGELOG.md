@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Feature (Day 4): Medicine Availability schema with strict unique compound index.
 - Feature (Day 4): Backend services, controllers, and routes to update and query Medicine Availability.
 - Feature (Day 4): Backend service, controller, and route (`/api/v1/pharmacies/nearby`) to find pharmacies by location and medicine availability.
+- Feature (Day 5): Medicine Request lifecycle management (Draft, Submitted, Quoted, Accepted, Dispatched, etc.)
+- Feature (Day 5): Quotation engine for pharmacies to offer prices for customer requests.
+- Feature (Day 5): Embedded timelines and history tracking via pre-save hooks on Medicine Request.
+- Feature (Day 5): Backend APIs for Customers to create requests, manage items, and submit for quotations.
+- Feature (Day 5): Security rules implemented to strictly isolate pharmacy quotes from competitor view.
+- Feature (Day 5): Payment mocking APIs for request conversion to orders.
+- Feature (Day 5): Expiry cron job logic built-in to cancel old unanswered requests.
 
 ## [0.3.0] - 2026-07-22 Day 3 Pharmacy Profiles & Medicine Catalogue
 - Pharmacy verification workflow (Draft, Pending, Approved, Rejected, Suspended)
