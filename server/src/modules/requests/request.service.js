@@ -461,6 +461,32 @@ const declineQuotation = async (requestId, quotationId, customerId) => {
   return request;
 };
 
+/**
+ * Customer processes payment for an accepted quotation
+ * @param {String} requestId - The ID of the request
+ * @param {String} customerId - The ID of the customer
+ * @param {Object} paymentDetails - Mock payment details
+ * @returns {Promise<Object>} The updated request
+ */
+const processPaymentForRequest = async (requestId, customerId, paymentDetails = {}) => {
+  const request = await MedicineRequest.findOne({ _id: requestId, customerId });
+  
+  if (!request) {
+    throw new ApiError(404, 'Request not found');
+  }
+
+  if (request.status !== REQUEST_STATUS.QUOTATION_ACCEPTED) {
+    throw new ApiError(400, `Cannot process payment for a request in ${request.status.toLowerCase()} status`);
+  }
+
+  // Mock payment processing logic here...
+  
+  request.status = REQUEST_STATUS.CONVERTED_TO_ORDER;
+  
+  await request.save();
+  return request;
+};
+
 module.exports = {
   buildMedicineSnapshot,
   calculatePrescriptionRequirement,
@@ -476,5 +502,6 @@ module.exports = {
   cancelCustomerRequest,
   providePharmacyQuotation,
   acceptQuotation,
-  declineQuotation
+  declineQuotation,
+  processPaymentForRequest
 };

@@ -64,4 +64,10 @@ router.post(
   requestController.declineQuotation
 );
 
+// Process payment
+router.post(
+  '/:requestId/pay',
+  requestController.processPayment
+);
+
 module.exports = router;

@@ -220,6 +220,29 @@ const declineQuotation = async (req, res, next) => {
   }
 };
 
+/**
+ * @desc    Process payment for an accepted request
+ * @route   POST /api/v1/requests/:requestId/pay
+ * @access  Private (Customer only)
+ */
+const processPayment = async (req, res, next) => {
+  try {
+    const customerId = req.user.id;
+    const { requestId } = req.params;
+    const paymentDetails = req.body;
+
+    const request = await requestService.processPaymentForRequest(requestId, customerId, paymentDetails);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Payment processed successfully. Request converted to order.',
+      data: request
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createDraftRequest,
   addItemToRequest,
@@ -230,5 +253,6 @@ module.exports = {
   getCustomerRequestById,
   cancelRequest,
   acceptQuotation,
-  declineQuotation
+  declineQuotation,
+  processPayment
 };
