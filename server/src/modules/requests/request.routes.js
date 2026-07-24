@@ -46,4 +46,10 @@ router.post(
   requestController.submitRequest
 );
 
+// Cancel request
+router.post(
+  '/:requestId/cancel',
+  requestController.cancelRequest
+);
+
 module.exports = router;

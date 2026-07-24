@@ -292,6 +292,35 @@ const getPharmacyRequestById = async (requestId, pharmacyId) => {
   return request;
 };
 
+/**
+ * Cancels a request by the customer.
+ * @param {String} requestId - The ID of the request
+ * @param {String} customerId - The ID of the customer
+ * @param {String} [reason] - Optional reason for cancellation
+ * @returns {Promise<Object>} The cancelled request
+ */
+const cancelCustomerRequest = async (requestId, customerId, reason) => {
+  const request = await MedicineRequest.findOne({ _id: requestId, customerId });
+  
+  if (!request) {
+    throw new ApiError(404, 'Request not found');
+  }
+  
+  if (request.status === REQUEST_STATUS.CANCELLED || request.status === REQUEST_STATUS.COMPLETED) {
+    throw new ApiError(400, `Cannot cancel a request that is already ${request.status.toLowerCase()}`);
+  }
+  
+  request.status = REQUEST_STATUS.CANCELLED;
+  request.cancelledAt = new Date();
+  request.cancelledBy = customerId;
+  if (reason) {
+    request.cancellationReason = reason;
+  }
+  
+  await request.save();
+  return request;
+};
+
 module.exports = {
   buildMedicineSnapshot,
   calculatePrescriptionRequirement,
@@ -303,5 +332,6 @@ module.exports = {
   getCustomerRequests,
   getCustomerRequestById,
   getPharmacyInbox,
-  getPharmacyRequestById
+  getPharmacyRequestById,
+  cancelCustomerRequest
 };

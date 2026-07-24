@@ -153,6 +153,29 @@ const getCustomerRequestById = async (req, res, next) => {
   }
 };
 
+/**
+ * @desc    Cancel a request
+ * @route   POST /api/v1/requests/:requestId/cancel
+ * @access  Private (Customer only)
+ */
+const cancelRequest = async (req, res, next) => {
+  try {
+    const customerId = req.user.id;
+    const { requestId } = req.params;
+    const { reason } = req.body;
+
+    const request = await requestService.cancelCustomerRequest(requestId, customerId, reason);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Request cancelled successfully',
+      data: request
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createDraftRequest,
   addItemToRequest,
@@ -160,5 +183,6 @@ module.exports = {
   removeRequestItem,
   submitRequest,
   getCustomerRequests,
-  getCustomerRequestById
+  getCustomerRequestById,
+  cancelRequest
 };
