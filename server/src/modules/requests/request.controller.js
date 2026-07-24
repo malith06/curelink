@@ -66,8 +66,31 @@ const updateRequestItem = async (req, res, next) => {
   }
 };
 
+/**
+ * @desc    Remove a medicine item from a draft request
+ * @route   DELETE /api/v1/requests/:requestId/items/:medicineId
+ * @access  Private (Customer only)
+ */
+const removeRequestItem = async (req, res, next) => {
+  try {
+    const customerId = req.user.id;
+    const { requestId, medicineId } = req.params;
+
+    const request = await requestService.removeRequestItem(requestId, customerId, medicineId);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Item removed successfully',
+      data: request
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createDraftRequest,
   addItemToRequest,
-  updateRequestItem
+  updateRequestItem,
+  removeRequestItem
 };

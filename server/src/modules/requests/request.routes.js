@@ -27,4 +27,10 @@ router.patch(
   requestController.updateRequestItem
 );
 
+// Remove item from draft request
+router.delete(
+  '/:requestId/items/:medicineId',
+  requestController.removeRequestItem
+);
+
 module.exports = router;

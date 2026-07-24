@@ -126,10 +126,42 @@ const updateRequestItem = async (requestId, customerId, medicineId, updateData) 
   return request;
 };
 
+/**
+ * Removes an item from a draft request.
+ * @param {String} requestId - The ID of the request
+ * @param {String} customerId - The ID of the customer
+ * @param {String} medicineId - The ID of the medicine to remove
+ * @returns {Promise<Object>} The updated request
+ */
+const removeRequestItem = async (requestId, customerId, medicineId) => {
+  const request = await MedicineRequest.findOne({ _id: requestId, customerId });
+  if (!request) {
+    throw new ApiError(404, 'Request not found or unauthorized');
+  }
+  if (request.status !== REQUEST_STATUS.DRAFT) {
+    throw new ApiError(400, 'Cannot modify a non-draft request');
+  }
+
+  const existingItemIndex = request.items.findIndex(
+    item => item.medicineId.toString() === medicineId.toString()
+  );
+
+  if (existingItemIndex === -1) {
+    throw new ApiError(404, 'Item not found in request');
+  }
+
+  request.items.splice(existingItemIndex, 1);
+  request.requiresPrescription = calculatePrescriptionRequirement(request.items);
+
+  await request.save();
+  return request;
+};
+
 module.exports = {
   buildMedicineSnapshot,
   calculatePrescriptionRequirement,
   createDraftRequest,
   addItemToRequest,
-  updateRequestItem
+  updateRequestItem,
+  removeRequestItem
 };
