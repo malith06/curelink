@@ -52,4 +52,10 @@ router.post(
   requestController.cancelRequest
 );
 
+// Accept quotation
+router.post(
+  '/:requestId/quotations/:quotationId/accept',
+  requestController.acceptQuotation
+);
+
 module.exports = router;

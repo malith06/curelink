@@ -386,6 +386,48 @@ const providePharmacyQuotation = async (requestId, pharmacyId, quotationData) =>
   return request;
 };
 
+/**
+ * Customer accepts a specific quotation
+ * @param {String} requestId - The ID of the request
+ * @param {String} quotationId - The ID of the quotation to accept
+ * @param {String} customerId - The ID of the customer
+ * @returns {Promise<Object>} The updated request
+ */
+const acceptQuotation = async (requestId, quotationId, customerId) => {
+  const request = await MedicineRequest.findOne({ _id: requestId, customerId });
+  
+  if (!request) {
+    throw new ApiError(404, 'Request not found');
+  }
+
+  if (request.status !== REQUEST_STATUS.QUOTATIONS_RECEIVED) {
+    throw new ApiError(400, `Cannot accept quotation for a request in ${request.status.toLowerCase()} status`);
+  }
+
+  const quotation = request.quotations.id(quotationId);
+  if (!quotation) {
+    throw new ApiError(404, 'Quotation not found');
+  }
+
+  if (quotation.validUntil && new Date() > quotation.validUntil) {
+    throw new ApiError(400, 'Quotation has expired');
+  }
+
+  request.status = REQUEST_STATUS.QUOTATION_ACCEPTED;
+  
+  // Accept the selected quote and decline the rest
+  request.quotations.forEach(q => {
+    if (q._id.toString() === quotationId.toString()) {
+      q.status = 'ACCEPTED';
+    } else {
+      q.status = 'DECLINED';
+    }
+  });
+
+  await request.save();
+  return request;
+};
+
 module.exports = {
   buildMedicineSnapshot,
   calculatePrescriptionRequirement,
@@ -399,5 +441,6 @@ module.exports = {
   getPharmacyInbox,
   getPharmacyRequestById,
   cancelCustomerRequest,
-  providePharmacyQuotation
+  providePharmacyQuotation,
+  acceptQuotation
 };

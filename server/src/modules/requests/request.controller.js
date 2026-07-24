@@ -176,6 +176,28 @@ const cancelRequest = async (req, res, next) => {
   }
 };
 
+/**
+ * @desc    Accept a pharmacy quotation
+ * @route   POST /api/v1/requests/:requestId/quotations/:quotationId/accept
+ * @access  Private (Customer only)
+ */
+const acceptQuotation = async (req, res, next) => {
+  try {
+    const customerId = req.user.id;
+    const { requestId, quotationId } = req.params;
+
+    const request = await requestService.acceptQuotation(requestId, quotationId, customerId);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Quotation accepted successfully',
+      data: request
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createDraftRequest,
   addItemToRequest,
@@ -184,5 +206,6 @@ module.exports = {
   submitRequest,
   getCustomerRequests,
   getCustomerRequestById,
-  cancelRequest
+  cancelRequest,
+  acceptQuotation
 };
