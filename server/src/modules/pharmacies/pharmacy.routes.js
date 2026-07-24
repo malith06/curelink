@@ -62,4 +62,11 @@ router.get(
   pharmacyController.getPharmacyRequestDetails
 );
 
+router.post(
+  '/me/requests/:requestId/quote',
+  protect,
+  authorize('PHARMACY'),
+  pharmacyController.provideQuotation
+);
+
 module.exports = router;

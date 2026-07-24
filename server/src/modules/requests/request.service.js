@@ -321,6 +321,71 @@ const cancelCustomerRequest = async (requestId, customerId, reason) => {
   return request;
 };
 
+/**
+ * Allows a pharmacy to provide a quotation for a request.
+ * @param {String} requestId - The ID of the request
+ * @param {String} pharmacyId - The ID of the pharmacy
+ * @param {Object} quotationData - Quotation details
+ * @returns {Promise<Object>} The updated request
+ */
+const providePharmacyQuotation = async (requestId, pharmacyId, quotationData) => {
+  const request = await MedicineRequest.findOne({ 
+    _id: requestId, 
+    selectedPharmacyIds: pharmacyId 
+  });
+  
+  if (!request) {
+    throw new ApiError(404, 'Request not found or not assigned to this pharmacy');
+  }
+  
+  const invalidStatuses = [REQUEST_STATUS.CANCELLED, REQUEST_STATUS.EXPIRED, REQUEST_STATUS.CONVERTED_TO_ORDER];
+  if (invalidStatuses.includes(request.status)) {
+    throw new ApiError(400, `Cannot provide a quotation for a request that is ${request.status.toLowerCase()}`);
+  }
+
+  // Check if pharmacy already provided a quotation
+  const existingQuoteIndex = request.quotations.findIndex(q => q.pharmacyId.toString() === pharmacyId.toString());
+  if (existingQuoteIndex !== -1) {
+    throw new ApiError(400, 'Pharmacy has already provided a quotation for this request');
+  }
+
+  let totalAmount = 0;
+  const quoteItems = [];
+
+  for (const item of quotationData.items) {
+    const originalItem = request.items.id(item.requestItemId);
+    if (!originalItem) {
+      throw new ApiError(400, `Item ${item.requestItemId} does not exist in the request`);
+    }
+
+    const subTotal = (item.unitPrice || 0) * (item.availableQuantity || 0);
+    totalAmount += subTotal;
+    
+    quoteItems.push({
+      requestItemId: item.requestItemId,
+      availabilityStatus: item.availabilityStatus,
+      availableQuantity: item.availableQuantity,
+      unitPrice: item.unitPrice,
+      subTotal
+    });
+  }
+
+  request.quotations.push({
+    pharmacyId,
+    items: quoteItems,
+    totalAmount,
+    notes: quotationData.notes,
+    validUntil: new Date(Date.now() + 24 * 60 * 60 * 1000) // Default valid for 24 hours
+  });
+
+  if (request.status === REQUEST_STATUS.SUBMITTED) {
+    request.status = REQUEST_STATUS.QUOTATIONS_RECEIVED;
+  }
+
+  await request.save();
+  return request;
+};
+
 module.exports = {
   buildMedicineSnapshot,
   calculatePrescriptionRequirement,
@@ -333,5 +398,6 @@ module.exports = {
   getCustomerRequestById,
   getPharmacyInbox,
   getPharmacyRequestById,
-  cancelCustomerRequest
+  cancelCustomerRequest,
+  providePharmacyQuotation
 };

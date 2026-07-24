@@ -111,6 +111,24 @@ const getPharmacyRequestDetails = asyncHandler(async (req, res) => {
   });
 });
 
+const provideQuotation = asyncHandler(async (req, res) => {
+  const profile = await pharmacyService.getPharmacyProfileByUserId(req.user._id);
+  if (!profile) {
+    throw new ApiError('Pharmacy profile not found', 404);
+  }
+  
+  const { requestId } = req.params;
+  const quotationData = req.body;
+  
+  const request = await requestService.providePharmacyQuotation(requestId, profile._id, quotationData);
+  
+  res.status(200).json({
+    success: true,
+    message: 'Quotation provided successfully',
+    data: request,
+  });
+});
+
 module.exports = {
   createPharmacyProfile,
   getMyPharmacyProfile,
@@ -119,5 +137,6 @@ module.exports = {
   updatePharmacyLocation,
   findNearbyPharmacies,
   getPharmacyInboxRequests,
-  getPharmacyRequestDetails
+  getPharmacyRequestDetails,
+  provideQuotation
 };
