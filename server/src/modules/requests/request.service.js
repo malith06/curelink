@@ -16,6 +16,17 @@ const buildMedicineSnapshot = (medicine) => {
   };
 };
 
+/**
+ * Calculates whether a request requires a prescription based on its items.
+ * @param {Array} items - Array of request items
+ * @returns {Boolean} True if any item requires a prescription
+ */
+const calculatePrescriptionRequirement = (items) => {
+  if (!items || !Array.isArray(items) || items.length === 0) return false;
+  return items.some(item => item.requiresPrescription === true);
+};
+
 module.exports = {
-  buildMedicineSnapshot
+  buildMedicineSnapshot,
+  calculatePrescriptionRequirement
 };
