@@ -69,4 +69,11 @@ router.post(
   pharmacyController.provideQuotation
 );
 
+router.patch(
+  '/me/requests/:requestId/status',
+  protect,
+  authorize('PHARMACY'),
+  pharmacyController.updateRequestStatus
+);
+
 module.exports = router;

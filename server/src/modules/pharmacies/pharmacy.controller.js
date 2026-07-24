@@ -129,6 +129,28 @@ const provideQuotation = asyncHandler(async (req, res) => {
   });
 });
 
+const updateRequestStatus = asyncHandler(async (req, res) => {
+  const profile = await pharmacyService.getPharmacyProfileByUserId(req.user._id);
+  if (!profile) {
+    throw new ApiError('Pharmacy profile not found', 404);
+  }
+  
+  const { requestId } = req.params;
+  const { status } = req.body;
+  
+  if (!status) {
+    throw new ApiError('Status is required', 400);
+  }
+
+  const request = await requestService.updatePharmacyRequestStatus(requestId, profile._id, status);
+  
+  res.status(200).json({
+    success: true,
+    message: `Request status updated to ${status}`,
+    data: request,
+  });
+});
+
 module.exports = {
   createPharmacyProfile,
   getMyPharmacyProfile,
@@ -138,5 +160,6 @@ module.exports = {
   findNearbyPharmacies,
   getPharmacyInboxRequests,
   getPharmacyRequestDetails,
-  provideQuotation
+  provideQuotation,
+  updateRequestStatus
 };

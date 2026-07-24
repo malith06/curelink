@@ -487,6 +487,44 @@ const processPaymentForRequest = async (requestId, customerId, paymentDetails = 
   return request;
 };
 
+/**
+ * Pharmacy updates the status of an accepted request/order
+ * @param {String} requestId - The ID of the request
+ * @param {String} pharmacyId - The ID of the pharmacy
+ * @param {String} newStatus - The new status
+ * @returns {Promise<Object>} The updated request
+ */
+const updatePharmacyRequestStatus = async (requestId, pharmacyId, newStatus) => {
+  const request = await MedicineRequest.findOne({ _id: requestId });
+  
+  if (!request) {
+    throw new ApiError(404, 'Request not found');
+  }
+
+  // Ensure this pharmacy owns the accepted quotation
+  const acceptedQuote = request.quotations.find(q => q.status === 'ACCEPTED');
+  if (!acceptedQuote || acceptedQuote.pharmacyId.toString() !== pharmacyId.toString()) {
+    throw new ApiError(403, 'Not authorized to update this request. No accepted quotation from your pharmacy found.');
+  }
+
+  const validTransitions = [
+    REQUEST_STATUS.CONVERTED_TO_ORDER,
+    REQUEST_STATUS.PROCESSING,
+    REQUEST_STATUS.READY_FOR_PICKUP,
+    REQUEST_STATUS.DISPATCHED,
+    REQUEST_STATUS.COMPLETED,
+    REQUEST_STATUS.CANCELLED
+  ];
+
+  if (!validTransitions.includes(newStatus)) {
+    throw new ApiError(400, `Invalid status update: ${newStatus}`);
+  }
+
+  request.status = newStatus;
+  await request.save();
+  return request;
+};
+
 module.exports = {
   buildMedicineSnapshot,
   calculatePrescriptionRequirement,
@@ -503,5 +541,6 @@ module.exports = {
   providePharmacyQuotation,
   acceptQuotation,
   declineQuotation,
-  processPaymentForRequest
+  processPaymentForRequest,
+  updatePharmacyRequestStatus
 };
