@@ -26,7 +26,24 @@ const calculatePrescriptionRequirement = (items) => {
   return items.some(item => item.requiresPrescription === true);
 };
 
+/**
+ * Creates a new draft medicine request for a customer.
+ * @param {String} customerId - The ID of the customer
+ * @returns {Promise<Object>} The newly created draft request
+ */
+const createDraftRequest = async (customerId) => {
+  const request = new MedicineRequest({
+    customerId,
+    items: [],
+    status: REQUEST_STATUS.DRAFT
+  });
+  
+  await request.save();
+  return request;
+};
+
 module.exports = {
   buildMedicineSnapshot,
-  calculatePrescriptionRequirement
+  calculatePrescriptionRequirement,
+  createDraftRequest
 };
