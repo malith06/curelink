@@ -94,3 +94,27 @@
 | ✅ | 17. Implement Admin Medicine CRUD | Routes for medicine catalogue |
 | ✅ | 18. Add Medicine Seeder script | Pre-fill 10-15 sample medicines |
 | ✅ | 19. End-of-day testing & cleanup | Verification of features and tests |
+
+## Day 5 Tasks (Medicine Request Module)
+| Status | Task | Description |
+| :---: | :--- | :--- |
+| ✅ | 1. Create medicine request constants | Define statuses, items, and rules |
+| ✅ | 2. Create medicine request item schema | Schema for items within a request |
+| ✅ | 3. Create medicine request model | Main document schema |
+| ✅ | 4. Add query indexes | Optimize queries for customer and pharmacy |
+| ✅ | 5. Add payload validations | Zod schema validation rules |
+| ✅ | 6. Implement draft creation | Allow customers to start a request |
+| ✅ | 7. Implement item addition | Endpoint to add items to draft |
+| ✅ | 8. Implement item update/removal | Endpoints to manage draft items |
+| ✅ | 9. Implement request submission | Lock request and notify pharmacies |
+| ✅ | 10. Query customer requests | List and get specific request |
+| ✅ | 11. Query pharmacy inbox | List and get specific request |
+| ✅ | 12. Implement customer cancel | Allow customer to cancel request |
+| ✅ | 13. Implement pharmacy quotation | Allow pharmacy to offer prices |
+| ✅ | 14. Implement quotation accept/decline | Customer decision logic |
+| ✅ | 15. Implement payment mock logic | Process fake payment on acceptance |
+| ✅ | 16. Implement status timeline log | Track every state change with timestamps |
+| ✅ | 17. Implement fulfillment status update | Allow pharmacy to update dispatch/ready |
+| ✅ | 18. Implement automatic expiry cron logic | Expire old unaccepted requests |
+| ✅ | 19. List pagination | Refactor lists to return pagination metadata |
+| ✅ | 20. End-of-day testing & cleanup | Final integration and verification |
