@@ -163,9 +163,10 @@ const removeRequestItem = async (requestId, customerId, medicineId) => {
  * @param {String} requestId - The ID of the request
  * @param {String} customerId - The ID of the customer
  * @param {Array<String>} pharmacyIds - Array of pharmacy IDs to send the request to
+ * @param {Object} [customerLocation] - Optional customer location object
  * @returns {Promise<Object>} The submitted request
  */
-const submitRequest = async (requestId, customerId, pharmacyIds) => {
+const submitRequest = async (requestId, customerId, pharmacyIds, customerLocation) => {
   const request = await MedicineRequest.findOne({ _id: requestId, customerId });
   if (!request) {
     throw new ApiError(404, 'Request not found or unauthorized');
@@ -198,12 +199,52 @@ const submitRequest = async (requestId, customerId, pharmacyIds) => {
   request.status = REQUEST_STATUS.PENDING;
   request.submittedAt = new Date();
   
+  if (customerLocation) {
+    request.customerLocation = customerLocation;
+  }
+  
   // Set expiration to 24 hours from submission
   const expiresAt = new Date();
   expiresAt.setHours(expiresAt.getHours() + 24);
   request.expiresAt = expiresAt;
 
   await request.save();
+  return request;
+};
+
+/**
+ * Gets all requests for a customer, optionally filtered by status
+ * @param {String} customerId - The ID of the customer
+ * @param {Object} filters - Query filters (e.g., status)
+ * @returns {Promise<Array>} List of requests
+ */
+const getCustomerRequests = async (customerId, filters = {}) => {
+  const query = { customerId };
+  if (filters.status) {
+    query.status = filters.status;
+  }
+  
+  return MedicineRequest.find(query)
+    .sort({ createdAt: -1 })
+    .populate('selectedPharmacyIds', 'name address city')
+    .lean();
+};
+
+/**
+ * Gets details of a specific request for a customer
+ * @param {String} requestId - The ID of the request
+ * @param {String} customerId - The ID of the customer
+ * @returns {Promise<Object>} The request details
+ */
+const getCustomerRequestById = async (requestId, customerId) => {
+  const request = await MedicineRequest.findOne({ _id: requestId, customerId })
+    .populate('selectedPharmacyIds', 'name address phone city')
+    .lean();
+    
+  if (!request) {
+    throw new ApiError(404, 'Request not found');
+  }
+  
   return request;
 };
 
@@ -214,5 +255,7 @@ module.exports = {
   addItemToRequest,
   updateRequestItem,
   removeRequestItem,
-  submitRequest
+  submitRequest,
+  getCustomerRequests,
+  getCustomerRequestById
 };

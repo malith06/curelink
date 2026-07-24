@@ -10,6 +10,12 @@ const router = express.Router();
 router.use(protect);
 router.use(authorize('CUSTOMER'));
 
+// Get all requests for customer
+router.get('/', requestController.getCustomerRequests);
+
+// Get specific request details
+router.get('/:requestId', requestController.getCustomerRequestById);
+
 // Create draft request
 router.post('/', requestController.createDraftRequest);
 

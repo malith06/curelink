@@ -111,10 +111,54 @@ const submitRequest = async (req, res, next) => {
   }
 };
 
+/**
+ * @desc    Get all requests for the logged-in customer
+ * @route   GET /api/v1/requests
+ * @access  Private (Customer only)
+ */
+const getCustomerRequests = async (req, res, next) => {
+  try {
+    const customerId = req.user.id;
+    const { status } = req.query;
+
+    const requests = await requestService.getCustomerRequests(customerId, { status });
+    
+    res.status(200).json({
+      success: true,
+      data: requests
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Get a specific request for the logged-in customer
+ * @route   GET /api/v1/requests/:requestId
+ * @access  Private (Customer only)
+ */
+const getCustomerRequestById = async (req, res, next) => {
+  try {
+    const customerId = req.user.id;
+    const { requestId } = req.params;
+
+    const request = await requestService.getCustomerRequestById(requestId, customerId);
+    
+    res.status(200).json({
+      success: true,
+      data: request
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createDraftRequest,
   addItemToRequest,
   updateRequestItem,
   removeRequestItem,
-  submitRequest
+  submitRequest,
+  getCustomerRequests,
+  getCustomerRequestById
 };
