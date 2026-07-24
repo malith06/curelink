@@ -2,7 +2,7 @@ const express = require('express');
 const { protect, authorize } = require('../../middleware/auth.middleware');
 const { validate } = require('../../middleware/validate');
 const requestController = require('./request.controller');
-const { addItemSchema, updateItemSchema, submitRequestSchema } = require('./request.validation');
+const { addItemSchema, updateItemSchema, submitRequestSchema, processPaymentSchema } = require('./request.validation');
 
 const router = express.Router();
 
@@ -67,6 +67,7 @@ router.post(
 // Process payment
 router.post(
   '/:requestId/pay',
+  validate(processPaymentSchema),
   requestController.processPayment
 );
 

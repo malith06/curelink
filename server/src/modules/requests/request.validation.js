@@ -26,8 +26,38 @@ const submitRequestSchema = z.object({
   })
 });
 
+const provideQuotationSchema = z.object({
+  items: z.array(z.object({
+    requestItemId: z.string().regex(/^[0-9a-fA-F]{24}$/),
+    availabilityStatus: z.enum(['AVAILABLE', 'PARTIALLY_AVAILABLE', 'UNAVAILABLE', 'SUBSTITUTE_AVAILABLE']),
+    availableQuantity: z.number().int().min(0),
+    unitPrice: z.number().min(0)
+  })).min(1, 'Must provide at least one item quotation'),
+  notes: z.string().max(500).optional()
+});
+
+const updateRequestStatusSchema = z.object({
+  status: z.enum([
+    'CONVERTED_TO_ORDER',
+    'PROCESSING',
+    'READY_FOR_PICKUP',
+    'DISPATCHED',
+    'COMPLETED',
+    'CANCELLED'
+  ])
+});
+
+const processPaymentSchema = z.object({
+  paymentMethod: z.string().optional(),
+  transactionId: z.string().optional(),
+  amount: z.number().optional()
+});
+
 module.exports = {
   addItemSchema,
   updateItemSchema,
-  submitRequestSchema
+  submitRequestSchema,
+  provideQuotationSchema,
+  updateRequestStatusSchema,
+  processPaymentSchema
 };
