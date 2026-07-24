@@ -88,9 +88,33 @@ const removeRequestItem = async (req, res, next) => {
   }
 };
 
+/**
+ * @desc    Submit a draft request to selected pharmacies
+ * @route   POST /api/v1/requests/:requestId/submit
+ * @access  Private (Customer only)
+ */
+const submitRequest = async (req, res, next) => {
+  try {
+    const customerId = req.user.id;
+    const { requestId } = req.params;
+    const { selectedPharmacyIds, customerLocation } = req.body;
+
+    const request = await requestService.submitRequest(requestId, customerId, selectedPharmacyIds, customerLocation);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Request submitted successfully',
+      data: request
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createDraftRequest,
   addItemToRequest,
   updateRequestItem,
-  removeRequestItem
+  removeRequestItem,
+  submitRequest
 };

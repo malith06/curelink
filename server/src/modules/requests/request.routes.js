@@ -2,7 +2,7 @@ const express = require('express');
 const { protect, authorize } = require('../../middleware/auth.middleware');
 const { validate } = require('../../middleware/validate');
 const requestController = require('./request.controller');
-const { addItemSchema, updateItemSchema } = require('./request.validation');
+const { addItemSchema, updateItemSchema, submitRequestSchema } = require('./request.validation');
 
 const router = express.Router();
 
@@ -31,6 +31,13 @@ router.patch(
 router.delete(
   '/:requestId/items/:medicineId',
   requestController.removeRequestItem
+);
+
+// Submit request
+router.post(
+  '/:requestId/submit',
+  validate(submitRequestSchema),
+  requestController.submitRequest
 );
 
 module.exports = router;
