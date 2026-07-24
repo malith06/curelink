@@ -268,6 +268,30 @@ const getPharmacyInbox = async (pharmacyId, filters = {}) => {
     .lean();
 };
 
+/**
+ * Gets details of a specific request for a pharmacy, ensuring they can't see competitors.
+ * @param {String} requestId - The ID of the request
+ * @param {String} pharmacyId - The ID of the pharmacy
+ * @returns {Promise<Object>} The request details
+ */
+const getPharmacyRequestById = async (requestId, pharmacyId) => {
+  const request = await MedicineRequest.findOne({ 
+    _id: requestId, 
+    selectedPharmacyIds: pharmacyId 
+  })
+    .populate('customerId', 'name')
+    .lean();
+    
+  if (!request) {
+    throw new ApiError(404, 'Request not found or not assigned to this pharmacy');
+  }
+
+  // Security Rule: Strip out other selected pharmacies
+  delete request.selectedPharmacyIds;
+  
+  return request;
+};
+
 module.exports = {
   buildMedicineSnapshot,
   calculatePrescriptionRequirement,
@@ -278,5 +302,6 @@ module.exports = {
   submitRequest,
   getCustomerRequests,
   getCustomerRequestById,
-  getPharmacyInbox
+  getPharmacyInbox,
+  getPharmacyRequestById
 };

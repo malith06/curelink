@@ -96,6 +96,21 @@ const getPharmacyInboxRequests = asyncHandler(async (req, res) => {
   });
 });
 
+const getPharmacyRequestDetails = asyncHandler(async (req, res) => {
+  const profile = await pharmacyService.getPharmacyProfileByUserId(req.user._id);
+  if (!profile) {
+    throw new ApiError('Pharmacy profile not found', 404);
+  }
+  
+  const { requestId } = req.params;
+  const request = await requestService.getPharmacyRequestById(requestId, profile._id);
+  
+  res.status(200).json({
+    success: true,
+    data: request,
+  });
+});
+
 module.exports = {
   createPharmacyProfile,
   getMyPharmacyProfile,
@@ -103,5 +118,6 @@ module.exports = {
   submitForVerification,
   updatePharmacyLocation,
   findNearbyPharmacies,
-  getPharmacyInboxRequests
+  getPharmacyInboxRequests,
+  getPharmacyRequestDetails
 };

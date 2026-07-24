@@ -55,4 +55,11 @@ router.get(
   pharmacyController.getPharmacyInboxRequests
 );
 
+router.get(
+  '/me/requests/:requestId',
+  protect,
+  authorize('PHARMACY'),
+  pharmacyController.getPharmacyRequestDetails
+);
+
 module.exports = router;
