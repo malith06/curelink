@@ -20,6 +20,30 @@ const createDraftRequest = async (req, res, next) => {
   }
 };
 
+/**
+ * @desc    Add a medicine item to a draft request
+ * @route   POST /api/v1/requests/:requestId/items
+ * @access  Private (Customer only)
+ */
+const addItemToRequest = async (req, res, next) => {
+  try {
+    const customerId = req.user.id;
+    const { requestId } = req.params;
+    const itemData = req.body;
+
+    const request = await requestService.addItemToRequest(requestId, customerId, itemData);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Item added to request successfully',
+      data: request
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
-  createDraftRequest
+  createDraftRequest,
+  addItemToRequest
 };
