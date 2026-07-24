@@ -58,4 +58,10 @@ router.post(
   requestController.acceptQuotation
 );
 
+// Decline quotation
+router.post(
+  '/:requestId/quotations/:quotationId/decline',
+  requestController.declineQuotation
+);
+
 module.exports = router;

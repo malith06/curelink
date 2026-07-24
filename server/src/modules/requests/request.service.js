@@ -428,6 +428,39 @@ const acceptQuotation = async (requestId, quotationId, customerId) => {
   return request;
 };
 
+/**
+ * Customer declines a specific quotation
+ * @param {String} requestId - The ID of the request
+ * @param {String} quotationId - The ID of the quotation to decline
+ * @param {String} customerId - The ID of the customer
+ * @returns {Promise<Object>} The updated request
+ */
+const declineQuotation = async (requestId, quotationId, customerId) => {
+  const request = await MedicineRequest.findOne({ _id: requestId, customerId });
+  
+  if (!request) {
+    throw new ApiError(404, 'Request not found');
+  }
+
+  if (request.status !== REQUEST_STATUS.QUOTATIONS_RECEIVED) {
+    throw new ApiError(400, `Cannot decline quotation for a request in ${request.status.toLowerCase()} status`);
+  }
+
+  const quotation = request.quotations.id(quotationId);
+  if (!quotation) {
+    throw new ApiError(404, 'Quotation not found');
+  }
+
+  if (quotation.status !== 'PENDING') {
+    throw new ApiError(400, `Quotation is already ${quotation.status.toLowerCase()}`);
+  }
+
+  quotation.status = 'DECLINED';
+  
+  await request.save();
+  return request;
+};
+
 module.exports = {
   buildMedicineSnapshot,
   calculatePrescriptionRequirement,
@@ -442,5 +475,6 @@ module.exports = {
   getPharmacyRequestById,
   cancelCustomerRequest,
   providePharmacyQuotation,
-  acceptQuotation
+  acceptQuotation,
+  declineQuotation
 };

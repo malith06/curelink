@@ -198,6 +198,28 @@ const acceptQuotation = async (req, res, next) => {
   }
 };
 
+/**
+ * @desc    Decline a pharmacy quotation
+ * @route   POST /api/v1/requests/:requestId/quotations/:quotationId/decline
+ * @access  Private (Customer only)
+ */
+const declineQuotation = async (req, res, next) => {
+  try {
+    const customerId = req.user.id;
+    const { requestId, quotationId } = req.params;
+
+    const request = await requestService.declineQuotation(requestId, quotationId, customerId);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Quotation declined successfully',
+      data: request
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createDraftRequest,
   addItemToRequest,
@@ -207,5 +229,6 @@ module.exports = {
   getCustomerRequests,
   getCustomerRequestById,
   cancelRequest,
-  acceptQuotation
+  acceptQuotation,
+  declineQuotation
 };
