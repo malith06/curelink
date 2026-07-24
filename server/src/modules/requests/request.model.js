@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const crypto = require('crypto');
 const requestItemSchema = require('./requestItem.schema');
 const { REQUEST_STATUS } = require('./request.constants');
 
@@ -61,6 +62,15 @@ const medicineRequestSchema = new mongoose.Schema({
     maxlength: 300
   }
 }, { timestamps: true });
+
+medicineRequestSchema.pre('validate', function(next) {
+  if (this.isNew && !this.requestNumber) {
+    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const randomStr = crypto.randomBytes(3).toString('hex').toUpperCase();
+    this.requestNumber = `REQ-${dateStr}-${randomStr}`;
+  }
+  next();
+});
 
 // Index for a customer querying their own requests efficiently
 medicineRequestSchema.index({ customerId: 1, createdAt: -1 });
