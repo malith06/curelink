@@ -1,4 +1,5 @@
 const pharmacyService = require('./pharmacy.service');
+const requestService = require('../requests/request.service');
 const asyncHandler = require('../../utils/asyncHandler');
 const ApiError = require('../../utils/ApiError');
 
@@ -80,6 +81,77 @@ const findNearbyPharmacies = asyncHandler(async (req, res) => {
   });
 });
 
+const getPharmacyInboxRequests = asyncHandler(async (req, res) => {
+  const profile = await pharmacyService.getPharmacyProfileByUserId(req.user._id);
+  if (!profile) {
+    throw new ApiError('Pharmacy profile not found', 404);
+  }
+  
+  const { status, page, limit, sort } = req.query;
+  const result = await requestService.getPharmacyInbox(profile._id, { status, page, limit, sort });
+  
+  res.status(200).json({
+    success: true,
+    data: result.data,
+    pagination: result.pagination
+  });
+});
+
+const getPharmacyRequestDetails = asyncHandler(async (req, res) => {
+  const profile = await pharmacyService.getPharmacyProfileByUserId(req.user._id);
+  if (!profile) {
+    throw new ApiError('Pharmacy profile not found', 404);
+  }
+  
+  const { requestId } = req.params;
+  const request = await requestService.getPharmacyRequestById(requestId, profile._id);
+  
+  res.status(200).json({
+    success: true,
+    data: request,
+  });
+});
+
+const provideQuotation = asyncHandler(async (req, res) => {
+  const profile = await pharmacyService.getPharmacyProfileByUserId(req.user._id);
+  if (!profile) {
+    throw new ApiError('Pharmacy profile not found', 404);
+  }
+  
+  const { requestId } = req.params;
+  const quotationData = req.body;
+  
+  const request = await requestService.providePharmacyQuotation(requestId, profile._id, quotationData);
+  
+  res.status(200).json({
+    success: true,
+    message: 'Quotation provided successfully',
+    data: request,
+  });
+});
+
+const updateRequestStatus = asyncHandler(async (req, res) => {
+  const profile = await pharmacyService.getPharmacyProfileByUserId(req.user._id);
+  if (!profile) {
+    throw new ApiError('Pharmacy profile not found', 404);
+  }
+  
+  const { requestId } = req.params;
+  const { status } = req.body;
+  
+  if (!status) {
+    throw new ApiError('Status is required', 400);
+  }
+
+  const request = await requestService.updatePharmacyRequestStatus(requestId, profile._id, status);
+  
+  res.status(200).json({
+    success: true,
+    message: `Request status updated to ${status}`,
+    data: request,
+  });
+});
+
 module.exports = {
   createPharmacyProfile,
   getMyPharmacyProfile,
@@ -87,4 +159,8 @@ module.exports = {
   submitForVerification,
   updatePharmacyLocation,
   findNearbyPharmacies,
+  getPharmacyInboxRequests,
+  getPharmacyRequestDetails,
+  provideQuotation,
+  updateRequestStatus
 };

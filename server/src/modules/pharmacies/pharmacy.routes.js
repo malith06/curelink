@@ -3,6 +3,7 @@ const { protect, authorize } = require('../../middleware/auth.middleware');
 const { validate } = require('../../middleware/validate');
 const pharmacyController = require('./pharmacy.controller');
 const { createPharmacyProfileSchema, updatePharmacyProfileSchema } = require('./pharmacy.validation');
+const { provideQuotationSchema, updateRequestStatusSchema } = require('../requests/request.validation');
 
 const router = express.Router();
 
@@ -46,6 +47,36 @@ router.patch(
   authorize('PHARMACY'),
   // Add validation if needed, assuming validation is in controller for now or using locationSchema
   pharmacyController.updatePharmacyLocation
+);
+
+router.get(
+  '/me/requests',
+  protect,
+  authorize('PHARMACY'),
+  pharmacyController.getPharmacyInboxRequests
+);
+
+router.get(
+  '/me/requests/:requestId',
+  protect,
+  authorize('PHARMACY'),
+  pharmacyController.getPharmacyRequestDetails
+);
+
+router.post(
+  '/me/requests/:requestId/quote',
+  protect,
+  authorize('PHARMACY'),
+  validate(provideQuotationSchema),
+  pharmacyController.provideQuotation
+);
+
+router.patch(
+  '/me/requests/:requestId/status',
+  protect,
+  authorize('PHARMACY'),
+  validate(updateRequestStatusSchema),
+  pharmacyController.updateRequestStatus
 );
 
 module.exports = router;
