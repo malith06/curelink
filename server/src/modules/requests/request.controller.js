@@ -43,7 +43,31 @@ const addItemToRequest = async (req, res, next) => {
   }
 };
 
+/**
+ * @desc    Update a medicine item in a draft request
+ * @route   PATCH /api/v1/requests/:requestId/items/:medicineId
+ * @access  Private (Customer only)
+ */
+const updateRequestItem = async (req, res, next) => {
+  try {
+    const customerId = req.user.id;
+    const { requestId, medicineId } = req.params;
+    const updateData = req.body;
+
+    const request = await requestService.updateRequestItem(requestId, customerId, medicineId, updateData);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Item updated successfully',
+      data: request
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createDraftRequest,
-  addItemToRequest
+  addItemToRequest,
+  updateRequestItem
 };

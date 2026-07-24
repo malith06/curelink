@@ -2,7 +2,7 @@ const express = require('express');
 const { protect, authorize } = require('../../middleware/auth.middleware');
 const { validate } = require('../../middleware/validate');
 const requestController = require('./request.controller');
-const { addItemSchema } = require('./request.validation');
+const { addItemSchema, updateItemSchema } = require('./request.validation');
 
 const router = express.Router();
 
@@ -18,6 +18,13 @@ router.post(
   '/:requestId/items',
   validate(addItemSchema),
   requestController.addItemToRequest
+);
+
+// Update item in draft request
+router.patch(
+  '/:requestId/items/:medicineId',
+  validate(updateItemSchema),
+  requestController.updateRequestItem
 );
 
 module.exports = router;

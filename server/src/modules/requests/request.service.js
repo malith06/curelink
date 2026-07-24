@@ -90,9 +90,46 @@ const addItemToRequest = async (requestId, customerId, itemData) => {
   return request;
 };
 
+/**
+ * Updates an item's quantity or notes in a draft request.
+ * @param {String} requestId - The ID of the request
+ * @param {String} customerId - The ID of the customer
+ * @param {String} medicineId - The ID of the medicine to update
+ * @param {Object} updateData - Data containing quantity and/or notes
+ * @returns {Promise<Object>} The updated request
+ */
+const updateRequestItem = async (requestId, customerId, medicineId, updateData) => {
+  const request = await MedicineRequest.findOne({ _id: requestId, customerId });
+  if (!request) {
+    throw new ApiError(404, 'Request not found or unauthorized');
+  }
+  if (request.status !== REQUEST_STATUS.DRAFT) {
+    throw new ApiError(400, 'Cannot modify a non-draft request');
+  }
+
+  const existingItemIndex = request.items.findIndex(
+    item => item.medicineId.toString() === medicineId.toString()
+  );
+
+  if (existingItemIndex === -1) {
+    throw new ApiError(404, 'Item not found in request');
+  }
+
+  if (updateData.quantity !== undefined) {
+    request.items[existingItemIndex].quantity = updateData.quantity;
+  }
+  if (updateData.notes !== undefined) {
+    request.items[existingItemIndex].notes = updateData.notes;
+  }
+
+  await request.save();
+  return request;
+};
+
 module.exports = {
   buildMedicineSnapshot,
   calculatePrescriptionRequirement,
   createDraftRequest,
-  addItemToRequest
+  addItemToRequest,
+  updateRequestItem
 };
