@@ -75,6 +75,9 @@ exports.processOcr = asyncHandler(async (req, res, next) => {
  * Fetches the current OCR results and status for a prescription.
  */
 exports.getOcrResults = asyncHandler(async (req, res, next) => {
+  // We need to populate the medicine details to return them to the client
+  await req.prescription.populate('ocrEntries.medicineId', 'name manufacturer category');
+  
   const prescription = req.prescription;
   
   res.status(200).json({
