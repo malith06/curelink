@@ -54,4 +54,8 @@ const verificationSchema = new mongoose.Schema(
   }
 );
 
+verificationSchema.index({ prescriptionId: 1, pharmacyId: 1 }, { unique: true });
+verificationSchema.index({ requestId: 1 });
+verificationSchema.index({ pharmacyId: 1 });
+
 module.exports = mongoose.model("PrescriptionVerification", verificationSchema);
