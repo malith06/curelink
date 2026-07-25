@@ -90,6 +90,26 @@ class PrescriptionService {
     
     return prescription;
   }
+
+  /**
+   * Generates a short-lived signed URL for a prescription file.
+   */
+  async getPrescriptionAccessUrl(prescription) {
+    if (!prescription.storagePublicId) {
+      throw new ApiError(404, "Prescription file not found in storage");
+    }
+
+    const expirySeconds = process.env.PRESCRIPTION_ACCESS_URL_EXPIRY_SECONDS
+      ? parseInt(process.env.PRESCRIPTION_ACCESS_URL_EXPIRY_SECONDS)
+      : 300;
+
+    const url = await cloudinaryAdapter.createAuthorisedAccessUrl(
+      prescription.storagePublicId,
+      expirySeconds
+    );
+
+    return url;
+  }
 }
 
 module.exports = new PrescriptionService();

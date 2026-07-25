@@ -33,3 +33,21 @@ exports.uploadPrescription = asyncHandler(async (req, res, next) => {
     },
   });
 });
+
+/**
+ * Gets a short-lived signed URL to access a prescription file.
+ */
+exports.getPrescriptionAccessUrl = asyncHandler(async (req, res, next) => {
+  // Assume `req.prescription` is attached by an ownership middleware
+  const prescription = req.prescription;
+  
+  const url = await prescriptionService.getPrescriptionAccessUrl(prescription);
+  
+  res.status(200).json({
+    success: true,
+    data: {
+      url,
+      expiresIn: process.env.PRESCRIPTION_ACCESS_URL_EXPIRY_SECONDS || 300
+    },
+  });
+});
