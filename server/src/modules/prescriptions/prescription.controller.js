@@ -66,7 +66,7 @@ exports.processOcr = asyncHandler(async (req, res, next) => {
     success: true,
     data: {
       ocrStatus: updatedPrescription.ocrStatus,
-      ocrRawText: updatedPrescription.ocrRawText,
+      rawExtractedText: updatedPrescription.rawExtractedText,
     },
   });
 });
@@ -76,7 +76,7 @@ exports.processOcr = asyncHandler(async (req, res, next) => {
  */
 exports.getOcrResults = asyncHandler(async (req, res, next) => {
   // We need to populate the medicine details to return them to the client
-  await req.prescription.populate('ocrEntries.medicineId', 'name manufacturer category');
+  await req.prescription.populate('extractedMedicines.matchedMedicineId', 'name manufacturer category');
   
   const prescription = req.prescription;
   
@@ -84,8 +84,8 @@ exports.getOcrResults = asyncHandler(async (req, res, next) => {
     success: true,
     data: {
       ocrStatus: prescription.ocrStatus,
-      ocrRawText: prescription.ocrRawText,
-      ocrEntries: prescription.ocrEntries,
+      rawExtractedText: prescription.rawExtractedText,
+      extractedMedicines: prescription.extractedMedicines,
     },
   });
 });
@@ -105,7 +105,7 @@ exports.updateOcrEntries = asyncHandler(async (req, res, next) => {
   res.status(200).json({
     success: true,
     data: {
-      ocrEntries: updatedPrescription.ocrEntries,
+      extractedMedicines: updatedPrescription.extractedMedicines,
     },
   });
 });

@@ -158,9 +158,17 @@ class PrescriptionService {
       const matchedEntries = ocrUtils.findBestMatches(potentialNames, allMedicines);
 
       // 7. Update prescription with results
-      prescription.ocrRawText = extractedText;
-      prescription.ocrEntries = matchedEntries;
-      prescription.ocrStatus = OCR_STATUSES.COMPLETED;
+      prescription.rawExtractedText = extractedText;
+      
+      // If we got NO matches and text was empty, we can mark as MANUAL_ENTRY_REQUIRED
+      if (!extractedText.trim() && matchedEntries.length === 0) {
+        prescription.ocrStatus = OCR_STATUSES.MANUAL_ENTRY_REQUIRED;
+        prescription.extractedMedicines = [];
+      } else {
+        prescription.extractedMedicines = matchedEntries;
+        prescription.ocrStatus = OCR_STATUSES.COMPLETED;
+      }
+      
       await prescription.save();
 
       return prescription;
@@ -172,26 +180,39 @@ class PrescriptionService {
   }
 
   /**
-   * Updates OCR entries based on customer corrections/confirmations.
+   * Updates extracted medicines based on customer corrections/confirmations.
+   * Also serves as the fallback for manual entry.
    * 
    * @param {Object} prescription - The prescription document
    * @param {Array<Object>} newEntries - The customer-corrected entries
    * @returns {Object} Updated prescription
    */
   async updateOcrEntries(prescription, newEntries) {
-    if (prescription.ocrStatus !== OCR_STATUSES.COMPLETED) {
-      throw new ApiError(400, "Cannot update entries: OCR processing is not completed.");
+    // Allow updating if completed, failed, or requires manual entry
+    if (![OCR_STATUSES.COMPLETED, OCR_STATUSES.FAILED, OCR_STATUSES.MANUAL_ENTRY_REQUIRED].includes(prescription.ocrStatus)) {
+      throw new ApiError(400, "Cannot update entries: OCR processing is not in a valid state.");
     }
 
-    // Replace the current entries with the corrected ones, enforcing isCustomerConfirmed
-    prescription.ocrEntries = newEntries.map(entry => ({
-      medicineId: entry.medicineId || null,
-      extractedText: entry.extractedText || "Manual Entry",
-      confidenceScore: entry.confidenceScore || 0,
-      confidenceLevel: entry.confidenceLevel || 'LOW',
-      quantity: entry.quantity || 1,
-      isCustomerConfirmed: true // Since the customer is submitting this, they are implicitly confirming it
-    }));
+    const { CUSTOMER_ACTIONS } = require("./prescription.constants");
+
+    // Replace the current entries with the corrected ones, enforcing customer action states
+    prescription.extractedMedicines = newEntries.map(entry => {
+      const isManual = !entry.entryId; // If no original entry ID, it was manually added
+      return {
+        entryId: entry.entryId || new mongoose.Types.ObjectId().toString(),
+        matchedMedicineId: entry.medicineId || null,
+        rawDetectedText: entry.extractedText || "Manual Entry",
+        ocrConfidence: entry.confidenceScore || 0,
+        customerCorrectedName: entry.extractedText,
+        quantity: entry.quantity || 1,
+        customerAction: isManual ? CUSTOMER_ACTIONS.MANUALLY_ADDED : CUSTOMER_ACTIONS.CORRECTED,
+      };
+    });
+
+    // If they provided manual entries, we can consider the OCR phase finalized
+    if (prescription.ocrStatus === OCR_STATUSES.FAILED || prescription.ocrStatus === OCR_STATUSES.MANUAL_ENTRY_REQUIRED) {
+      prescription.ocrStatus = OCR_STATUSES.COMPLETED; // We can mark the extraction phase complete manually
+    }
 
     await prescription.save();
     return prescription;
