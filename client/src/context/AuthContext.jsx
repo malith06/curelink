@@ -15,8 +15,8 @@ export const AuthProvider = ({ children }) => {
         try {
           // Verify token and load user profile
           const response = await axiosClient.get('/auth/me');
-          if (response.data?.data) {
-            setUser(response.data.data);
+          if (response.data?.data?.user) {
+            setUser(response.data.data.user);
           } else {
             logout(); // Invalid token response structure
           }
