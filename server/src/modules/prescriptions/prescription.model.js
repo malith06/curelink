@@ -144,4 +144,7 @@ const prescriptionSchema = new mongoose.Schema(
   }
 );
 
+prescriptionSchema.index({ customerId: 1 });
+prescriptionSchema.index({ requestId: 1 });
+
 module.exports = mongoose.model("Prescription", prescriptionSchema);
