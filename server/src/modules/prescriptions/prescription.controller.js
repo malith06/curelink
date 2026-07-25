@@ -51,3 +51,38 @@ exports.getPrescriptionAccessUrl = asyncHandler(async (req, res, next) => {
     },
   });
 });
+
+/**
+ * Triggers OCR processing for a prescription.
+ */
+exports.processOcr = asyncHandler(async (req, res, next) => {
+  const prescription = req.prescription;
+  
+  // This can take some time, in a production environment this should be queued.
+  // For MVP, we await it synchronously.
+  const updatedPrescription = await prescriptionService.processOcr(prescription);
+  
+  res.status(200).json({
+    success: true,
+    data: {
+      ocrStatus: updatedPrescription.ocrStatus,
+      ocrRawText: updatedPrescription.ocrRawText,
+    },
+  });
+});
+
+/**
+ * Fetches the current OCR results and status for a prescription.
+ */
+exports.getOcrResults = asyncHandler(async (req, res, next) => {
+  const prescription = req.prescription;
+  
+  res.status(200).json({
+    success: true,
+    data: {
+      ocrStatus: prescription.ocrStatus,
+      ocrRawText: prescription.ocrRawText,
+      ocrEntries: prescription.ocrEntries,
+    },
+  });
+});

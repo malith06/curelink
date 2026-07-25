@@ -12,5 +12,7 @@ router.use(protect);
 router.use("/:prescriptionId", checkPrescriptionAccess);
 
 router.get("/:prescriptionId/access", prescriptionController.getPrescriptionAccessUrl);
+router.post("/:prescriptionId/process-ocr", prescriptionController.processOcr);
+router.get("/:prescriptionId/ocr", prescriptionController.getOcrResults);
 
 module.exports = router;
