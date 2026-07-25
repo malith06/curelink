@@ -3,6 +3,8 @@ const FileType = require("file-type");
 const Prescription = require("./prescription.model");
 const MedicineRequest = require("../requests/request.model");
 const cloudinaryAdapter = require("../storage/cloudinary.adapter");
+const tesseractAdapter = require("../ocr/tesseract.adapter");
+const pdfAdapter = require("../ocr/pdf.adapter");
 const ApiError = require("../../utils/ApiError");
 const { UPLOAD_STATUSES, OCR_STATUSES } = require("./prescription.constants");
 const { REQUEST_STATUS } = require("../requests/request.constants");
@@ -109,6 +111,52 @@ class PrescriptionService {
     );
 
     return url;
+  }
+
+  /**
+   * Processes OCR for a prescription.
+   */
+  async processOcr(prescription) {
+    if (prescription.ocrStatus === OCR_STATUSES.COMPLETED) {
+      throw new ApiError(400, "OCR has already been completed for this prescription");
+    }
+
+    // Mark as processing
+    prescription.ocrStatus = OCR_STATUSES.PROCESSING;
+    await prescription.save();
+
+    try {
+      // 1. Get a short-lived access URL to download the file securely
+      const url = await this.getPrescriptionAccessUrl(prescription);
+
+      // 2. Download the file into memory
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch file from storage. Status: ${response.status}`);
+      }
+      
+      const arrayBuffer = await response.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+
+      // 3. Delegate to appropriate adapter
+      let extractedText = "";
+      if (prescription.mimeType === "application/pdf") {
+        extractedText = await pdfAdapter.extractText(buffer, prescription.mimeType);
+      } else {
+        extractedText = await tesseractAdapter.extractText(buffer, prescription.mimeType);
+      }
+
+      // 4. Update prescription with results
+      prescription.ocrRawText = extractedText;
+      prescription.ocrStatus = OCR_STATUSES.COMPLETED;
+      await prescription.save();
+
+      return prescription;
+    } catch (error) {
+      prescription.ocrStatus = OCR_STATUSES.FAILED;
+      await prescription.save();
+      throw new ApiError(500, `OCR processing failed: ${error.message}`);
+    }
   }
 }
 
