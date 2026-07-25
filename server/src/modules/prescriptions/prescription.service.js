@@ -5,6 +5,8 @@ const MedicineRequest = require("../requests/request.model");
 const cloudinaryAdapter = require("../storage/cloudinary.adapter");
 const tesseractAdapter = require("../ocr/tesseract.adapter");
 const pdfAdapter = require("../ocr/pdf.adapter");
+const ocrUtils = require("../ocr/ocr.utils");
+const Medicine = require("../medicines/medicine.model");
 const ApiError = require("../../utils/ApiError");
 const { UPLOAD_STATUSES, OCR_STATUSES } = require("./prescription.constants");
 const { REQUEST_STATUS } = require("../requests/request.constants");
@@ -146,8 +148,18 @@ class PrescriptionService {
         extractedText = await tesseractAdapter.extractText(buffer, prescription.mimeType);
       }
 
-      // 4. Update prescription with results
+      // 4. Normalise text and extract potential names
+      const potentialNames = ocrUtils.extractPotentialMedicineNames(extractedText);
+
+      // 5. Fetch all medicines for matching (For MVP this is OK, in production we might use text search or elasticsearch)
+      const allMedicines = await Medicine.find({}).lean();
+
+      // 6. Match medicines and generate entries
+      const matchedEntries = ocrUtils.findBestMatches(potentialNames, allMedicines);
+
+      // 7. Update prescription with results
       prescription.ocrRawText = extractedText;
+      prescription.ocrEntries = matchedEntries;
       prescription.ocrStatus = OCR_STATUSES.COMPLETED;
       await prescription.save();
 
