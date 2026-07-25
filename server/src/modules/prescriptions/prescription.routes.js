@@ -2,6 +2,7 @@ const express = require("express");
 const { protect } = require("../../middleware/auth.middleware");
 const { checkPrescriptionAccess } = require("../../middleware/prescriptionAccess.middleware");
 const prescriptionController = require("./prescription.controller");
+const verificationRoutes = require("../prescription-verifications/verification.routes");
 
 const router = express.Router();
 
@@ -16,5 +17,8 @@ router.post("/:prescriptionId/process-ocr", prescriptionController.processOcr);
 router.get("/:prescriptionId/ocr", prescriptionController.getOcrResults);
 router.put("/:prescriptionId/ocr", prescriptionController.updateOcrEntries);
 router.post("/:prescriptionId/confirm", prescriptionController.confirmPrescription);
+
+// Mount verification routes
+router.use("/:prescriptionId/verify", verificationRoutes);
 
 module.exports = router;
