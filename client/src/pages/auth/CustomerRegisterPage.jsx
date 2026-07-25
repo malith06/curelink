@@ -8,10 +8,20 @@ import { Mail, Lock, User, Phone, Loader2, ArrowRight } from 'lucide-react';
 import axiosClient from '../../api/axiosClient';
 
 const customerRegisterSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
+  fullName: z.string().min(2, 'Name must be at least 2 characters').max(100, 'Name cannot be more than 100 characters'),
   email: z.string().email('Invalid email address'),
-  phone: z.string().min(10, 'Phone number must be at least 10 digits'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  phone: z.string().min(5, 'Please provide a valid phone number'),
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one number')
+    .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character'),
+  confirmPassword: z.string({ required_error: "Confirm password is required" }),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
 });
 
 const CustomerRegisterPage = () => {
@@ -30,7 +40,7 @@ const CustomerRegisterPage = () => {
     try {
       setLoading(true);
       await axiosClient.post('/auth/register/customer', data);
-      
+
       toast.success('Registration successful! Please log in.');
       navigate('/login');
     } catch (error) {
@@ -54,8 +64,8 @@ const CustomerRegisterPage = () => {
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-gray-100">
           <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
-            
-            {/* Name Field */}
+
+            {/* Full Name Field */}
             <div>
               <label className="block text-sm font-medium text-gray-700">Full Name</label>
               <div className="mt-1 relative rounded-md shadow-sm">
@@ -63,13 +73,13 @@ const CustomerRegisterPage = () => {
                   <User className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
-                  {...register('name')}
+                  {...register('fullName')}
                   type="text"
-                  className={`focus:ring-primary focus:border-primary block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-2 px-3 border outline-none transition-colors ${errors.name ? 'border-red-500' : ''}`}
+                  className={`focus:ring-primary focus:border-primary block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-2 px-3 border outline-none transition-colors ${errors.fullName ? 'border-red-500' : ''}`}
                   placeholder="John Doe"
                 />
               </div>
-              {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>}
+              {errors.fullName && <p className="mt-1 text-sm text-red-600">{errors.fullName.message}</p>}
             </div>
 
             {/* Email Field */}
@@ -88,7 +98,7 @@ const CustomerRegisterPage = () => {
               </div>
               {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
             </div>
-            
+
             {/* Phone Field */}
             <div>
               <label className="block text-sm font-medium text-gray-700">Phone Number</label>
@@ -123,6 +133,23 @@ const CustomerRegisterPage = () => {
               {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>}
             </div>
 
+            {/* Confirm Password Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Confirm Password</label>
+              <div className="mt-1 relative rounded-md shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  {...register('confirmPassword')}
+                  type="password"
+                  className={`focus:ring-primary focus:border-primary block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-2 px-3 border outline-none transition-colors ${errors.confirmPassword ? 'border-red-500' : ''}`}
+                  placeholder="••••••••"
+                />
+              </div>
+              {errors.confirmPassword && <p className="mt-1 text-sm text-red-600">{errors.confirmPassword.message}</p>}
+            </div>
+
             <div>
               <button
                 type="submit"
@@ -145,7 +172,7 @@ const CustomerRegisterPage = () => {
               Sign in instead
             </Link>
           </div>
-          
+
           <div className="mt-4 text-center text-sm">
             <span className="text-gray-500">Are you a pharmacy owner? </span>
             <Link to="/register/pharmacy" className="font-medium text-gray-700 hover:text-gray-900 underline">

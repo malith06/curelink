@@ -3,6 +3,8 @@ const { protect, authorize } = require('../../middleware/auth.middleware');
 const { validate } = require('../../middleware/validate');
 const requestController = require('./request.controller');
 const { addItemSchema, updateItemSchema, submitRequestSchema, processPaymentSchema } = require('./request.validation');
+const prescriptionUploadMiddleware = require('../../middleware/prescriptionUpload');
+const prescriptionController = require('../prescriptions/prescription.controller');
 
 const router = express.Router();
 
@@ -75,6 +77,13 @@ router.post(
 router.post(
   '/system/expire',
   requestController.triggerExpiry
+);
+
+// Upload prescription for request
+router.post(
+  '/:requestId/prescription',
+  prescriptionUploadMiddleware,
+  prescriptionController.uploadPrescription
 );
 
 module.exports = router;

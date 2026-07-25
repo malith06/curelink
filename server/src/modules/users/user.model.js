@@ -69,9 +69,9 @@ userSchema.set("toJSON", {
 });
 
 // Encrypt password using bcrypt
-userSchema.pre("save", async function (next) {
+userSchema.pre("save", async function () {
   if (!this.isModified("passwordHash")) {
-    next();
+    return;
   }
 
   const salt = await bcrypt.genSalt(10);

@@ -4,13 +4,25 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { Mail, Lock, Store, Loader2, ArrowRight } from 'lucide-react';
+import { Mail, Lock, Store, Loader2, ArrowRight, User, Phone } from 'lucide-react';
 import axiosClient from '../../api/axiosClient';
 import { useAuth } from '../../context/AuthContext';
 
 const pharmacyRegisterSchema = z.object({
+  fullName: z.string().min(2, 'Name must be at least 2 characters').max(100, 'Name cannot be more than 100 characters'),
   email: z.string().email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  phone: z.string().min(5, 'Please provide a valid phone number'),
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one number')
+    .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character'),
+  confirmPassword: z.string({ required_error: "Confirm password is required" }),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
 });
 
 const PharmacyRegisterPage = () => {
@@ -64,6 +76,23 @@ const PharmacyRegisterPage = () => {
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-gray-100">
           <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
             
+            {/* Full Name Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Contact Person Full Name</label>
+              <div className="mt-1 relative rounded-md shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <User className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  {...register('fullName')}
+                  type="text"
+                  className={`focus:ring-primary focus:border-primary block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-2 px-3 border outline-none transition-colors ${errors.fullName ? 'border-red-500' : ''}`}
+                  placeholder="Jane Doe"
+                />
+              </div>
+              {errors.fullName && <p className="mt-1 text-sm text-red-600">{errors.fullName.message}</p>}
+            </div>
+
             {/* Email Field */}
             <div>
               <label className="block text-sm font-medium text-gray-700">Business Email</label>
@@ -81,6 +110,23 @@ const PharmacyRegisterPage = () => {
               {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
             </div>
 
+            {/* Phone Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Business Phone</label>
+              <div className="mt-1 relative rounded-md shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Phone className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  {...register('phone')}
+                  type="tel"
+                  className={`focus:ring-primary focus:border-primary block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-2 px-3 border outline-none transition-colors ${errors.phone ? 'border-red-500' : ''}`}
+                  placeholder="0712345678"
+                />
+              </div>
+              {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>}
+            </div>
+
             {/* Password Field */}
             <div>
               <label className="block text-sm font-medium text-gray-700">Password</label>
@@ -96,6 +142,23 @@ const PharmacyRegisterPage = () => {
                 />
               </div>
               {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>}
+            </div>
+
+            {/* Confirm Password Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Confirm Password</label>
+              <div className="mt-1 relative rounded-md shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  {...register('confirmPassword')}
+                  type="password"
+                  className={`focus:ring-primary focus:border-primary block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-2 px-3 border outline-none transition-colors ${errors.confirmPassword ? 'border-red-500' : ''}`}
+                  placeholder="••••••••"
+                />
+              </div>
+              {errors.confirmPassword && <p className="mt-1 text-sm text-red-600">{errors.confirmPassword.message}</p>}
             </div>
             
             <div className="bg-primary-50 p-4 rounded-md border border-primary-100 text-sm text-primary-900">
