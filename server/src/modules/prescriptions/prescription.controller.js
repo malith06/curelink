@@ -89,3 +89,23 @@ exports.getOcrResults = asyncHandler(async (req, res, next) => {
     },
   });
 });
+
+/**
+ * Updates OCR entries based on customer corrections/confirmations.
+ */
+exports.updateOcrEntries = asyncHandler(async (req, res, next) => {
+  const { entries } = req.body;
+  
+  if (!Array.isArray(entries)) {
+    return next(new ApiError(400, "Entries must be an array"));
+  }
+
+  const updatedPrescription = await prescriptionService.updateOcrEntries(req.prescription, entries);
+
+  res.status(200).json({
+    success: true,
+    data: {
+      ocrEntries: updatedPrescription.ocrEntries,
+    },
+  });
+});

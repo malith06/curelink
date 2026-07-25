@@ -170,6 +170,32 @@ class PrescriptionService {
       throw new ApiError(500, `OCR processing failed: ${error.message}`);
     }
   }
+
+  /**
+   * Updates OCR entries based on customer corrections/confirmations.
+   * 
+   * @param {Object} prescription - The prescription document
+   * @param {Array<Object>} newEntries - The customer-corrected entries
+   * @returns {Object} Updated prescription
+   */
+  async updateOcrEntries(prescription, newEntries) {
+    if (prescription.ocrStatus !== OCR_STATUSES.COMPLETED) {
+      throw new ApiError(400, "Cannot update entries: OCR processing is not completed.");
+    }
+
+    // Replace the current entries with the corrected ones, enforcing isCustomerConfirmed
+    prescription.ocrEntries = newEntries.map(entry => ({
+      medicineId: entry.medicineId || null,
+      extractedText: entry.extractedText || "Manual Entry",
+      confidenceScore: entry.confidenceScore || 0,
+      confidenceLevel: entry.confidenceLevel || 'LOW',
+      quantity: entry.quantity || 1,
+      isCustomerConfirmed: true // Since the customer is submitting this, they are implicitly confirming it
+    }));
+
+    await prescription.save();
+    return prescription;
+  }
 }
 
 module.exports = new PrescriptionService();
