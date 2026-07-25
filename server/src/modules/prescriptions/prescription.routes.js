@@ -15,5 +15,6 @@ router.get("/:prescriptionId/access", prescriptionController.getPrescriptionAcce
 router.post("/:prescriptionId/process-ocr", prescriptionController.processOcr);
 router.get("/:prescriptionId/ocr", prescriptionController.getOcrResults);
 router.put("/:prescriptionId/ocr", prescriptionController.updateOcrEntries);
+router.post("/:prescriptionId/confirm", prescriptionController.confirmPrescription);
 
 module.exports = router;

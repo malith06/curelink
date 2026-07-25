@@ -217,6 +217,59 @@ class PrescriptionService {
     await prescription.save();
     return prescription;
   }
+
+  /**
+   * Confirms the customer review and syncs the matched items with the request.
+   * 
+   * @param {Object} prescription - The prescription document
+   * @returns {Object} Updated prescription
+   */
+  async confirmPrescription(prescription) {
+    if (prescription.customerReviewStatus === require("./prescription.constants").CUSTOMER_REVIEW_STATUSES.CONFIRMED) {
+      throw new ApiError(400, "Prescription is already confirmed");
+    }
+
+    // 1. Mark prescription as confirmed
+    const { CUSTOMER_REVIEW_STATUSES } = require("./prescription.constants");
+    prescription.customerReviewStatus = CUSTOMER_REVIEW_STATUSES.CONFIRMED;
+    prescription.customerConfirmedAt = new Date();
+    await prescription.save();
+
+    // 2. Sync with MedicineRequest
+    const MedicineRequest = require("../requests/request.model");
+    const request = await MedicineRequest.findById(prescription.requestId);
+    
+    if (request) {
+      const Medicine = require("../medicines/medicine.model");
+      
+      for (const entry of prescription.extractedMedicines) {
+        if (entry.matchedMedicineId) {
+          const med = await Medicine.findById(entry.matchedMedicineId);
+          if (med) {
+            request.items.push({
+              medicineId: med._id,
+              medicineSnapshot: {
+                genericName: med.genericName,
+                brandName: med.brandName,
+                strength: med.strength,
+                dosageForm: med.dosageForm
+              },
+              quantity: entry.quantity || 1,
+              source: 'OCR'
+            });
+          }
+        }
+      }
+      
+      // Also ensure the request knows about the prescription ID
+      request.prescriptionId = prescription._id;
+      request.requiresPrescription = true;
+      
+      await request.save();
+    }
+
+    return prescription;
+  }
 }
 
 module.exports = new PrescriptionService();

@@ -109,3 +109,18 @@ exports.updateOcrEntries = asyncHandler(async (req, res, next) => {
     },
   });
 });
+
+/**
+ * Confirms the prescription OCR entries and syncs with the request.
+ */
+exports.confirmPrescription = asyncHandler(async (req, res, next) => {
+  const confirmedPrescription = await prescriptionService.confirmPrescription(req.prescription);
+
+  res.status(200).json({
+    success: true,
+    data: {
+      customerReviewStatus: confirmedPrescription.customerReviewStatus,
+      customerConfirmedAt: confirmedPrescription.customerConfirmedAt,
+    },
+  });
+});
