@@ -2,6 +2,7 @@ const Quotation = require('./quotation.model');
 const MedicineRequest = require('../requests/request.model');
 const Medicine = require('../medicines/medicine.model');
 const { QUOTATION_STATUS } = require('./quotation.constants');
+const { calculateItemAvailability, calculateItemSubtotal, calculateQuotationTotal, toCents } = require('./quotation.calculator');
 const ApiError = require('../../utils/ApiError');
 
 class QuotationService {
@@ -129,9 +130,31 @@ class QuotationService {
               }
             }
           }
+
+          // Recalculate item availability and subtotal
+          item.availabilityResult = calculateItemAvailability(item.requestedQuantity, item.availableQuantity);
+          
+          // If unit price was updated, it's expected as standard decimal and should be stored in cents,
+          // but since updateData might already contain cents depending on validation, we ensure it's calculated correctly.
+          // Wait, the validation allows float inputs, we convert here.
+          // Actually, we'll assume updateData.unitPrice is in cents if processed by middleware, or we explicitly convert it.
+          // Let's explicitly convert it here to be safe.
+          if (updateItem.unitPrice !== undefined && updateItem.unitPrice !== null) {
+            item.unitPrice = toCents(updateItem.unitPrice);
+          }
+          item.subtotal = calculateItemSubtotal(item.availableQuantity, item.unitPrice);
         }
       }
     }
+
+    // Process top-level delivery fee to cents if provided
+    if (updateData.deliveryFee !== undefined && updateData.deliveryFee !== null) {
+      quotation.deliveryFee = toCents(updateData.deliveryFee);
+    }
+
+    // Recalculate quotation subtotal and total
+    quotation.subtotal = quotation.items.reduce((sum, item) => sum + (item.subtotal || 0), 0);
+    quotation.total = calculateQuotationTotal(quotation.items, quotation.deliveryFee);
 
     await quotation.save();
     return quotation;
