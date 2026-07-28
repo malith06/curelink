@@ -1,6 +1,7 @@
 const Quotation = require('./quotation.model');
 const MedicineRequest = require('../requests/request.model');
 const Medicine = require('../medicines/medicine.model');
+const PrescriptionVerification = require('../prescription-verifications/verification.model');
 const { QUOTATION_STATUS } = require('./quotation.constants');
 const { calculateItemAvailability, calculateItemSubtotal, calculateQuotationTotal, toCents } = require('./quotation.calculator');
 const ApiError = require('../../utils/ApiError');
@@ -188,6 +189,23 @@ class QuotationService {
 
     if (!quotation.expiresAt || new Date(quotation.expiresAt) <= new Date()) {
       throw new ApiError(400, 'A valid future expiration date is required');
+    }
+
+    // 2. Enforce Prescription Verification
+    const request = await MedicineRequest.findById(quotation.requestId);
+    if (!request) {
+      throw new ApiError(404, 'Associated medicine request not found');
+    }
+
+    if (request.requiresPrescription) {
+      const verification = await PrescriptionVerification.findOne({
+        requestId: request._id,
+        pharmacyId: pharmacyId
+      });
+
+      if (!verification || verification.status !== 'VERIFIED') {
+        throw new ApiError(403, 'You must verify the prescription before submitting a quotation for this request');
+      }
     }
 
     // More validations in following units...
