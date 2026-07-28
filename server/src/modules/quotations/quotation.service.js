@@ -56,6 +56,55 @@ class QuotationService {
     await quotation.save();
     return quotation;
   }
+
+  /**
+   * Updates a draft quotation with new item prices, quantities, and pharmacy settings.
+   * Only allowed when status is DRAFT.
+   * @param {string} quotationId 
+   * @param {string} pharmacyId 
+   * @param {Object} updateData 
+   * @returns {Promise<Object>} Updated quotation
+   */
+  async updateDraft(quotationId, pharmacyId, updateData) {
+    const quotation = await Quotation.findOne({ _id: quotationId, pharmacyId });
+    
+    if (!quotation) {
+      throw new ApiError(404, 'Quotation not found');
+    }
+
+    if (quotation.status !== QUOTATION_STATUS.DRAFT) {
+      throw new ApiError(400, 'Only draft quotations can be updated');
+    }
+
+    // Update top-level fields if provided
+    if (updateData.deliveryFee !== undefined) quotation.deliveryFee = updateData.deliveryFee;
+    if (updateData.preparationMinutes !== undefined) quotation.preparationMinutes = updateData.preparationMinutes;
+    if (updateData.deliveryAvailable !== undefined) quotation.deliveryAvailable = updateData.deliveryAvailable;
+    if (updateData.pickupAvailable !== undefined) quotation.pickupAvailable = updateData.pickupAvailable;
+    if (updateData.expiresAt !== undefined) quotation.expiresAt = updateData.expiresAt;
+    if (updateData.pharmacyNotes !== undefined) quotation.pharmacyNotes = updateData.pharmacyNotes;
+
+    // Update items if provided
+    if (updateData.items && Array.isArray(updateData.items)) {
+      updateData.items.forEach(updateItem => {
+        // Find the corresponding item in the quotation
+        const itemIndex = quotation.items.findIndex(i => 
+          i.requestItemId.toString() === updateItem.requestItemId.toString()
+        );
+
+        if (itemIndex > -1) {
+          const item = quotation.items[itemIndex];
+          
+          if (updateItem.availableQuantity !== undefined) item.availableQuantity = updateItem.availableQuantity;
+          if (updateItem.unitPrice !== undefined) item.unitPrice = updateItem.unitPrice;
+          if (updateItem.pharmacyItemNote !== undefined) item.pharmacyItemNote = updateItem.pharmacyItemNote;
+        }
+      });
+    }
+
+    await quotation.save();
+    return quotation;
+  }
 }
 
 module.exports = new QuotationService();
