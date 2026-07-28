@@ -45,6 +45,7 @@ import PharmacyQuotationsPage from './pages/pharmacy/quotations/PharmacyQuotatio
 import CustomerRequestsPage from './pages/customer/requests/CustomerRequestsPage';
 import CreateRequestPage from './pages/customer/requests/CreateRequestPage';
 import RequestDetailsPage from './pages/customer/requests/RequestDetailsPage';
+import CustomerQuotationDetailsPage from './pages/customer/quotations/CustomerQuotationDetailsPage';
 
 function App() {
   return (
@@ -91,6 +92,14 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={['CUSTOMER']}>
                   <RequestDetailsPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/customer/requests/:id/quotations/:quotationId" 
+              element={
+                <ProtectedRoute allowedRoles={['CUSTOMER']}>
+                  <CustomerQuotationDetailsPage />
                 </ProtectedRoute>
               } 
             />

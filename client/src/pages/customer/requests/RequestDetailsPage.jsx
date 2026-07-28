@@ -3,12 +3,14 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Loader2, ArrowLeft, Plus, Check, Search, Trash2, Send } from 'lucide-react';
 import { toast } from 'react-toastify';
 import requestService from '../../../features/requests/requestService';
+import quotationService from '../../../features/quotations/quotationService';
 import api from '../../../api/axiosClient'; // for medicine/pharmacy search
 
 const RequestDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [request, setRequest] = useState(null);
+  const [quotations, setQuotations] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Draft mode states
@@ -33,6 +35,11 @@ const RequestDetailsPage = () => {
       setLoading(true);
       const res = await requestService.getRequestById(id);
       setRequest(res.data);
+      
+      if (res.data.status !== 'DRAFT') {
+        const qRes = await quotationService.getRequestQuotations(id);
+        setQuotations(qRes.data?.quotations || []);
+      }
     } catch (error) {
       toast.error("Failed to fetch request details");
       navigate('/customer/requests');
@@ -97,14 +104,10 @@ const RequestDetailsPage = () => {
     }
   };
 
-  const handleAcceptQuotation = async (pharmacyId) => {
+  const handleAcceptQuotation = async (quotationId) => {
     try {
-      await requestService.acceptQuotation(id, pharmacyId);
+      await quotationService.acceptQuotation(id, quotationId);
       toast.success('Quotation accepted!');
-      fetchRequest();
-      // Auto-trigger payment for demonstration
-      await requestService.processPayment(id);
-      toast.success('Payment processed successfully!');
       fetchRequest();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to accept quotation');
@@ -267,61 +270,111 @@ const RequestDetailsPage = () => {
           {/* Non-Draft Mode: Quotations */}
           {!isDraft && (
             <div className="border-t border-gray-200 pt-8 mt-4">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Quotations from Pharmacies</h3>
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-semibold text-gray-800">Quotations from Pharmacies</h3>
+                {quotations.length > 0 && (
+                  <span className="text-sm text-gray-500 font-medium">
+                    {quotations.length} {quotations.length === 1 ? 'Quotation' : 'Quotations'} Received
+                  </span>
+                )}
+              </div>
               
-              {request.quotations && request.quotations.length > 0 ? (
+              {quotations && quotations.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {request.quotations.map((quotation, idx) => (
-                    <div key={idx} className={`border rounded-xl p-5 ${
+                  {quotations.map((quotation, idx) => (
+                    <div key={quotation._id} className={`border rounded-xl p-5 ${
                       quotation.status === 'ACCEPTED' ? 'border-green-500 bg-green-50 shadow-sm' : 
-                      quotation.status === 'REJECTED' ? 'border-red-200 opacity-60' : 
-                      'border-gray-200 bg-white hover:border-gray-300'
+                      quotation.status === 'DECLINED' ? 'border-red-200 opacity-60 bg-red-50' : 
+                      'border-gray-200 bg-white hover:border-primary-300 transition-colors'
                     }`}>
-                      <div className="flex justify-between items-start mb-4">
-                        <h4 className="font-bold text-gray-900">{quotation.pharmacyId?.businessName || 'Pharmacy'}</h4>
-                        <span className={`text-xs font-bold px-2 py-1 rounded ${
-                          quotation.status === 'ACCEPTED' ? 'bg-green-200 text-green-800' : 'bg-gray-100 text-gray-600'
+                      <div className="flex justify-between items-start mb-4 border-b border-gray-100 pb-3">
+                        <div>
+                          <h4 className="font-bold text-gray-900 text-lg">
+                            {quotation.pharmacyId?.businessName || 'Pharmacy'}
+                          </h4>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {quotation.pharmacyId?.address?.city || 'Location Unknown'} • {quotation.preparationMinutes} mins prep
+                          </p>
+                        </div>
+                        <span className={`text-xs font-bold px-2 py-1 rounded-full ${
+                          quotation.status === 'ACCEPTED' ? 'bg-green-200 text-green-800' : 
+                          quotation.status === 'DECLINED' ? 'bg-red-200 text-red-800' :
+                          'bg-blue-100 text-blue-800'
                         }`}>
                           {quotation.status}
                         </span>
                       </div>
                       
-                      <div className="space-y-2 mb-4">
-                        {quotation.items.map((qItem, i) => (
-                          <div key={i} className="flex justify-between text-sm">
-                            <span className="text-gray-600">{qItem.medicineId?.genericName || 'Item'} (x{qItem.quantity})</span>
-                            <span className="font-medium">
-                              {qItem.isAvailable ? `Rs. ${qItem.price?.toFixed(2) || '0.00'}` : <span className="text-red-500">Unavailable</span>}
+                      <div className="space-y-3 mb-4">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500">Items Available:</span>
+                          <span className="font-medium text-gray-900">
+                            {quotation.items?.filter(i => i.availabilityResult === 'FULL' || i.availabilityResult === 'PARTIAL').length || 0} / {request.items.length}
+                          </span>
+                        </div>
+                        {quotation.deliveryAvailable && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-500">Delivery Fee:</span>
+                            <span className="font-medium text-gray-900">
+                              Rs. {quotation.deliveryFee?.toFixed(2)}
                             </span>
                           </div>
-                        ))}
+                        )}
+                        {!quotation.deliveryAvailable && quotation.pickupAvailable && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-500">Fulfillment:</span>
+                            <span className="font-medium text-gray-900 text-right">
+                              Pickup Only
+                            </span>
+                          </div>
+                        )}
+                        
+                        {quotation.substitutionsOffered > 0 && (
+                          <div className="text-xs bg-amber-50 text-amber-800 px-2 py-1.5 rounded inline-block">
+                            Includes {quotation.substitutionsOffered} substituted {quotation.substitutionsOffered === 1 ? 'medicine' : 'medicines'}
+                          </div>
+                        )}
                       </div>
 
-                      <div className="border-t pt-3 flex justify-between items-center">
-                        <span className="font-bold text-lg text-gray-900">Total: Rs. {quotation.totalPrice?.toFixed(2) || '0.00'}</span>
+                      <div className="border-t pt-4 flex flex-col gap-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600">Total Price:</span>
+                          <span className="font-bold text-xl text-primary">Rs. {quotation.total?.toFixed(2) || '0.00'}</span>
+                        </div>
                         
-                        {request.status === 'QUOTATION_RECEIVED' && quotation.status === 'PENDING' && (
-                          <button 
-                            onClick={() => handleAcceptQuotation(quotation.pharmacyId._id)}
-                            className="px-4 py-2 bg-primary text-white rounded hover:bg-primary-700 text-sm font-medium transition-colors"
+                        <div className="grid grid-cols-2 gap-2 mt-2">
+                          <Link 
+                            to={`/customer/requests/${id}/quotations/${quotation._id}`}
+                            className="text-center px-4 py-2 border border-primary text-primary rounded-lg hover:bg-primary-50 text-sm font-medium transition-colors"
                           >
-                            Accept & Pay
-                          </button>
-                        )}
-                        
-                        {quotation.status === 'ACCEPTED' && request.paymentStatus === 'PAID' && (
-                          <span className="text-green-600 text-sm font-bold flex items-center">
-                            <Check className="w-4 h-4 mr-1" /> PAID
-                          </span>
-                        )}
+                            View Details
+                          </Link>
+                          {request.status === 'QUOTATIONS_RECEIVED' && quotation.status === 'SUBMITTED' && (
+                            <button 
+                              onClick={() => handleAcceptQuotation(quotation._id)}
+                              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-700 text-sm font-medium transition-colors"
+                            >
+                              Accept Quote
+                            </button>
+                          )}
+                          {quotation.status === 'ACCEPTED' && (
+                            <button 
+                              disabled
+                              className="px-4 py-2 bg-green-600 text-white rounded-lg opacity-50 text-sm font-medium cursor-not-allowed flex items-center justify-center"
+                            >
+                              <Check className="w-4 h-4 mr-1" /> Accepted
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="p-6 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 flex items-center">
-                  <Search className="w-5 h-5 mr-3 flex-shrink-0" />
-                  <p>Pharmacies are currently reviewing your request. Quotations will appear here once they respond.</p>
+                <div className="p-8 bg-yellow-50 border border-yellow-200 rounded-xl text-yellow-800 flex flex-col items-center justify-center text-center">
+                  <Search className="w-10 h-10 mb-3 text-yellow-500 opacity-80" />
+                  <p className="font-medium text-lg mb-1">Waiting for Quotations</p>
+                  <p className="text-sm opacity-90 max-w-md">Pharmacies are currently reviewing your request. Quotations will appear here once they respond.</p>
                 </div>
               )}
             </div>
