@@ -1,3 +1,5 @@
+const { AVAILABILITY_RESULT } = require('./quotation.constants');
+
 /**
  * Converts a standard decimal currency value (e.g., 10.50) to integer cents (1050).
  * Handles floating-point precision issues correctly by rounding to the nearest integer.
@@ -45,9 +47,79 @@ const calculateQuotationTotal = (items, deliveryFeeInCents = 0) => {
   return itemsTotal + (deliveryFeeInCents || 0);
 };
 
+/**
+ * Derives the availability result based on requested vs available quantities.
+ * @param {number} requestedQuantity
+ * @param {number} availableQuantity
+ * @returns {string} AVAILABILITY_RESULT
+ */
+const calculateItemAvailability = (requestedQuantity, availableQuantity) => {
+  if (!availableQuantity || availableQuantity <= 0) {
+    return AVAILABILITY_RESULT.UNAVAILABLE;
+  }
+  if (availableQuantity >= requestedQuantity) {
+    return AVAILABILITY_RESULT.FULLY_AVAILABLE;
+  }
+  return AVAILABILITY_RESULT.PARTIALLY_AVAILABLE;
+};
+
+/**
+ * Calculates completeness metrics for the quotation.
+ * @param {Array<{requestedQuantity: number, availableQuantity: number}>} items
+ * @returns {Object} completeness metrics
+ */
+const calculateQuotationCompleteness = (items) => {
+  if (!items || items.length === 0) {
+    return {
+      totalRequested: 0,
+      totalAvailable: 0,
+      coveragePercentage: 0,
+      isCompleteFulfilment: false
+    };
+  }
+
+  let totalRequested = 0;
+  let totalAvailable = 0;
+  let fullyAvailableCount = 0;
+  let partiallyAvailableCount = 0;
+  let unavailableCount = 0;
+
+  items.forEach(item => {
+    const req = item.requestedQuantity || 0;
+    const avail = item.availableQuantity || 0;
+    
+    totalRequested += req;
+    // Cap available at requested for percentage calculation
+    totalAvailable += Math.min(avail, req);
+
+    const result = calculateItemAvailability(req, avail);
+    if (result === AVAILABILITY_RESULT.FULLY_AVAILABLE) fullyAvailableCount++;
+    else if (result === AVAILABILITY_RESULT.PARTIALLY_AVAILABLE) partiallyAvailableCount++;
+    else unavailableCount++;
+  });
+
+  const coveragePercentage = totalRequested > 0 
+    ? Math.round((totalAvailable / totalRequested) * 100) 
+    : 0;
+
+  const isCompleteFulfilment = (unavailableCount === 0 && partiallyAvailableCount === 0);
+
+  return {
+    totalRequested,
+    totalAvailable,
+    coveragePercentage,
+    fullyAvailableCount,
+    partiallyAvailableCount,
+    unavailableCount,
+    isCompleteFulfilment
+  };
+};
+
 module.exports = {
   toCents,
   fromCents,
   calculateItemSubtotal,
-  calculateQuotationTotal
+  calculateQuotationTotal,
+  calculateItemAvailability,
+  calculateQuotationCompleteness
 };
