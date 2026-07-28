@@ -310,6 +310,51 @@ class QuotationService {
       total
     };
   }
+
+  /**
+   * Lists quotations for a specific request that a customer can view.
+   * Only returns quotations that are SUBMITTED or in subsequent states (not DRAFT).
+   * @param {string} requestId 
+   * @param {string} customerId 
+   * @returns {Promise<Array>} Array of quotations
+   */
+  async listCustomerQuotations(requestId, customerId) {
+    const request = await MedicineRequest.findOne({ _id: requestId, customerId });
+    if (!request) {
+      throw new ApiError(404, 'Request not found or you do not have permission');
+    }
+
+    const quotations = await Quotation.find({
+      requestId,
+      customerId,
+      status: { $ne: QUOTATION_STATUS.DRAFT }
+    })
+      .sort({ submittedAt: -1 })
+      .populate('pharmacyId', 'name address location type profileImage');
+
+    return quotations;
+  }
+
+  /**
+   * Gets details of a specific quotation for a customer.
+   * Ensures the quotation belongs to the customer and is not a DRAFT.
+   * @param {string} quotationId 
+   * @param {string} customerId 
+   * @returns {Promise<Object>} Quotation document
+   */
+  async getCustomerQuotationById(quotationId, customerId) {
+    const quotation = await Quotation.findOne({
+      _id: quotationId,
+      customerId,
+      status: { $ne: QUOTATION_STATUS.DRAFT }
+    }).populate('pharmacyId', 'name address location phone email profileImage type');
+
+    if (!quotation) {
+      throw new ApiError(404, 'Quotation not found');
+    }
+
+    return quotation;
+  }
 }
 
 module.exports = new QuotationService();

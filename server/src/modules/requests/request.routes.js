@@ -54,6 +54,18 @@ router.post(
   requestController.cancelRequest
 );
 
+// Get quotations for request
+router.get(
+  '/:requestId/quotations',
+  requestController.getRequestQuotations
+);
+
+// Get specific quotation details
+router.get(
+  '/:requestId/quotations/:quotationId',
+  requestController.getQuotationDetails
+);
+
 // Accept quotation
 router.post(
   '/:requestId/quotations/:quotationId/accept',
