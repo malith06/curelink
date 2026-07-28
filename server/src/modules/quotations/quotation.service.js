@@ -1,5 +1,6 @@
 const Quotation = require('./quotation.model');
 const MedicineRequest = require('../requests/request.model');
+const Medicine = require('../medicines/medicine.model');
 const { QUOTATION_STATUS } = require('./quotation.constants');
 const ApiError = require('../../utils/ApiError');
 
@@ -86,7 +87,7 @@ class QuotationService {
 
     // Update items if provided
     if (updateData.items && Array.isArray(updateData.items)) {
-      updateData.items.forEach(updateItem => {
+      for (const updateItem of updateData.items) {
         // Find the corresponding item in the quotation
         const itemIndex = quotation.items.findIndex(i => 
           i.requestItemId.toString() === updateItem.requestItemId.toString()
@@ -98,8 +99,38 @@ class QuotationService {
           if (updateItem.availableQuantity !== undefined) item.availableQuantity = updateItem.availableQuantity;
           if (updateItem.unitPrice !== undefined) item.unitPrice = updateItem.unitPrice;
           if (updateItem.pharmacyItemNote !== undefined) item.pharmacyItemNote = updateItem.pharmacyItemNote;
+
+          if (updateItem.substitutionOffered !== undefined) {
+            item.substitutionOffered = updateItem.substitutionOffered;
+            
+            if (!updateItem.substitutionOffered) {
+              // Clear substitution if not offered
+              item.substitutionMedicineId = null;
+              item.substitutionSnapshot = null;
+              item.substitutionNote = null;
+            } else {
+              // Apply substitution
+              if (updateItem.substitutionNote !== undefined) {
+                item.substitutionNote = updateItem.substitutionNote;
+              }
+              
+              if (updateItem.substitutionMedicineId) {
+                item.substitutionMedicineId = updateItem.substitutionMedicineId;
+                // Fetch the medicine snapshot to save
+                const substitute = await Medicine.findById(updateItem.substitutionMedicineId);
+                if (substitute) {
+                  item.substitutionSnapshot = {
+                    genericName: substitute.genericName,
+                    brandName: substitute.brandName,
+                    strength: substitute.strength,
+                    dosageForm: substitute.dosageForm
+                  };
+                }
+              }
+            }
+          }
         }
-      });
+      }
     }
 
     await quotation.save();
