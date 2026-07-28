@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Quotation = require('./quotation.model');
 const MedicineRequest = require('../requests/request.model');
 const Medicine = require('../medicines/medicine.model');
@@ -217,10 +218,39 @@ class QuotationService {
     quotation.status = QUOTATION_STATUS.SUBMITTED;
     quotation.submittedAt = new Date();
 
-    // The update to MedicineRequest will be handled by the controller or a transaction,
-    // but we can just save the quotation first.
-    
-    await quotation.save();
+    // The update to MedicineRequest will be handled via a transaction to guarantee atomicity
+    const session = await mongoose.startSession();
+    try {
+      session.startTransaction();
+
+      await quotation.save({ session });
+
+      // Update the request document
+      const requestUpdate = {
+        $inc: { quotationCount: 1 }
+      };
+
+      if (request.status === 'SUBMITTED') {
+        requestUpdate.$set = {
+          status: 'QUOTATIONS_RECEIVED',
+          firstQuotationReceivedAt: new Date()
+        };
+      }
+
+      await MedicineRequest.findByIdAndUpdate(
+        request._id,
+        requestUpdate,
+        { session }
+      );
+
+      await session.commitTransaction();
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      session.endSession();
+    }
+
     return quotation;
   }
 }
