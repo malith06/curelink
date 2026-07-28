@@ -208,8 +208,19 @@ class QuotationService {
       }
     }
 
-    // More validations in following units...
+    // 3. Prevent completely empty/zero-value quotes from being submitted
+    if (quotation.total <= 0) {
+      throw new ApiError(400, 'Cannot submit a quotation with a total value of 0');
+    }
+
+    // 4. Mark as submitted
+    quotation.status = QUOTATION_STATUS.SUBMITTED;
+    quotation.submittedAt = new Date();
+
+    // The update to MedicineRequest will be handled by the controller or a transaction,
+    // but we can just save the quotation first.
     
+    await quotation.save();
     return quotation;
   }
 }
