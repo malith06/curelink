@@ -22,6 +22,11 @@ class QuotationService {
       throw new ApiError(400, 'This request is no longer accepting quotations');
     }
 
+    // Verify the pharmacy was actually selected by the customer
+    if (!request.selectedPharmacyIds.includes(pharmacyId)) {
+      throw new ApiError(403, 'You do not have permission to quote on this request');
+    }
+
     // Check if quotation already exists
     let quotation = await Quotation.findOne({ requestId, pharmacyId });
     if (quotation) {
