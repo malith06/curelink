@@ -253,6 +253,63 @@ class QuotationService {
 
     return quotation;
   }
+
+  /**
+   * Retrieves a specific quotation, optionally scoped by pharmacyId.
+   * @param {string} quotationId 
+   * @param {string} pharmacyId (Optional)
+   * @returns {Promise<Object>} Quotation document
+   */
+  async getQuotationById(quotationId, pharmacyId = null) {
+    const query = { _id: quotationId };
+    if (pharmacyId) {
+      query.pharmacyId = pharmacyId;
+    }
+    
+    const quotation = await Quotation.findOne(query)
+      .populate('requestId', 'requestNumber status customerId')
+      .populate('customerId', 'firstName lastName');
+
+    if (!quotation) {
+      throw new ApiError(404, 'Quotation not found');
+    }
+
+    return quotation;
+  }
+
+  /**
+   * Lists quotations for a specific pharmacy with pagination and status filtering.
+   * @param {string} pharmacyId 
+   * @param {Object} options 
+   * @returns {Promise<Object>} Paginated quotations
+   */
+  async listPharmacyQuotations(pharmacyId, options = {}) {
+    const { status, page = 1, limit = 10 } = options;
+    const query = { pharmacyId };
+    
+    if (status) {
+      query.status = status;
+    }
+
+    const skip = (page - 1) * limit;
+
+    const [quotations, total] = await Promise.all([
+      Quotation.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit))
+        .populate('requestId', 'requestNumber status'),
+      Quotation.countDocuments(query)
+    ]);
+
+    return {
+      quotations,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      totalPages: Math.ceil(total / limit),
+      total
+    };
+  }
 }
 
 module.exports = new QuotationService();
