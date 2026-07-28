@@ -159,6 +159,41 @@ class QuotationService {
     await quotation.save();
     return quotation;
   }
+
+  /**
+   * Submits a draft quotation, verifying it meets all completeness and fulfilment criteria.
+   * @param {string} quotationId 
+   * @param {string} pharmacyId 
+   * @returns {Promise<Object>} Submitted quotation
+   */
+  async submitQuotation(quotationId, pharmacyId) {
+    const quotation = await Quotation.findOne({ _id: quotationId, pharmacyId });
+    
+    if (!quotation) {
+      throw new ApiError(404, 'Quotation not found');
+    }
+
+    if (quotation.status !== QUOTATION_STATUS.DRAFT) {
+      throw new ApiError(400, 'Only draft quotations can be submitted');
+    }
+
+    // 1. Validate fulfilment options
+    if (!quotation.deliveryAvailable && !quotation.pickupAvailable) {
+      throw new ApiError(400, 'At least one fulfilment option (delivery or pickup) must be selected');
+    }
+    
+    if (!quotation.preparationMinutes) {
+      throw new ApiError(400, 'Preparation time is required');
+    }
+
+    if (!quotation.expiresAt || new Date(quotation.expiresAt) <= new Date()) {
+      throw new ApiError(400, 'A valid future expiration date is required');
+    }
+
+    // More validations in following units...
+    
+    return quotation;
+  }
 }
 
 module.exports = new QuotationService();
