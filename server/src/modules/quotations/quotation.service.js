@@ -28,13 +28,24 @@ class QuotationService {
       return quotation;
     }
 
+    // Map request items to quotation draft items
+    const quotationItems = request.items.map(item => ({
+      requestItemId: item._id,
+      medicineId: item.medicineId,
+      medicineSnapshot: item.medicineSnapshot,
+      requestedQuantity: item.quantity,
+      availableQuantity: 0,
+      unitPrice: null,
+      subtotal: 0
+    }));
+
     // Create a new draft quotation
     quotation = new Quotation({
       requestId,
       customerId: request.customerId,
       pharmacyId,
       status: QUOTATION_STATUS.DRAFT,
-      items: [] // Will be populated in next step
+      items: quotationItems
     });
 
     await quotation.save();
