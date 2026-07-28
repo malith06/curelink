@@ -39,6 +39,7 @@ import PharmacyLocationPage from './pages/pharmacy/PharmacyLocationPage';
 import PharmacyAvailabilityPage from './pages/pharmacy/PharmacyAvailabilityPage';
 import PharmacyInboxPage from './pages/pharmacy/requests/PharmacyInboxPage';
 import PharmacyRequestDetailsPage from './pages/pharmacy/requests/PharmacyRequestDetailsPage';
+import PharmacyQuotationsPage from './pages/pharmacy/quotations/PharmacyQuotationsPage';
 
 // Customer Protected Pages
 import CustomerRequestsPage from './pages/customer/requests/CustomerRequestsPage';
@@ -132,6 +133,14 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={['PHARMACY']}>
                   <PharmacyInboxPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/pharmacy/quotations" 
+              element={
+                <ProtectedRoute allowedRoles={['PHARMACY']}>
+                  <PharmacyQuotationsPage />
                 </ProtectedRoute>
               } 
             />
