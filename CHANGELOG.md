@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Feature (Day 7): Private Quotation Workflow, allowing pharmacies to offer dynamic pricing based on customer requests.
+- Feature (Day 7): Quotation calculator for accurate currency conversions and availability score determination.
+- Feature (Day 7): Pharmacy Quotation Builder UI to draft, calculate totals, and submit pricing options.
+- Feature (Day 7): Customer Inbox UI and Quotation Comparison views (table format) to evaluate offers from different pharmacies side-by-side.
+- Feature (Day 7): Secure atomic acceptance logic using MongoDB transactions to accept one quotation and auto-decline competing quotes.
+- Feature (Day 6): Prescription OCR processing integration to automatically extract text using Tesseract.
+- Feature (Day 6): Pharmacist manual verification loop to ensure safety over extracted OCR text and customer entry.
+- Feature (Day 6): Cloudinary integration for secure prescription PDF and image storage.
+- Feature (Day 6): Fuzzy matching for OCR extracted medicine names to link against existing catalogue items.
 - Feature (Day 4): Pharmacy profile location fields with 2dsphere geospatial index.
 - Feature (Day 4): Medicine Availability schema with strict unique compound index.
 - Feature (Day 4): Backend services, controllers, and routes to update and query Medicine Availability.

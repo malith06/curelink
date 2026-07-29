@@ -118,3 +118,15 @@
 | ✅ | 18. Implement automatic expiry cron logic | Expire old unaccepted requests |
 | ✅ | 19. List pagination | Refactor lists to return pagination metadata |
 | ✅ | 20. End-of-day testing & cleanup | Final integration and verification |
+
+## Day 7 Tasks (Private Quotation Workflow)
+| Status | Task | Description |
+| :---: | :--- | :--- |
+| ? | 1. Implement Quotation Calculator & Models | Pure currency and percentage helper functions |
+| ? | 2. Implement Quotation Verification Validation | Block if prescription is unverified |
+| ? | 3. Implement Atomic Quotation Acceptance | Prevent race conditions during payments |
+| ? | 4. Add Pharmacy Quotation Builder UI | Dynamic interface for draft quotations |
+| ? | 5. Add Pharmacy Submission & Review UI | Allow confirmation before lock-in |
+| ? | 6. Add Customer Inbox & Comparison UI | Build side-by-side view |
+| ? | 7. Customer Acceptance Integration | Add logic for payment integration |
+| ? | 8. Fix global ApiError bugs & Test Rules | Resolve missing test rules |
