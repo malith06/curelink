@@ -12,6 +12,7 @@ const RequestDetailsPage = () => {
   const [request, setRequest] = useState(null);
   const [quotations, setQuotations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [processing, setProcessing] = useState(false);
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'compare'
 
   // Draft mode states
@@ -106,12 +107,24 @@ const RequestDetailsPage = () => {
   };
 
   const handleAcceptQuotation = async (quotationId) => {
+    if (!window.confirm("Are you sure you want to accept this quotation and proceed to checkout?")) {
+      return;
+    }
+    
     try {
+      setProcessing(true);
       await quotationService.acceptQuotation(id, quotationId);
       toast.success('Quotation accepted!');
+      
+      // Auto-trigger payment for demonstration
+      await requestService.processPayment(id);
+      toast.success('Payment processed successfully!');
+      
       fetchRequest();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to accept quotation');
+    } finally {
+      setProcessing(false);
     }
   };
 
@@ -389,9 +402,10 @@ const RequestDetailsPage = () => {
                                 {request.status === 'QUOTATIONS_RECEIVED' && q.status === 'SUBMITTED' && (
                                   <button 
                                     onClick={() => handleAcceptQuotation(q._id)}
-                                    className="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-700 text-sm font-medium transition-colors"
+                                    disabled={processing}
+                                    className="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-700 text-sm font-medium transition-colors disabled:opacity-50"
                                   >
-                                    Accept Quote
+                                    {processing ? <Loader2 className="w-4 h-4 mx-auto animate-spin" /> : 'Accept Quote'}
                                   </button>
                                 )}
                               </div>
@@ -474,9 +488,10 @@ const RequestDetailsPage = () => {
                           {request.status === 'QUOTATIONS_RECEIVED' && quotation.status === 'SUBMITTED' && (
                             <button 
                               onClick={() => handleAcceptQuotation(quotation._id)}
-                              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-700 text-sm font-medium transition-colors"
+                              disabled={processing}
+                              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-700 text-sm font-medium transition-colors flex items-center justify-center disabled:opacity-50"
                             >
-                              Accept Quote
+                              {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Accept Quote'}
                             </button>
                           )}
                           {quotation.status === 'ACCEPTED' && (
@@ -492,6 +507,7 @@ const RequestDetailsPage = () => {
                     </div>
                   ))}
                 </div>
+                )
               ) : (
                 <div className="p-8 bg-yellow-50 border border-yellow-200 rounded-xl text-yellow-800 flex flex-col items-center justify-center text-center">
                   <Search className="w-10 h-10 mb-3 text-yellow-500 opacity-80" />

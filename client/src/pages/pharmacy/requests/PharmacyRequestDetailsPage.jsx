@@ -4,13 +4,11 @@ import { Loader2, ArrowLeft, Send, Save, AlertCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
 import requestService from '../../../features/requests/requestService';
 import quotationService from '../../../features/quotations/quotationService';
-import { QUOTATION_STATUS, ITEM_AVAILABILITY_STATUS } from '../../../constants/quotation';
-import { useAuth } from '../../../context/AuthContext';
+import { QUOTATION_STATUS } from '../../../constants/quotation';
 
 const PharmacyRequestDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
   
   const [request, setRequest] = useState(null);
   const [quotation, setQuotation] = useState(null);
@@ -31,6 +29,7 @@ const PharmacyRequestDetailsPage = () => {
 
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const fetchData = async () => {
@@ -65,7 +64,7 @@ const PharmacyRequestDetailsPage = () => {
           pharmacyNotes: qRes.data.pharmacyNotes || ''
         });
       }
-    } catch (error) {
+    } catch (err) {
       toast.error('Failed to load details');
       navigate('/pharmacy/inbox');
     } finally {
