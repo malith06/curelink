@@ -12,6 +12,7 @@ const RequestDetailsPage = () => {
   const [request, setRequest] = useState(null);
   const [quotations, setQuotations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'compare'
 
   // Draft mode states
   const [searchQuery, setSearchQuery] = useState('');
@@ -271,15 +272,136 @@ const RequestDetailsPage = () => {
           {!isDraft && (
             <div className="border-t border-gray-200 pt-8 mt-4">
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-semibold text-gray-800">Quotations from Pharmacies</h3>
-                {quotations.length > 0 && (
-                  <span className="text-sm text-gray-500 font-medium">
-                    {quotations.length} {quotations.length === 1 ? 'Quotation' : 'Quotations'} Received
-                  </span>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800">Quotations from Pharmacies</h3>
+                  {quotations.length > 0 && (
+                    <span className="text-sm text-gray-500 font-medium">
+                      {quotations.length} {quotations.length === 1 ? 'Quotation' : 'Quotations'} Received
+                    </span>
+                  )}
+                </div>
+                {quotations.length > 1 && (
+                  <div className="flex bg-gray-100 rounded-lg p-1">
+                    <button
+                      onClick={() => setViewMode('grid')}
+                      className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${viewMode === 'grid' ? 'bg-white shadow-sm text-primary' : 'text-gray-600 hover:text-gray-900'}`}
+                    >
+                      Grid View
+                    </button>
+                    <button
+                      onClick={() => setViewMode('compare')}
+                      className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${viewMode === 'compare' ? 'bg-white shadow-sm text-primary' : 'text-gray-600 hover:text-gray-900'}`}
+                    >
+                      Compare
+                    </button>
+                  </div>
                 )}
               </div>
               
               {quotations && quotations.length > 0 ? (
+                viewMode === 'compare' && quotations.length > 1 ? (
+                  <div className="overflow-x-auto pb-4">
+                    <table className="min-w-full divide-y divide-gray-200 border rounded-lg bg-white">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Feature</th>
+                          {quotations.map(q => (
+                            <th key={q._id} className="px-6 py-4 text-center text-sm font-bold text-gray-900 border-l">
+                              {q.pharmacyId?.businessName}
+                              <div className="text-xs font-normal text-gray-500 mt-1">{q.pharmacyId?.address?.city}</div>
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        <tr>
+                          <td className="px-6 py-4 text-sm font-medium text-gray-900 bg-gray-50">Status</td>
+                          {quotations.map(q => (
+                            <td key={q._id} className="px-6 py-4 text-center border-l">
+                              <span className={`text-xs font-bold px-2 py-1 rounded-full ${
+                                q.status === 'ACCEPTED' ? 'bg-green-200 text-green-800' : 
+                                q.status === 'DECLINED' ? 'bg-red-200 text-red-800' : 'bg-blue-100 text-blue-800'
+                              }`}>
+                                {q.status}
+                              </span>
+                            </td>
+                          ))}
+                        </tr>
+                        <tr>
+                          <td className="px-6 py-4 text-sm font-medium text-gray-900 bg-gray-50">Total Price</td>
+                          {quotations.map(q => (
+                            <td key={q._id} className="px-6 py-4 text-center border-l font-bold text-primary text-lg">
+                              Rs. {q.total?.toFixed(2) || '0.00'}
+                            </td>
+                          ))}
+                        </tr>
+                        <tr>
+                          <td className="px-6 py-4 text-sm font-medium text-gray-900 bg-gray-50">Items Available</td>
+                          {quotations.map(q => {
+                            const available = q.items?.filter(i => i.availabilityResult === 'FULL' || i.availabilityResult === 'PARTIAL').length || 0;
+                            const total = request.items.length;
+                            return (
+                              <td key={q._id} className={`px-6 py-4 text-center border-l font-medium ${available === total ? 'text-green-600' : 'text-amber-600'}`}>
+                                {available} / {total}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                        <tr>
+                          <td className="px-6 py-4 text-sm font-medium text-gray-900 bg-gray-50">Preparation Time</td>
+                          {quotations.map(q => (
+                            <td key={q._id} className="px-6 py-4 text-center border-l text-gray-700">
+                              {q.preparationMinutes} mins
+                            </td>
+                          ))}
+                        </tr>
+                        <tr>
+                          <td className="px-6 py-4 text-sm font-medium text-gray-900 bg-gray-50">Delivery</td>
+                          {quotations.map(q => (
+                            <td key={q._id} className="px-6 py-4 text-center border-l text-gray-700">
+                              {q.deliveryAvailable ? `Yes (Rs. ${q.deliveryFee?.toFixed(2)})` : 'Pickup Only'}
+                            </td>
+                          ))}
+                        </tr>
+                        <tr>
+                          <td className="px-6 py-4 text-sm font-medium text-gray-900 bg-gray-50">Substitutions</td>
+                          {quotations.map(q => (
+                            <td key={q._id} className="px-6 py-4 text-center border-l text-gray-700">
+                              {q.substitutionsOffered > 0 ? (
+                                <span className="text-amber-700 font-medium">{q.substitutionsOffered} items</span>
+                              ) : (
+                                <span className="text-gray-500">None</span>
+                              )}
+                            </td>
+                          ))}
+                        </tr>
+                        <tr>
+                          <td className="px-6 py-4 text-sm font-medium text-gray-900 bg-gray-50">Action</td>
+                          {quotations.map(q => (
+                            <td key={q._id} className="px-6 py-4 text-center border-l">
+                              <div className="flex flex-col gap-2">
+                                <Link 
+                                  to={`/customer/requests/${id}/quotations/${q._id}`}
+                                  className="w-full text-center px-4 py-2 border border-primary text-primary rounded-lg hover:bg-primary-50 text-sm font-medium transition-colors"
+                                >
+                                  View Details
+                                </Link>
+                                {request.status === 'QUOTATIONS_RECEIVED' && q.status === 'SUBMITTED' && (
+                                  <button 
+                                    onClick={() => handleAcceptQuotation(q._id)}
+                                    className="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-700 text-sm font-medium transition-colors"
+                                  >
+                                    Accept Quote
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          ))}
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {quotations.map((quotation, idx) => (
                     <div key={quotation._id} className={`border rounded-xl p-5 ${
