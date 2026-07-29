@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const crypto = require('crypto');
 const requestItemSchema = require('./requestItem.schema');
-const quotationSchema = require('./quotation.schema');
+
 const { REQUEST_STATUS } = require('./request.constants');
 
 const medicineRequestSchema = new mongoose.Schema({
@@ -40,7 +40,18 @@ const medicineRequestSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Pharmacy'
   }],
-  quotations: [quotationSchema],
+  acceptedQuotationId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Quotation',
+    default: null
+  },
+  quotationCount: {
+    type: Number,
+    default: 0
+  },
+  firstQuotationReceivedAt: {
+    type: Date
+  },
   status: {
     type: String,
     enum: Object.values(REQUEST_STATUS),

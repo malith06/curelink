@@ -1,102 +1,138 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Loader2, ArrowLeft, Send } from 'lucide-react';
+import { Loader2, ArrowLeft, Send, Save, AlertCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
 import requestService from '../../../features/requests/requestService';
-import { useAuth } from '../../../context/AuthContext';
+import quotationService from '../../../features/quotations/quotationService';
+import { QUOTATION_STATUS } from '../../../constants/quotation';
 
 const PharmacyRequestDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  
   const [request, setRequest] = useState(null);
+  const [quotation, setQuotation] = useState(null);
+  
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   
-  // State for the quotation form
-  const [quotationItems, setQuotationItems] = useState({});
-  const [notes, setNotes] = useState('');
+  // Editable Draft State
+  const [draftItems, setDraftItems] = useState({});
+  const [draftMeta, setDraftMeta] = useState({
+    deliveryFee: 0,
+    preparationMinutes: 30,
+    deliveryAvailable: false,
+    pickupAvailable: true,
+    pharmacyNotes: ''
+  });
 
   useEffect(() => {
-    fetchRequest();
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  const fetchRequest = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
-      // We can use getRequestById. The backend will return the request if this pharmacy was invited.
-      const res = await requestService.getRequestById(id);
-      setRequest(res.data);
-      
-      // Initialize form state
-      const initialItems = {};
-      res.data.items.forEach(item => {
-        initialItems[item.medicineId._id] = {
-          price: 0,
-          isAvailable: true
-        };
-      });
-      setQuotationItems(initialItems);
-    } catch (error) {
-      toast.error('Failed to load request details');
+      const reqRes = await requestService.getRequestById(id);
+      setRequest(reqRes.data);
+
+      if (['SUBMITTED', 'QUOTATIONS_RECEIVED', 'QUOTATION_ACCEPTED', 'CONVERTED_TO_ORDER'].includes(reqRes.data.status)) {
+        // Try to get or create draft
+        const qRes = await quotationService.getOrCreateDraft(id);
+        setQuotation(qRes.data);
+        
+        // Initialize state from quotation
+        const initialItems = {};
+        qRes.data.items.forEach(item => {
+          initialItems[item.requestItemId] = {
+            availableQuantity: item.availableQuantity,
+            unitPrice: item.unitPrice || 0,
+            substitutionOffered: item.substitutionOffered,
+            substitutionMedicineId: item.substitutionMedicineId,
+            substitutionNote: item.substitutionNote || '',
+            pharmacyItemNote: item.pharmacyItemNote || ''
+          };
+        });
+        setDraftItems(initialItems);
+        setDraftMeta({
+          deliveryFee: qRes.data.deliveryFee || 0,
+          preparationMinutes: qRes.data.preparationMinutes || 30,
+          deliveryAvailable: qRes.data.deliveryAvailable || false,
+          pickupAvailable: qRes.data.pickupAvailable ?? true,
+          pharmacyNotes: qRes.data.pharmacyNotes || ''
+        });
+      }
+    } catch (err) {
+      toast.error('Failed to load details');
       navigate('/pharmacy/inbox');
     } finally {
       setLoading(false);
     }
   };
 
-  const handlePriceChange = (medicineId, value) => {
-    setQuotationItems(prev => ({
+  const handleItemChange = (requestItemId, field, value) => {
+    setDraftItems(prev => ({
       ...prev,
-      [medicineId]: {
-        ...prev[medicineId],
-        price: Number(value)
+      [requestItemId]: {
+        ...prev[requestItemId],
+        [field]: value
       }
     }));
   };
 
-  const handleAvailabilityChange = (medicineId, isAvailable) => {
-    setQuotationItems(prev => ({
-      ...prev,
-      [medicineId]: {
-        ...prev[medicineId],
-        isAvailable
-      }
-    }));
+  const handleMetaChange = (field, value) => {
+    setDraftMeta(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSaveDraft = async () => {
+    try {
+      setSaving(true);
+      
+      const itemsArray = Object.keys(draftItems).map(requestItemId => ({
+        requestItemId,
+        ...draftItems[requestItemId]
+      }));
+
+      const updateData = {
+        items: itemsArray,
+        ...draftMeta
+      };
+
+      const res = await quotationService.updateDraft(quotation._id, updateData);
+      setQuotation(res.data);
+      toast.success('Draft saved successfully');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to save draft');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleSubmitQuotation = async () => {
     try {
+      if (!window.confirm("Are you sure you want to submit this quotation? You cannot edit it once submitted.")) {
+        return;
+      }
+      
       setSubmitting(true);
-      // Transform our state object into the array expected by the backend
-      const itemsArray = Object.keys(quotationItems).map(medicineId => ({
-        medicineId,
-        price: quotationItems[medicineId].price,
-        isAvailable: quotationItems[medicineId].isAvailable
+      
+      // Auto-save draft before submitting
+      const itemsArray = Object.keys(draftItems).map(requestItemId => ({
+        requestItemId,
+        ...draftItems[requestItemId]
       }));
 
-      await requestService.provideQuotation(id, {
-        items: itemsArray,
-        notes
-      });
+      await quotationService.updateDraft(quotation._id, { items: itemsArray, ...draftMeta });
       
-      toast.success('Quotation submitted successfully');
-      fetchRequest();
+      // Submit
+      const res = await quotationService.submitQuotation(quotation._id);
+      setQuotation(res.data);
+      toast.success('Quotation submitted successfully!');
+      fetchData(); // Refresh everything
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to submit quotation');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleFulfillmentStatus = async (status) => {
-    try {
-      setSubmitting(true);
-      await requestService.updateFulfillmentStatus(id, status);
-      toast.success(`Order marked as ${status}`);
-      fetchRequest();
-    } catch (error) {
-      toast.error('Failed to update status');
     } finally {
       setSubmitting(false);
     }
@@ -112,10 +148,8 @@ const PharmacyRequestDetailsPage = () => {
 
   if (!request) return null;
 
-  // Find if we already submitted a quotation
-  const myQuotation = request.quotations?.find(q => q.pharmacyId?._id === user.pharmacyId || q.pharmacyId === user.pharmacyId);
-  const isPendingMyQuote = request.status === 'SUBMITTED' && !myQuotation;
-  const iWon = myQuotation?.status === 'ACCEPTED';
+  const isDraft = quotation && quotation.status === QUOTATION_STATUS.DRAFT;
+  const isSubmitted = quotation && quotation.status !== QUOTATION_STATUS.DRAFT;
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-5xl">
@@ -125,188 +159,244 @@ const PharmacyRequestDetailsPage = () => {
         </Link>
       </div>
 
+      {/* Header */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
         <div className="p-6 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Request #{request._id.substring(request._id.length - 6).toUpperCase()}</h1>
-            <p className="text-gray-500 text-sm mt-1">From Customer ID: {request.customerId?._id || 'Unknown'}</p>
+            <p className="text-gray-500 text-sm mt-1">Customer Request Status: {request.status.replace(/_/g, ' ')}</p>
           </div>
-          <div>
-            <span className="px-4 py-1.5 rounded-full text-sm font-bold bg-blue-100 text-blue-800 border border-blue-200">
-              {request.status.replace(/_/g, ' ')}
-            </span>
-          </div>
+          {quotation && (
+            <div>
+              <span className={`px-4 py-1.5 rounded-full text-sm font-bold border ${
+                quotation.status === 'ACCEPTED' ? 'bg-green-100 text-green-800 border-green-200' :
+                quotation.status === 'DECLINED' ? 'bg-red-100 text-red-800 border-red-200' :
+                quotation.status === 'SUBMITTED' ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                'bg-gray-100 text-gray-800 border-gray-200'
+              }`}>
+                Quote: {quotation.status}
+              </span>
+            </div>
+          )}
         </div>
 
+        {/* Quotation Editor */}
         <div className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Requested Items</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quotation Items</h3>
           <div className="overflow-x-auto mb-8">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Medicine</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Prescription?</th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Quantity</th>
-                  {isPendingMyQuote && (
-                    <>
-                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Available?</th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Unit Price (Rs)</th>
-                    </>
-                  )}
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Medicine</th>
+                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Req Qty</th>
+                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Avail Qty</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Unit Price (Rs)</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Subtotal (Rs)</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {request.items.map((item, idx) => (
-                  <tr key={idx}>
-                    <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
-                      {item.medicineId?.genericName || 'Medicine'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {item.prescriptionRequired ? (
-                        <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">Required</span>
-                      ) : (
-                        <span className="text-xs text-gray-500">No</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center font-bold">
-                      {item.quantity}
-                    </td>
-                    
-                    {isPendingMyQuote && quotationItems[item.medicineId._id] && (
-                      <>
-                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                {quotation?.items.map((qItem) => {
+                  const reqItem = request.items.find(i => i._id === qItem.requestItemId);
+                  const isEditing = isDraft;
+                  
+                  return (
+                    <tr key={qItem._id}>
+                      <td className="px-4 py-4">
+                        <div className="font-medium text-gray-900">
+                          {qItem.medicineSnapshot?.genericName || reqItem?.medicineId?.genericName || 'Medicine'}
+                        </div>
+                        {reqItem?.prescriptionRequired && (
+                          <span className="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded mt-1 inline-block">Prescription Required</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-4 text-center font-bold">
+                        {qItem.requestedQuantity}
+                      </td>
+                      
+                      {/* Available Quantity */}
+                      <td className="px-4 py-4 text-center">
+                        {isEditing ? (
                           <input 
-                            type="checkbox" 
-                            className="w-5 h-5 text-primary focus:ring-primary border-gray-300 rounded"
-                            checked={quotationItems[item.medicineId._id].isAvailable}
-                            onChange={(e) => handleAvailabilityChange(item.medicineId._id, e.target.checked)}
+                            type="number" 
+                            min="0"
+                            max={qItem.requestedQuantity}
+                            className="w-20 px-2 py-1 border border-gray-300 rounded focus:ring-1 focus:ring-primary outline-none"
+                            value={draftItems[qItem.requestItemId]?.availableQuantity ?? ''}
+                            onChange={(e) => handleItemChange(qItem.requestItemId, 'availableQuantity', parseInt(e.target.value) || 0)}
                           />
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                        ) : (
+                          <span className="font-medium">{qItem.availableQuantity}</span>
+                        )}
+                      </td>
+
+                      {/* Unit Price */}
+                      <td className="px-4 py-4 text-right">
+                        {isEditing ? (
                           <input 
                             type="number" 
                             min="0"
                             step="0.01"
-                            disabled={!quotationItems[item.medicineId._id].isAvailable}
-                            className="w-24 px-3 py-1 border border-gray-300 rounded focus:ring-1 focus:ring-primary outline-none disabled:bg-gray-100 disabled:opacity-50"
-                            value={quotationItems[item.medicineId._id].price || ''}
-                            onChange={(e) => handlePriceChange(item.medicineId._id, e.target.value)}
+                            className="w-24 px-2 py-1 border border-gray-300 rounded focus:ring-1 focus:ring-primary outline-none"
+                            value={draftItems[qItem.requestItemId]?.unitPrice ?? ''}
+                            onChange={(e) => handleItemChange(qItem.requestItemId, 'unitPrice', parseFloat(e.target.value) || 0)}
                             placeholder="0.00"
                           />
-                        </td>
-                      </>
-                    )}
-                  </tr>
-                ))}
+                        ) : (
+                          <span>{qItem.unitPrice?.toFixed(2) || '0.00'}</span>
+                        )}
+                      </td>
+                      
+                      {/* Subtotal */}
+                      <td className="px-4 py-4 text-right font-medium text-gray-900">
+                        {isEditing ? (
+                          <span>{((draftItems[qItem.requestItemId]?.availableQuantity || 0) * (draftItems[qItem.requestItemId]?.unitPrice || 0)).toFixed(2)}</span>
+                        ) : (
+                          <span>{qItem.subtotal?.toFixed(2) || '0.00'}</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
 
-          {/* Form for Submitting Quotation */}
-          {isPendingMyQuote && (
-            <div className="bg-blue-50 rounded-xl p-6 border border-blue-100">
-              <h4 className="font-semibold text-blue-900 mb-4">Provide Quotation</h4>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Additional Notes (Optional)</label>
-                <textarea 
-                  className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-primary outline-none"
-                  rows="3"
-                  placeholder="e.g. Generic alternatives available, delivery takes 2 hours..."
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                />
-              </div>
-              <div className="flex justify-end">
-                <button 
-                  onClick={handleSubmitQuotation}
-                  disabled={submitting}
-                  className="px-6 py-2 bg-primary text-white font-medium rounded hover:bg-primary-700 flex items-center disabled:opacity-50"
-                >
-                  {submitting ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Send className="w-5 h-5 mr-2" />}
-                  Send Quotation
-                </button>
-              </div>
-            </div>
-          )}
+          {/* Quotation Metadata */}
+          {quotation && (
+            <div className="bg-gray-50 rounded-xl p-6 border border-gray-200 mb-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-4">Fulfillment Details</h4>
+                
+                <div className="mb-4">
+                  <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
+                    <input 
+                      type="checkbox" 
+                      disabled={!isDraft}
+                      checked={isDraft ? draftMeta.pickupAvailable : quotation.pickupAvailable}
+                      onChange={(e) => handleMetaChange('pickupAvailable', e.target.checked)}
+                      className="mr-2 rounded text-primary focus:ring-primary"
+                    />
+                    Pickup Available
+                  </label>
+                </div>
+                
+                <div className="mb-4">
+                  <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
+                    <input 
+                      type="checkbox" 
+                      disabled={!isDraft}
+                      checked={isDraft ? draftMeta.deliveryAvailable : quotation.deliveryAvailable}
+                      onChange={(e) => handleMetaChange('deliveryAvailable', e.target.checked)}
+                      className="mr-2 rounded text-primary focus:ring-primary"
+                    />
+                    Delivery Available
+                  </label>
+                </div>
 
-          {/* View Previous Quotation */}
-          {myQuotation && (
-            <div className={`rounded-xl p-6 border ${iWon ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
-              <div className="flex justify-between items-center mb-4">
-                <h4 className={`font-bold ${iWon ? 'text-green-900' : 'text-gray-900'}`}>Your Quotation Details</h4>
-                <span className={`px-3 py-1 text-xs font-bold rounded-full ${
-                  myQuotation.status === 'ACCEPTED' ? 'bg-green-200 text-green-800' : 
-                  myQuotation.status === 'REJECTED' ? 'bg-red-200 text-red-800' : 
-                  'bg-gray-200 text-gray-800'
-                }`}>
-                  {myQuotation.status}
-                </span>
-              </div>
-              
-              <div className="space-y-2 mb-4 text-sm">
-                {myQuotation.items.map((qi, idx) => (
-                  <div key={idx} className="flex justify-between">
-                    <span className="text-gray-600">{qi.medicineId?.genericName || 'Medicine'}</span>
-                    <span className="font-medium">{qi.isAvailable ? `Rs. ${qi.price?.toFixed(2)}` : 'Not Available'}</span>
+                {(isDraft ? draftMeta.deliveryAvailable : quotation.deliveryAvailable) && (
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Delivery Fee (Rs)</label>
+                    {isDraft ? (
+                      <input 
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        className="w-32 px-3 py-1 border border-gray-300 rounded focus:ring-1 focus:ring-primary outline-none"
+                        value={draftMeta.deliveryFee}
+                        onChange={(e) => handleMetaChange('deliveryFee', parseFloat(e.target.value) || 0)}
+                      />
+                    ) : (
+                      <div className="font-medium">Rs. {quotation.deliveryFee?.toFixed(2)}</div>
+                    )}
                   </div>
-                ))}
+                )}
+                
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Prep Time (Minutes)</label>
+                  {isDraft ? (
+                    <input 
+                      type="number"
+                      min="15"
+                      step="5"
+                      className="w-32 px-3 py-1 border border-gray-300 rounded focus:ring-1 focus:ring-primary outline-none"
+                      value={draftMeta.preparationMinutes}
+                      onChange={(e) => handleMetaChange('preparationMinutes', parseInt(e.target.value) || 30)}
+                    />
+                  ) : (
+                    <div className="font-medium">{quotation.preparationMinutes} mins</div>
+                  )}
+                </div>
               </div>
               
-              <div className="border-t pt-3 flex justify-between font-bold text-lg">
-                <span>Total Offered:</span>
-                <span>Rs. {myQuotation.totalPrice?.toFixed(2)}</span>
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-4">Notes & Summary</h4>
+                
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Additional Notes</label>
+                  {isDraft ? (
+                    <textarea 
+                      className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-primary outline-none"
+                      rows="3"
+                      value={draftMeta.pharmacyNotes}
+                      onChange={(e) => handleMetaChange('pharmacyNotes', e.target.value)}
+                      placeholder="Special instructions or information..."
+                    />
+                  ) : (
+                    <p className="text-gray-600 bg-white p-3 rounded border text-sm">{quotation.pharmacyNotes || 'No notes provided.'}</p>
+                  )}
+                </div>
+
+                {isSubmitted && (
+                  <div className="bg-white p-4 rounded-lg border border-gray-200 mt-4">
+                    <div className="flex justify-between text-sm mb-2">
+                      <span className="text-gray-500">Subtotal:</span>
+                      <span className="font-medium">Rs. {quotation.subtotal?.toFixed(2)}</span>
+                    </div>
+                    {quotation.deliveryAvailable && (
+                      <div className="flex justify-between text-sm mb-2">
+                        <span className="text-gray-500">Delivery Fee:</span>
+                        <span className="font-medium">Rs. {quotation.deliveryFee?.toFixed(2)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-lg font-bold mt-2 pt-2 border-t">
+                      <span>Total:</span>
+                      <span className="text-primary">Rs. {quotation.total?.toFixed(2)}</span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
 
-          {/* Fulfillment controls if accepted & paid */}
-          {iWon && request.paymentStatus === 'PAID' && (
-            <div className="mt-8 border-t border-gray-200 pt-6">
-              <h4 className="font-bold text-gray-900 mb-4">Fulfillment Management</h4>
-              <p className="text-sm text-gray-600 mb-4">Customer has paid for this order. Please process and update the status.</p>
+          {/* Action Buttons */}
+          {isDraft && (
+            <div className="flex justify-end space-x-4">
+              <button 
+                onClick={handleSaveDraft}
+                disabled={saving || submitting}
+                className="px-6 py-2 bg-gray-100 text-gray-700 font-medium rounded hover:bg-gray-200 flex items-center"
+              >
+                {saving ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Save className="w-5 h-5 mr-2" />}
+                Save Draft
+              </button>
               
-              <div className="flex gap-4">
-                {request.fulfillmentStatus === 'PENDING' && (
-                  <button 
-                    onClick={() => handleFulfillmentStatus('PROCESSING')}
-                    disabled={submitting}
-                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium"
-                  >
-                    Start Processing
-                  </button>
-                )}
-                
-                {request.fulfillmentStatus === 'PROCESSING' && (
-                  <>
-                    <button 
-                      onClick={() => handleFulfillmentStatus('READY_FOR_PICKUP')}
-                      disabled={submitting}
-                      className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-medium"
-                    >
-                      Ready for Pickup
-                    </button>
-                    <button 
-                      onClick={() => handleFulfillmentStatus('DISPATCHED')}
-                      disabled={submitting}
-                      className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 font-medium"
-                    >
-                      Dispatched for Delivery
-                    </button>
-                  </>
-                )}
-                
-                {(request.fulfillmentStatus === 'READY_FOR_PICKUP' || request.fulfillmentStatus === 'DISPATCHED') && request.status !== 'COMPLETED' && (
-                  <button 
-                    disabled
-                    className="px-4 py-2 bg-gray-200 text-gray-600 rounded font-medium cursor-not-allowed"
-                  >
-                    Waiting for customer to confirm receipt
-                  </button>
-                )}
-              </div>
+              <button 
+                onClick={handleSubmitQuotation}
+                disabled={saving || submitting}
+                className="px-6 py-2 bg-primary text-white font-medium rounded hover:bg-primary-700 flex items-center shadow-sm"
+              >
+                {submitting ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Send className="w-5 h-5 mr-2" />}
+                Submit Quotation
+              </button>
             </div>
           )}
-
+          
+          {isDraft && (
+            <div className="mt-4 flex items-start text-amber-700 bg-amber-50 p-3 rounded-lg text-sm">
+              <AlertCircle className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" />
+              <p>Submitting this quotation is final. You will not be able to edit the prices or quantities once submitted to the customer.</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

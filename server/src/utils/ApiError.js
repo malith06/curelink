@@ -1,5 +1,12 @@
 class ApiError extends Error {
   constructor(message, statusCode, errors = []) {
+    // Hack to support codebase using (statusCode, message)
+    if (typeof message === 'number') {
+      const temp = message;
+      message = statusCode;
+      statusCode = temp;
+    }
+
     super(message);
     this.statusCode = statusCode;
     this.status = `${statusCode}`.startsWith('4') ? 'fail' : 'error';

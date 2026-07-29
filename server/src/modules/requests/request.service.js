@@ -1,8 +1,12 @@
 const MedicineRequest = require('./request.model');
 const Medicine = require('../medicines/medicine.model');
 const Pharmacy = require('../pharmacies/pharmacy.model');
+const Quotation = require('../quotations/quotation.model');
+const PrescriptionVerification = require('../prescription-verifications/verification.model');
 const { REQUEST_STATUS } = require('./request.constants');
+const { QUOTATION_STATUS } = require('../quotations/quotation.constants');
 const ApiError = require('../../utils/ApiError');
+const mongoose = require('mongoose');
 
 /**
  * Builds a snapshot of a medicine's current state to be embedded in a request item.
@@ -369,71 +373,6 @@ const cancelCustomerRequest = async (requestId, customerId, reason) => {
 };
 
 /**
- * Allows a pharmacy to provide a quotation for a request.
- * @param {String} requestId - The ID of the request
- * @param {String} pharmacyId - The ID of the pharmacy
- * @param {Object} quotationData - Quotation details
- * @returns {Promise<Object>} The updated request
- */
-const providePharmacyQuotation = async (requestId, pharmacyId, quotationData) => {
-  const request = await MedicineRequest.findOne({ 
-    _id: requestId, 
-    selectedPharmacyIds: pharmacyId 
-  });
-  
-  if (!request) {
-    throw new ApiError(404, 'Request not found or not assigned to this pharmacy');
-  }
-  
-  const invalidStatuses = [REQUEST_STATUS.CANCELLED, REQUEST_STATUS.EXPIRED, REQUEST_STATUS.CONVERTED_TO_ORDER];
-  if (invalidStatuses.includes(request.status)) {
-    throw new ApiError(400, `Cannot provide a quotation for a request that is ${request.status.toLowerCase()}`);
-  }
-
-  // Check if pharmacy already provided a quotation
-  const existingQuoteIndex = request.quotations.findIndex(q => q.pharmacyId.toString() === pharmacyId.toString());
-  if (existingQuoteIndex !== -1) {
-    throw new ApiError(400, 'Pharmacy has already provided a quotation for this request');
-  }
-
-  let totalAmount = 0;
-  const quoteItems = [];
-
-  for (const item of quotationData.items) {
-    const originalItem = request.items.id(item.requestItemId);
-    if (!originalItem) {
-      throw new ApiError(400, `Item ${item.requestItemId} does not exist in the request`);
-    }
-
-    const subTotal = (item.unitPrice || 0) * (item.availableQuantity || 0);
-    totalAmount += subTotal;
-    
-    quoteItems.push({
-      requestItemId: item.requestItemId,
-      availabilityStatus: item.availabilityStatus,
-      availableQuantity: item.availableQuantity,
-      unitPrice: item.unitPrice,
-      subTotal
-    });
-  }
-
-  request.quotations.push({
-    pharmacyId,
-    items: quoteItems,
-    totalAmount,
-    notes: quotationData.notes,
-    validUntil: new Date(Date.now() + 24 * 60 * 60 * 1000) // Default valid for 24 hours
-  });
-
-  if (request.status === REQUEST_STATUS.SUBMITTED) {
-    request.status = REQUEST_STATUS.QUOTATIONS_RECEIVED;
-  }
-
-  await request.save();
-  return request;
-};
-
-/**
  * Customer accepts a specific quotation
  * @param {String} requestId - The ID of the request
  * @param {String} quotationId - The ID of the quotation to accept
@@ -441,38 +380,58 @@ const providePharmacyQuotation = async (requestId, pharmacyId, quotationData) =>
  * @returns {Promise<Object>} The updated request
  */
 const acceptQuotation = async (requestId, quotationId, customerId) => {
-  const request = await MedicineRequest.findOne({ _id: requestId, customerId });
-  
-  if (!request) {
-    throw new ApiError(404, 'Request not found');
-  }
+  const session = await mongoose.startSession();
+  try {
+    session.startTransaction();
 
-  if (request.status !== REQUEST_STATUS.QUOTATIONS_RECEIVED) {
-    throw new ApiError(400, `Cannot accept quotation for a request in ${request.status.toLowerCase()} status`);
-  }
-
-  const quotation = request.quotations.id(quotationId);
-  if (!quotation) {
-    throw new ApiError(404, 'Quotation not found');
-  }
-
-  if (quotation.validUntil && new Date() > quotation.validUntil) {
-    throw new ApiError(400, 'Quotation has expired');
-  }
-
-  request.status = REQUEST_STATUS.QUOTATION_ACCEPTED;
-  
-  // Accept the selected quote and decline the rest
-  request.quotations.forEach(q => {
-    if (q._id.toString() === quotationId.toString()) {
-      q.status = 'ACCEPTED';
-    } else {
-      q.status = 'DECLINED';
+    const request = await MedicineRequest.findOne({ _id: requestId, customerId }).session(session);
+    
+    if (!request) {
+      throw new ApiError(404, 'Request not found');
     }
-  });
 
-  await request.save();
-  return request;
+    if (request.status !== REQUEST_STATUS.QUOTATIONS_RECEIVED) {
+      throw new ApiError(400, `Cannot accept quotation for a request in ${request.status.toLowerCase()} status`);
+    }
+
+    const quotation = await Quotation.findOne({ _id: quotationId, requestId }).session(session);
+    if (!quotation) {
+      throw new ApiError(404, 'Quotation not found');
+    }
+
+    if (quotation.status !== QUOTATION_STATUS.SUBMITTED) {
+      throw new ApiError(400, `Cannot accept a quotation with status ${quotation.status}`);
+    }
+
+    if (quotation.expiresAt && new Date() > new Date(quotation.expiresAt)) {
+      throw new ApiError(400, 'Quotation has expired');
+    }
+
+    // 1. Mark request as accepted
+    request.status = REQUEST_STATUS.QUOTATION_ACCEPTED;
+    request.acceptedQuotationId = quotation._id;
+    
+    // 2. Mark this quotation as ACCEPTED
+    quotation.status = QUOTATION_STATUS.ACCEPTED;
+
+    // 3. Mark all other competing SUBMITTED quotations as DECLINED
+    await Quotation.updateMany(
+      { requestId, _id: { $ne: quotationId }, status: QUOTATION_STATUS.SUBMITTED },
+      { $set: { status: QUOTATION_STATUS.DECLINED } },
+      { session }
+    );
+
+    await request.save({ session });
+    await quotation.save({ session });
+
+    await session.commitTransaction();
+    return request;
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
+  }
 };
 
 /**
@@ -480,7 +439,7 @@ const acceptQuotation = async (requestId, quotationId, customerId) => {
  * @param {String} requestId - The ID of the request
  * @param {String} quotationId - The ID of the quotation to decline
  * @param {String} customerId - The ID of the customer
- * @returns {Promise<Object>} The updated request
+ * @returns {Promise<Object>} The updated quotation
  */
 const declineQuotation = async (requestId, quotationId, customerId) => {
   const request = await MedicineRequest.findOne({ _id: requestId, customerId });
@@ -493,19 +452,22 @@ const declineQuotation = async (requestId, quotationId, customerId) => {
     throw new ApiError(400, `Cannot decline quotation for a request in ${request.status.toLowerCase()} status`);
   }
 
-  const quotation = request.quotations.id(quotationId);
+  const quotation = await Quotation.findOne({ _id: quotationId, requestId });
   if (!quotation) {
     throw new ApiError(404, 'Quotation not found');
   }
 
-  if (quotation.status !== 'PENDING') {
-    throw new ApiError(400, `Quotation is already ${quotation.status.toLowerCase()}`);
+  if (quotation.status !== QUOTATION_STATUS.SUBMITTED) {
+    throw new ApiError(400, `Cannot decline a quotation with status ${quotation.status}`);
   }
 
-  quotation.status = 'DECLINED';
-  
-  await request.save();
-  return request;
+  quotation.status = QUOTATION_STATUS.DECLINED;
+  await quotation.save();
+
+  // Optionally, if all quotations are declined, you could move the request status back to SUBMITTED or CANCELLED,
+  // but let's keep it QUOTATIONS_RECEIVED so they can still receive new ones.
+
+  return quotation;
 };
 
 /**
@@ -605,7 +567,6 @@ module.exports = {
   getPharmacyInbox,
   getPharmacyRequestById,
   cancelCustomerRequest,
-  providePharmacyQuotation,
   acceptQuotation,
   declineQuotation,
   processPaymentForRequest,

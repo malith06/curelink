@@ -1,4 +1,7 @@
 const requestService = require('./request.service');
+const quotationService = require('../quotations/quotation.service');
+const { formatCentsToDollars } = require('../quotations/quotation.calculator');
+const catchAsync = require('../../utils/asyncHandler');
 
 /**
  * @desc    Create a new draft medicine request
@@ -140,21 +143,68 @@ const getCustomerRequests = async (req, res, next) => {
  * @route   GET /api/v1/requests/:requestId
  * @access  Private (Customer only)
  */
-const getCustomerRequestById = async (req, res, next) => {
-  try {
-    const customerId = req.user.id;
-    const { requestId } = req.params;
+const getCustomerRequestById = catchAsync(async (req, res) => {
+  const request = await requestService.getCustomerRequestById(req.params.requestId, req.user._id);
+  res.status(200).json({
+    success: true,
+    data: request
+  });
+});
 
-    const request = await requestService.getCustomerRequestById(requestId, customerId);
-    
-    res.status(200).json({
-      success: true,
-      data: request
+/**
+ * @desc    Get all quotations for a request
+ * @route   GET /api/v1/requests/:requestId/quotations
+ * @access  Private (Customer only)
+ */
+const getRequestQuotations = catchAsync(async (req, res) => {
+  const { requestId } = req.params;
+  const customerId = req.user._id;
+
+  const quotations = await quotationService.listCustomerQuotations(requestId, customerId);
+
+  const formattedQuotations = quotations.map(q => {
+    const formatted = { ...q.toObject() };
+    if (formatted.total !== undefined) formatted.total = formatCentsToDollars(formatted.total);
+    if (formatted.subtotal !== undefined) formatted.subtotal = formatCentsToDollars(formatted.subtotal);
+    if (formatted.deliveryFee !== undefined) formatted.deliveryFee = formatCentsToDollars(formatted.deliveryFee);
+    return formatted;
+  });
+
+  res.status(200).json({
+    success: true,
+    data: formattedQuotations
+  });
+});
+
+/**
+ * @desc    Get specific quotation details
+ * @route   GET /api/v1/requests/:requestId/quotations/:quotationId
+ * @access  Private (Customer only)
+ */
+const getQuotationDetails = catchAsync(async (req, res) => {
+  const { quotationId } = req.params;
+  const customerId = req.user._id;
+
+  const quotation = await quotationService.getCustomerQuotationById(quotationId, customerId);
+
+  const formattedQuotation = { ...quotation.toObject() };
+  if (formattedQuotation.total !== undefined) formattedQuotation.total = formatCentsToDollars(formattedQuotation.total);
+  if (formattedQuotation.subtotal !== undefined) formattedQuotation.subtotal = formatCentsToDollars(formattedQuotation.subtotal);
+  if (formattedQuotation.deliveryFee !== undefined) formattedQuotation.deliveryFee = formatCentsToDollars(formattedQuotation.deliveryFee);
+  
+  if (formattedQuotation.items) {
+    formattedQuotation.items = formattedQuotation.items.map(item => {
+      if (item.unitPrice !== undefined && item.unitPrice !== null) item.unitPrice = formatCentsToDollars(item.unitPrice);
+      if (item.subtotal !== undefined) item.subtotal = formatCentsToDollars(item.subtotal);
+      return item;
     });
-  } catch (error) {
-    next(error);
   }
-};
+
+  res.status(200).json({
+    success: true,
+    data: formattedQuotation
+  });
+});
 
 /**
  * @desc    Cancel a request
@@ -273,6 +323,8 @@ module.exports = {
   submitRequest,
   getCustomerRequests,
   getCustomerRequestById,
+  getRequestQuotations,
+  getQuotationDetails,
   cancelRequest,
   acceptQuotation,
   declineQuotation,
