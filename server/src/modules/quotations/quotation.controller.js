@@ -1,5 +1,5 @@
 const quotationService = require('./quotation.service');
-const catchAsync = require('../../utils/catchAsync');
+const catchAsync = require('../../utils/asyncHandler');
 const ApiError = require('../../utils/ApiError');
 const { formatCentsToDollars } = require('./quotation.calculator');
 

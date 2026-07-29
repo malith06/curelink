@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const quotationController = require('./quotation.controller');
-const { protect, restrictTo } = require('../../middleware/auth.middleware');
-const validate = require('../../middleware/validate.middleware');
+const { protect, authorize } = require('../../middleware/auth.middleware');
+const { validate } = require('../../middleware/validate');
 const { updateDraftSchema } = require('./quotation.validation');
 
 // All routes here require authentication and pharmacy role for now
@@ -10,7 +10,7 @@ const { updateDraftSchema } = require('./quotation.validation');
 router.use(protect);
 
 // Pharmacy routes
-router.use(restrictTo('pharmacy'));
+router.use(authorize('pharmacy'));
 
 // Create or get draft for a specific request
 router.post('/requests/:requestId/draft', quotationController.getOrCreateDraft);

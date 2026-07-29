@@ -1,7 +1,7 @@
 const requestService = require('./request.service');
 const quotationService = require('../quotations/quotation.service');
 const { formatCentsToDollars } = require('../quotations/quotation.calculator');
-const catchAsync = require('../utils/catchAsync');
+const catchAsync = require('../../utils/asyncHandler');
 
 /**
  * @desc    Create a new draft medicine request
