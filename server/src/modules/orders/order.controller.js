@@ -1,4 +1,4 @@
-const catchAsync = require('../../utils/catchAsync');
+const catchAsync = require('../../utils/asyncHandler');
 const orderService = require('./order.service');
 
 const createOrder = catchAsync(async (req, res) => {
