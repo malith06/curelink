@@ -16,6 +16,7 @@ const availability = require("./modules/availability/availability.routes");
 const request = require("./modules/requests/request.routes");
 const prescription = require("./modules/prescriptions/prescription.routes");
 const quotation = require("./modules/quotations/quotation.routes");
+const { customerOrderRouter, pharmacyOrderRouter } = require("./modules/orders/order.routes");
 
 const app = express();
 
@@ -41,6 +42,8 @@ app.use("/api/v1/availability", availability);
 app.use("/api/v1/requests", request);
 app.use("/api/v1/prescriptions", prescription);
 app.use("/api/v1/quotations", quotation);
+app.use("/api/v1/orders", customerOrderRouter);
+app.use("/api/v1/pharmacy/orders", pharmacyOrderRouter);
 
 // Handle undefined routes
 app.use(notFound);

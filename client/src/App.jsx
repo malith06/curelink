@@ -40,12 +40,15 @@ import PharmacyAvailabilityPage from './pages/pharmacy/PharmacyAvailabilityPage'
 import PharmacyInboxPage from './pages/pharmacy/requests/PharmacyInboxPage';
 import PharmacyRequestDetailsPage from './pages/pharmacy/requests/PharmacyRequestDetailsPage';
 import PharmacyQuotationsPage from './pages/pharmacy/quotations/PharmacyQuotationsPage';
+import PharmacyOrdersPage from './pages/pharmacy/orders/PharmacyOrdersPage';
 
 // Customer Protected Pages
 import CustomerRequestsPage from './pages/customer/requests/CustomerRequestsPage';
 import CreateRequestPage from './pages/customer/requests/CreateRequestPage';
 import RequestDetailsPage from './pages/customer/requests/RequestDetailsPage';
 import CustomerQuotationDetailsPage from './pages/customer/quotations/CustomerQuotationDetailsPage';
+import CustomerOrdersPage from './pages/customer/orders/CustomerOrdersPage';
+import CreateOrderPage from './pages/customer/orders/CreateOrderPage';
 
 function App() {
   return (
@@ -100,6 +103,22 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={['CUSTOMER']}>
                   <CustomerQuotationDetailsPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/customer/orders" 
+              element={
+                <ProtectedRoute allowedRoles={['CUSTOMER']}>
+                  <CustomerOrdersPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/customer/orders/create/:quotationId" 
+              element={
+                <ProtectedRoute allowedRoles={['CUSTOMER']}>
+                  <CreateOrderPage />
                 </ProtectedRoute>
               } 
             />
@@ -158,6 +177,14 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={['PHARMACY']}>
                   <PharmacyRequestDetailsPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/pharmacy/orders" 
+              element={
+                <ProtectedRoute allowedRoles={['PHARMACY']}>
+                  <PharmacyOrdersPage />
                 </ProtectedRoute>
               } 
             />
