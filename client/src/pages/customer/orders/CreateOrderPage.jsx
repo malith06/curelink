@@ -63,8 +63,8 @@ const CreateOrderPage = () => {
 
       const response = await orderService.createOrderFromQuotation(quotationId, payload);
       toast.success('Order created successfully!');
-      // Navigate to customer orders list
-      navigate(`/customer/orders/${response.data.order._id}`);
+      // Navigate to payment selection page
+      navigate(`/customer/orders/${response.data.order._id}/payment`);
     } catch (error) {
       console.error('Order creation failed', error);
       toast.error(error.response?.data?.message || 'Failed to create order');

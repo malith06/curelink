@@ -49,6 +49,9 @@ import RequestDetailsPage from './pages/customer/requests/RequestDetailsPage';
 import CustomerQuotationDetailsPage from './pages/customer/quotations/CustomerQuotationDetailsPage';
 import CustomerOrdersPage from './pages/customer/orders/CustomerOrdersPage';
 import CreateOrderPage from './pages/customer/orders/CreateOrderPage';
+import PaymentSelectionPage from './pages/customer/orders/PaymentSelectionPage';
+import PaymentSuccessPage from './pages/customer/orders/PaymentSuccessPage';
+import PaymentCancelPage from './pages/customer/orders/PaymentCancelPage';
 
 function App() {
   return (
@@ -119,6 +122,30 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={['CUSTOMER']}>
                   <CreateOrderPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/customer/orders/:orderId/payment" 
+              element={
+                <ProtectedRoute allowedRoles={['CUSTOMER']}>
+                  <PaymentSelectionPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/customer/orders/:orderId/payment/success" 
+              element={
+                <ProtectedRoute allowedRoles={['CUSTOMER']}>
+                  <PaymentSuccessPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/customer/orders/:orderId/payment/cancel" 
+              element={
+                <ProtectedRoute allowedRoles={['CUSTOMER']}>
+                  <PaymentCancelPage />
                 </ProtectedRoute>
               } 
             />

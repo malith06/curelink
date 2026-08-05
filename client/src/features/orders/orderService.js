@@ -49,6 +49,23 @@ const updateOrderStatus = async (orderId, status, note = '') => {
   return response.data;
 };
 
+// --- PAYMENT ENDPOINTS ---
+
+const createCardSession = async (orderId) => {
+  const response = await api.post(`/orders/${orderId}/payments/card/session`);
+  return response.data;
+};
+
+const selectCOD = async (orderId) => {
+  const response = await api.post(`/orders/${orderId}/payments/cod`);
+  return response.data;
+};
+
+const collectCOD = async (orderId) => {
+  const response = await api.post(`/pharmacy/orders/${orderId}/payments/cod/collect`);
+  return response.data;
+};
+
 export const orderService = {
   createOrderFromQuotation,
   getMyOrders,
@@ -58,7 +75,10 @@ export const orderService = {
   getPharmacyOrderById,
   acceptOrder,
   rejectOrder,
-  updateOrderStatus
+  updateOrderStatus,
+  createCardSession,
+  selectCOD,
+  collectCOD
 };
 
 export default orderService;
