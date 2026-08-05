@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const Order = require('../orders/order.model');
 const Payment = require('./payment.model');
+const PaymentEvent = require('../payment-events/paymentEvent.model');
 const stripeSandboxAdapter = require('../payment-gateways/stripeSandbox.adapter');
 const ApiError = require('../../utils/ApiError');
 const env = require('../../config/env');
@@ -107,4 +108,61 @@ exports.createCardCheckoutSession = async (orderId, customerId) => {
     
     throw new ApiError('Failed to initialize secure checkout with the payment gateway', 502);
   }
+};
+
+/**
+ * Handle incoming webhook events from the payment gateway.
+ * Verifies the signature, deduplicates the event, and delegates processing.
+ */
+exports.handleWebhookEvent = async (rawBody, signature, provider = PAYMENT_PROVIDER.STRIPE_SANDBOX) => {
+  let rawEvent;
+  
+  // 1. Verify Signature
+  if (provider === PAYMENT_PROVIDER.STRIPE_SANDBOX) {
+    try {
+      rawEvent = await stripeSandboxAdapter.verifyWebhookSignature(rawBody, signature);
+    } catch (err) {
+      throw new ApiError(err.message, 400);
+    }
+  } else {
+    throw new ApiError(`Unsupported webhook provider: ${provider}`, 400);
+  }
+
+  // 2. Parse Event
+  let parsedEvent;
+  if (provider === PAYMENT_PROVIDER.STRIPE_SANDBOX) {
+    parsedEvent = await stripeSandboxAdapter.parseWebhookEvent(rawEvent);
+  }
+
+  // 3. Deduplication check using unique compound index
+  let paymentEvent;
+  try {
+    paymentEvent = await PaymentEvent.create({
+      provider,
+      eventId: parsedEvent.eventId,
+      eventType: parsedEvent.eventType,
+      signatureVerified: true,
+      processed: false
+    });
+  } catch (error) {
+    if (error.code === 11000) {
+      // Duplicate key error - event already received
+      paymentEvent = await PaymentEvent.findOne({ provider, eventId: parsedEvent.eventId });
+      if (paymentEvent && paymentEvent.processed) {
+        // Already successfully processed, just acknowledge
+        return { acknowledged: true, alreadyProcessed: true };
+      }
+    } else {
+      throw error;
+    }
+  }
+
+  // TODO: Step 5 - Business logic processing of the event
+  // For now, just mark as processed for this commit step
+  paymentEvent.processed = true;
+  paymentEvent.processingStatus = 'SUCCESS';
+  paymentEvent.processedAt = new Date();
+  await paymentEvent.save();
+
+  return { acknowledged: true, alreadyProcessed: false };
 };

@@ -17,3 +17,21 @@ exports.createCardSession = asyncHandler(async (req, res, next) => {
     data: sessionData
   });
 });
+
+/**
+ * @desc    Handle Stripe Webhooks
+ * @route   POST /api/v1/payments/webhook
+ * @access  Public (Webhook)
+ */
+exports.handleWebhook = asyncHandler(async (req, res, next) => {
+  const rawBody = req.body;
+  const signature = req.headers['stripe-signature'];
+
+  if (!signature) {
+    return res.status(400).send('Missing stripe-signature header');
+  }
+
+  const result = await paymentService.handleWebhookEvent(rawBody, signature);
+
+  res.status(200).json(result);
+});

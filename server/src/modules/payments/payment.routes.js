@@ -10,7 +10,7 @@ const pharmacyPaymentRouter = express.Router({ mergeParams: true });
 customerPaymentRouter.post('/card/session', paymentController.createCardSession);
 
 // Webhook must be parsed as raw body
-// webhookRouter.post('/webhook', rawWebhookBody, paymentController.handleWebhook);
+webhookRouter.post('/webhook', rawWebhookBody, paymentController.handleWebhook);
 
 module.exports = {
   webhookRouter,
