@@ -17,6 +17,7 @@ const request = require("./modules/requests/request.routes");
 const prescription = require("./modules/prescriptions/prescription.routes");
 const quotation = require("./modules/quotations/quotation.routes");
 const { customerOrderRouter, pharmacyOrderRouter } = require("./modules/orders/order.routes");
+const { webhookRouter, customerPaymentRouter, pharmacyPaymentRouter } = require("./modules/payments/payment.routes");
 
 const app = express();
 
@@ -29,6 +30,10 @@ app.use(
     credentials: true,
   })
 );
+
+// Mount raw webhook routes BEFORE express.json()
+app.use("/api/v1/payments", webhookRouter);
+
 app.use(express.json());
 app.use(cookieParser());
 
