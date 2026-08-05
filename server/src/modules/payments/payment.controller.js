@@ -35,3 +35,37 @@ exports.handleWebhook = asyncHandler(async (req, res, next) => {
 
   res.status(200).json(result);
 });
+
+/**
+ * @desc    Select Cash on Delivery for an order
+ * @route   POST /api/v1/orders/:orderId/payments/cod
+ * @access  Private (Customer only)
+ */
+exports.selectCOD = asyncHandler(async (req, res, next) => {
+  const { orderId } = req.params;
+  const customerId = req.user._id;
+
+  const result = await paymentService.selectCOD(orderId, customerId);
+
+  res.status(200).json({
+    success: true,
+    data: result
+  });
+});
+
+/**
+ * @desc    Mark COD payment as collected
+ * @route   POST /api/v1/pharmacy/orders/:orderId/payments/cod/collect
+ * @access  Private (Pharmacy only)
+ */
+exports.collectCOD = asyncHandler(async (req, res, next) => {
+  const { orderId } = req.params;
+  const pharmacyUserId = req.user._id;
+
+  const result = await paymentService.collectCOD(orderId, pharmacyUserId);
+
+  res.status(200).json({
+    success: true,
+    data: result
+  });
+});

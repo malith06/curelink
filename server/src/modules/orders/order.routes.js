@@ -70,6 +70,9 @@ pharmacyOrderRouter.patch(
   orderController.updateOrderStatus
 );
 
+// Mount pharmacy payment routes
+pharmacyOrderRouter.use('/:orderId/payments', pharmacyPaymentRouter);
+
 module.exports = {
   customerOrderRouter,
   pharmacyOrderRouter

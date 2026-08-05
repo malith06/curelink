@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const Order = require('../orders/order.model');
 const Payment = require('./payment.model');
 const PaymentEvent = require('../payment-events/paymentEvent.model');
+const Pharmacy = require('../pharmacies/pharmacy.model');
 const stripeSandboxAdapter = require('../payment-gateways/stripeSandbox.adapter');
 const ApiError = require('../../utils/ApiError');
 const env = require('../../config/env');
@@ -253,4 +254,129 @@ exports.handleWebhookEvent = async (rawBody, signature, provider = PAYMENT_PROVI
   }
 
   return { acknowledged: true, alreadyProcessed: false };
+};
+
+/**
+ * Select Cash on Delivery (COD) as the payment method for an order
+ */
+exports.selectCOD = async (orderId, customerId) => {
+  const session = await Order.startSession();
+  try {
+    session.startTransaction();
+
+    const order = await Order.findOne({ _id: orderId, customerId }).session(session);
+    if (!order) {
+      throw new ApiError('Order not found', 404);
+    }
+
+    if (order.orderStatus !== ORDER_STATUS.PENDING_PAYMENT) {
+      throw new ApiError('Order is not in a state that accepts payment', 400);
+    }
+
+    if (order.paymentStatus === PAYMENT_STATUS.PAID || order.paymentStatus === PAYMENT_STATUS.COD_PENDING) {
+      throw new ApiError('An active or successful payment already exists for this order', 400);
+    }
+
+    const pharmacy = await Pharmacy.findById(order.pharmacyId).session(session);
+    if (!pharmacy || !pharmacy.codAvailable) {
+      throw new ApiError('Cash on Delivery is not available for this pharmacy', 400);
+    }
+
+    const payment = new Payment({
+      paymentNumber: generatePaymentNumber(),
+      orderId: order._id,
+      customerId: customerId,
+      pharmacyId: order.pharmacyId,
+      method: PAYMENT_METHOD.COD,
+      provider: PAYMENT_PROVIDER.COD,
+      currency: order.currency || env.DEFAULT_CURRENCY,
+      amount: order.total,
+      status: PAYMENT_STATUS.COD_PENDING
+    });
+
+    await payment.save({ session });
+
+    order.paymentMethod = PAYMENT_METHOD.COD;
+    order.paymentStatus = PAYMENT_STATUS.COD_PENDING;
+    order.orderStatus = ORDER_STATUS.PAYMENT_CONFIRMED;
+    order.paymentId = payment._id;
+    order.statusHistory.push({
+      status: ORDER_STATUS.PAYMENT_CONFIRMED,
+      previousStatus: ORDER_STATUS.PENDING_PAYMENT,
+      actorRole: 'CUSTOMER',
+      changeSource: 'SYSTEM',
+      note: 'Customer selected Cash on Delivery'
+    });
+
+    await order.save({ session });
+
+    await session.commitTransaction();
+
+    return {
+      paymentId: payment._id,
+      paymentNumber: payment.paymentNumber,
+      status: payment.status
+    };
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
+  }
+};
+
+/**
+ * Mark a COD payment as collected by the pharmacy
+ */
+exports.collectCOD = async (orderId, pharmacyUserId) => {
+  const session = await Order.startSession();
+  try {
+    session.startTransaction();
+
+    const order = await Order.findById(orderId).session(session);
+    if (!order) {
+      throw new ApiError('Order not found', 404);
+    }
+
+    // Verify pharmacy owns this order (pharmacyUserId matches ownerUserId)
+    const pharmacy = await Pharmacy.findOne({ ownerUserId: pharmacyUserId }).session(session);
+    if (!pharmacy || order.pharmacyId.toString() !== pharmacy._id.toString()) {
+      throw new ApiError('Not authorized to collect payment for this order', 403);
+    }
+
+    if (order.paymentMethod !== PAYMENT_METHOD.COD || order.paymentStatus !== PAYMENT_STATUS.COD_PENDING) {
+      throw new ApiError('Order is not pending COD collection', 400);
+    }
+
+    const allowedStatuses = [ORDER_STATUS.READY_FOR_PICKUP, ORDER_STATUS.OUT_FOR_DELIVERY, ORDER_STATUS.DELIVERED, ORDER_STATUS.COMPLETED];
+    if (!allowedStatuses.includes(order.orderStatus)) {
+      throw new ApiError('Order must be in a fulfillable state to collect COD', 400);
+    }
+
+    const payment = await Payment.findById(order.paymentId).session(session);
+    if (!payment) {
+      throw new ApiError('Payment record not found', 404);
+    }
+
+    payment.status = PAYMENT_STATUS.COD_COLLECTED;
+    payment.codCollectedAt = new Date();
+    payment.codCollectedBy = pharmacyUserId;
+    await payment.save({ session });
+
+    order.paymentStatus = PAYMENT_STATUS.COD_COLLECTED;
+    await order.save({ session });
+
+    await session.commitTransaction();
+
+    return {
+      paymentId: payment._id,
+      paymentNumber: payment.paymentNumber,
+      status: payment.status
+    };
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
+  }
 };

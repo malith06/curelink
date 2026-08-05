@@ -69,6 +69,10 @@ const pharmacySchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    codAvailable: {
+      type: Boolean,
+      default: true,
+    },
     serviceRadiusKm: {
       type: Number,
       min: 1,
