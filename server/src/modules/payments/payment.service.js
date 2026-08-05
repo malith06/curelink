@@ -6,7 +6,7 @@ const stripeSandboxAdapter = require('../payment-gateways/stripeSandbox.adapter'
 const ApiError = require('../../utils/ApiError');
 const env = require('../../config/env');
 const { ORDER_STATUS, PAYMENT_METHOD, PAYMENT_STATUS } = require('../orders/order.constants');
-const { PAYMENT_PROVIDER } = require('./payment.constants');
+const { PAYMENT_PROVIDER, GATEWAY_EVENT } = require('./payment.constants');
 
 /**
  * Generate a unique payment number (e.g., PAY-20260802-B71C4E)
@@ -157,12 +157,100 @@ exports.handleWebhookEvent = async (rawBody, signature, provider = PAYMENT_PROVI
     }
   }
 
-  // TODO: Step 5 - Business logic processing of the event
-  // For now, just mark as processed for this commit step
-  paymentEvent.processed = true;
-  paymentEvent.processingStatus = 'SUCCESS';
-  paymentEvent.processedAt = new Date();
-  await paymentEvent.save();
+  // 4. Process the business logic within a transaction
+  const session = await Order.startSession();
+  try {
+    session.startTransaction();
+
+    let payment;
+    if (parsedEvent.metadata && parsedEvent.metadata.paymentId) {
+      payment = await Payment.findById(parsedEvent.metadata.paymentId).session(session);
+    } else if (parsedEvent.gatewaySessionId) {
+      payment = await Payment.findOne({ gatewaySessionId: parsedEvent.gatewaySessionId }).session(session);
+    }
+
+    if (payment) {
+      const order = await Order.findById(payment.orderId).session(session);
+
+      switch (parsedEvent.eventType) {
+        case GATEWAY_EVENT.PAYMENT_SUCCEEDED:
+          if (payment.status !== PAYMENT_STATUS.PAID) {
+            payment.status = PAYMENT_STATUS.PAID;
+            payment.paidAt = new Date();
+            if (parsedEvent.gatewayPaymentReference) {
+              payment.gatewayPaymentReference = parsedEvent.gatewayPaymentReference;
+            }
+            await payment.save({ session });
+          }
+
+          if (order && order.paymentStatus !== PAYMENT_STATUS.PAID) {
+            order.paymentMethod = PAYMENT_METHOD.CARD;
+            order.paymentStatus = PAYMENT_STATUS.PAID;
+            
+            // Only update order status if it's PENDING_PAYMENT
+            if (order.orderStatus === ORDER_STATUS.PENDING_PAYMENT) {
+              order.statusHistory.push({
+                status: ORDER_STATUS.PAYMENT_CONFIRMED,
+                previousStatus: order.orderStatus,
+                actorRole: 'SYSTEM',
+                changeSource: 'PAYMENT_GATEWAY',
+                note: `Payment successful via ${provider}`
+              });
+              order.orderStatus = ORDER_STATUS.PAYMENT_CONFIRMED;
+            }
+            order.paymentId = payment._id;
+            await order.save({ session });
+          }
+          break;
+
+        case GATEWAY_EVENT.PAYMENT_FAILED:
+          if (payment.status !== PAYMENT_STATUS.FAILED && payment.status !== PAYMENT_STATUS.PAID) {
+            payment.status = PAYMENT_STATUS.FAILED;
+            payment.failureCode = 'WEBHOOK_FAILED';
+            payment.failureMessage = 'Payment failed during asynchronous processing';
+            await payment.save({ session });
+          }
+          break;
+
+        case GATEWAY_EVENT.CHECKOUT_CANCELLED:
+          if (payment.status !== PAYMENT_STATUS.CANCELLED && payment.status !== PAYMENT_STATUS.PAID) {
+            payment.status = PAYMENT_STATUS.CANCELLED;
+            payment.cancelledAt = new Date();
+            await payment.save({ session });
+          }
+          break;
+      }
+    }
+
+    // 5. Mark event as processed
+    paymentEvent.processed = true;
+    paymentEvent.processingStatus = 'SUCCESS';
+    paymentEvent.processedAt = new Date();
+    if (payment) {
+      paymentEvent.paymentId = payment._id;
+      paymentEvent.orderId = payment.orderId;
+    }
+    await paymentEvent.save({ session });
+
+    await session.commitTransaction();
+  } catch (error) {
+    await session.abortTransaction();
+    
+    // Attempt to log the error to the event, but outside the aborted transaction
+    try {
+      paymentEvent.processed = true;
+      paymentEvent.processingStatus = 'ERROR';
+      paymentEvent.processingError = error.message;
+      paymentEvent.processedAt = new Date();
+      await paymentEvent.save();
+    } catch (saveError) {
+      // Ignore save error during fallback
+    }
+
+    throw error;
+  } finally {
+    session.endSession();
+  }
 
   return { acknowledged: true, alreadyProcessed: false };
 };
