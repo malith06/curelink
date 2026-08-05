@@ -1,5 +1,5 @@
 const paymentService = require('./payment.service');
-const asyncHandler = require('../../middleware/async.middleware');
+const asyncHandler = require('../../utils/asyncHandler');
 
 /**
  * @desc    Initialize a card checkout session
