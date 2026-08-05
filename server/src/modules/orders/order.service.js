@@ -171,6 +171,14 @@ const updateOrderStatus = async (orderId, pharmacyId, newStatus, note) => {
     throw new ApiError(`Invalid transition from ${order.orderStatus} to ${newStatus} for ${order.fulfilmentMethod} order`, 400);
   }
 
+  // Explicit security rule: Enforce payment state before pharmacy acceptance or preparation
+  if (newStatus === ORDER_STATUS.PHARMACY_ACCEPTED || newStatus === ORDER_STATUS.PREPARING) {
+    const { PAYMENT_STATUS } = require('./order.constants');
+    if (order.paymentStatus !== PAYMENT_STATUS.PAID && order.paymentStatus !== PAYMENT_STATUS.COD_PENDING) {
+      throw new ApiError('Cannot accept order without a confirmed payment or COD lock', 400);
+    }
+  }
+
   appendStatusHistory(order, newStatus, pharmacyId, 'PHARMACY', CHANGE_SOURCE.PHARMACY, note);
   await order.save();
   return order;

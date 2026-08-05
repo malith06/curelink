@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Feature (Day 9): Full-Stack Payment Integration supporting Stripe Sandbox for card payments and Cash on Delivery.
+- Feature (Day 9): Webhook signature verification and deduplication using MongoDB compound index on PaymentEvent to prevent duplicate processing.
+- Feature (Day 9): Card Checkout Sessions with seamless redirects to Stripe Hosted Checkout and server-side validation.
+- Feature (Day 9): Cash on Delivery Collection Workflow for pharmacists to securely mark orders as "Collected".
+- Feature (Day 9): Admin Payment Monitoring Dashboard to view all global transactions by method and status.
+- Feature (Day 9): Customer payment selection, success, and cancel frontend views integrated with checkout service.
+- Feature (Day 8): Order Management Workflow providing end-to-end status progression (Pending, Accepted, Preparing, Ready, Delivered).
+- Feature (Day 8): Snapshot functionality capturing customer and pharmacy details immutably at checkout time.
+- Feature (Day 8): Order State Machine transition validation preventing illegal fulfillment flow jumps.
+- Feature (Day 8): Customer Orders Dashboard UI and Create Order Flow (Pickup vs Delivery).
+- Feature (Day 8): Pharmacy Orders Dashboard UI for triage and bulk-filtering incoming orders.
 - Feature (Day 7): Private Quotation Workflow, allowing pharmacies to offer dynamic pricing based on customer requests.
 - Feature (Day 7): Quotation calculator for accurate currency conversions and availability score determination.
 - Feature (Day 7): Pharmacy Quotation Builder UI to draft, calculate totals, and submit pricing options.
