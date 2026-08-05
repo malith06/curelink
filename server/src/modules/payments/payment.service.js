@@ -380,3 +380,21 @@ exports.collectCOD = async (orderId, pharmacyUserId) => {
     session.endSession();
   }
 };
+
+/**
+ * Get all payments for admin monitoring
+ */
+exports.getAllPayments = async (query = {}) => {
+  // Simple filter mapped from query
+  const filter = {};
+  if (query.status) filter.status = query.status;
+  if (query.method) filter.method = query.method;
+
+  const payments = await Payment.find(filter)
+    .sort({ createdAt: -1 })
+    .populate('customerId', 'name phone')
+    .populate('pharmacyId', 'name')
+    .limit(100); // hard limit for now
+
+  return payments;
+};

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Store, Pill, Shield, Users } from 'lucide-react';
+import { Store, Pill, Shield, Users, DollarSign } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const AdminDashboardPage = () => {
@@ -38,6 +38,18 @@ const AdminDashboardPage = () => {
           </Link>
         </div>
 
+        {/* Payments */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow p-6">
+          <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center mb-4 text-green-600">
+            <DollarSign className="w-6 h-6" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Payments</h3>
+          <p className="text-gray-600 text-sm mb-4">Monitor all system payments and transactions.</p>
+          <Link to="/admin/payments" className="text-green-600 font-medium text-sm flex items-center hover:text-green-800">
+            Monitor Payments <span className="ml-1">→</span>
+          </Link>
+        </div>
+
         {/* Users (Placeholder) */}
         <div className="bg-gray-50 rounded-xl border border-gray-200 p-6 opacity-60">
           <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center mb-4 text-gray-500">
@@ -45,15 +57,6 @@ const AdminDashboardPage = () => {
           </div>
           <h3 className="text-lg font-semibold text-gray-900 mb-2">Users</h3>
           <p className="text-gray-600 text-sm mb-4">Manage customer accounts (Coming soon).</p>
-        </div>
-
-        {/* Settings (Placeholder) */}
-        <div className="bg-gray-50 rounded-xl border border-gray-200 p-6 opacity-60">
-          <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center mb-4 text-gray-500">
-            <Shield className="w-6 h-6" />
-          </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">System Logs</h3>
-          <p className="text-gray-600 text-sm mb-4">View security logs (Coming soon).</p>
         </div>
       </div>
     </div>

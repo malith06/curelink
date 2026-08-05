@@ -16,8 +16,16 @@ pharmacyPaymentRouter.post('/cod/collect', paymentController.collectCOD);
 // Webhook must be parsed as raw body
 webhookRouter.post('/webhook', rawWebhookBody, paymentController.handleWebhook);
 
+const { protect, authorize } = require('../../middleware/auth.middleware');
+
+// Admin routes (Mounted at /api/v1/admin/payments)
+const adminPaymentRouter = express.Router();
+adminPaymentRouter.use(protect, authorize('ADMIN'));
+adminPaymentRouter.get('/', paymentController.getAllPayments);
+
 module.exports = {
   webhookRouter,
   customerPaymentRouter,
-  pharmacyPaymentRouter
+  pharmacyPaymentRouter,
+  adminPaymentRouter
 };

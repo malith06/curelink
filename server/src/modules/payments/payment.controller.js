@@ -69,3 +69,18 @@ exports.collectCOD = asyncHandler(async (req, res, next) => {
     data: result
   });
 });
+
+/**
+ * @desc    Get all payments for admin monitoring
+ * @route   GET /api/v1/admin/payments
+ * @access  Private (Admin only)
+ */
+exports.getAllPayments = asyncHandler(async (req, res, next) => {
+  const payments = await paymentService.getAllPayments(req.query);
+
+  res.status(200).json({
+    success: true,
+    count: payments.length,
+    data: payments
+  });
+});

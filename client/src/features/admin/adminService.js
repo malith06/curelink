@@ -43,6 +43,12 @@ const deleteMedicine = async (id) => {
   return response.data;
 };
 
+// --- PAYMENTS ---
+const getAllPayments = async (params = {}) => {
+  const response = await api.get('/admin/payments', { params });
+  return response.data;
+};
+
 export const adminService = {
   getPharmacies,
   getPharmacyById,
@@ -52,6 +58,7 @@ export const adminService = {
   createMedicine,
   updateMedicine,
   deleteMedicine,
+  getAllPayments,
 };
 
 export default adminService;
