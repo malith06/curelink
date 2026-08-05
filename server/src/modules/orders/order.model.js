@@ -148,7 +148,7 @@ const orderSchema = new mongoose.Schema({
     rejectedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     rejectedAt: { type: Date }
   },
-  paymentId: { type: String }, // Placeholder for Day 9
+  paymentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Payment' },
   acceptedAt: { type: Date },
   preparationStartedAt: { type: Date },
   readyAt: { type: Date },

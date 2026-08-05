@@ -34,6 +34,10 @@ customerOrderRouter.post(
   orderController.cancelOrder
 );
 
+// Mount customer payment routes
+const { customerPaymentRouter, pharmacyPaymentRouter } = require('../payments/payment.routes');
+customerOrderRouter.use('/:orderId/payments', customerPaymentRouter);
+
 // ==========================================
 // PHARMACY ROUTES (/api/v1/pharmacy/orders)
 // ==========================================
