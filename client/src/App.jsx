@@ -32,6 +32,7 @@ import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import AdminPharmaciesPage from './pages/admin/pharmacies/AdminPharmaciesPage';
 import AdminPharmacyDetailsPage from './pages/admin/pharmacies/AdminPharmacyDetailsPage';
 import AdminMedicinesPage from './pages/admin/medicines/AdminMedicinesPage';
+import AdminPaymentsPage from './pages/admin/payments/AdminPaymentsPage';
 
 // Pharmacy Protected Pages
 import PharmacyProfilePage from './pages/pharmacy/PharmacyProfilePage';
@@ -41,6 +42,7 @@ import PharmacyInboxPage from './pages/pharmacy/requests/PharmacyInboxPage';
 import PharmacyRequestDetailsPage from './pages/pharmacy/requests/PharmacyRequestDetailsPage';
 import PharmacyQuotationsPage from './pages/pharmacy/quotations/PharmacyQuotationsPage';
 import PharmacyOrdersPage from './pages/pharmacy/orders/PharmacyOrdersPage';
+import PharmacyOrderDetailsPage from './pages/pharmacy/orders/PharmacyOrderDetailsPage';
 
 // Customer Protected Pages
 import CustomerRequestsPage from './pages/customer/requests/CustomerRequestsPage';
@@ -49,6 +51,9 @@ import RequestDetailsPage from './pages/customer/requests/RequestDetailsPage';
 import CustomerQuotationDetailsPage from './pages/customer/quotations/CustomerQuotationDetailsPage';
 import CustomerOrdersPage from './pages/customer/orders/CustomerOrdersPage';
 import CreateOrderPage from './pages/customer/orders/CreateOrderPage';
+import PaymentSelectionPage from './pages/customer/orders/PaymentSelectionPage';
+import PaymentSuccessPage from './pages/customer/orders/PaymentSuccessPage';
+import PaymentCancelPage from './pages/customer/orders/PaymentCancelPage';
 
 function App() {
   return (
@@ -122,6 +127,30 @@ function App() {
                 </ProtectedRoute>
               } 
             />
+            <Route 
+              path="/customer/orders/:orderId/payment" 
+              element={
+                <ProtectedRoute allowedRoles={['CUSTOMER']}>
+                  <PaymentSelectionPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/customer/orders/:orderId/payment/success" 
+              element={
+                <ProtectedRoute allowedRoles={['CUSTOMER']}>
+                  <PaymentSuccessPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/customer/orders/:orderId/payment/cancel" 
+              element={
+                <ProtectedRoute allowedRoles={['CUSTOMER']}>
+                  <PaymentCancelPage />
+                </ProtectedRoute>
+              } 
+            />
 
             {/* Pharmacy Routes */}
             <Route 
@@ -188,6 +217,14 @@ function App() {
                 </ProtectedRoute>
               } 
             />
+            <Route 
+              path="/pharmacy/orders/:id" 
+              element={
+                <ProtectedRoute allowedRoles={['PHARMACY']}>
+                  <PharmacyOrderDetailsPage />
+                </ProtectedRoute>
+              } 
+            />
 
             {/* Admin Routes */}
             <Route 
@@ -219,6 +256,14 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={['ADMIN']}>
                   <AdminMedicinesPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/payments" 
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <AdminPaymentsPage />
                 </ProtectedRoute>
               } 
             />

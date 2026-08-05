@@ -130,3 +130,28 @@
 | ? | 6. Add Customer Inbox & Comparison UI | Build side-by-side view |
 | ? | 7. Customer Acceptance Integration | Add logic for payment integration |
 | ? | 8. Fix global ApiError bugs & Test Rules | Resolve missing test rules |
+
+## Day 8 Tasks (Order Management Workflow)
+| Status | Task | Description |
+| :---: | :--- | :--- |
+| ? | 1. Implement Order constants | Define ORDER_STATUS and FULFILMENT_METHOD enums |
+| ? | 2. Create Order snapshots schema | Isolate user/pharmacy data at checkout time |
+| ? | 3. Create Order model | Main document tracking final orders |
+| ? | 4. Add Order API validations | Zod schema validation rules |
+| ? | 5. Implement Order State Transitions | Safe status graph (e.g., PENDING -> PREPARING) |
+| ? | 6. Implement Order checkout service | Atomic conversion from quotation to order |
+| ? | 7. Implement Order status updates | Logic for pharmacists to accept/reject/deliver |
+| ? | 8. Add Order Controllers & Routes | Express endpoints and middleware |
+| ? | 9. Add Order Tests | Unit and integration test suite |
+| ? | 10. Scaffold Frontend Order UI | Customer and Pharmacy Order dashboard views |
+| ? | 11. Implement Create Order Page | Delivery and Pickup selection UI |
+
+## Day 9 Tasks (Payments & Final Integration)
+| Status | Task | Description |
+| :---: | :--- | :--- |
+| ? | 1. Stripe Setup | Setup backend payment gateway |
+| ? | 2. Stripe Checkout integration | Frontend modal or redirect flow |
+| ? | 3. Implement Payment webhooks | Listen for successful payments |
+| ? | 4. Implement auto-inventory deduction | Decrease available quantity when paid |
+| ? | 5. Build Customer Order Detail Page | View full checkout and live status |
+| ? | 6. Build Pharmacy Order Detail Page | Manage processing and dispatch |
