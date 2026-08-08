@@ -211,8 +211,24 @@ const submitRequest = async (requestId, customerId, pharmacyIds, customerLocatio
   const expiresAt = new Date();
   expiresAt.setHours(expiresAt.getHours() + 24);
   request.expiresAt = expiresAt;
-
   await request.save();
+
+  // Send notifications to selected pharmacies
+  const { createAndEmitNotification } = require('../notifications/notification.service');
+  const { NOTIFICATION_EVENTS } = require('../notifications/notification.constants');
+  
+  for (const pharmacy of pharmacies) {
+    try {
+      await createAndEmitNotification({
+        type: NOTIFICATION_EVENTS.REQUEST_RECEIVED,
+        recipient: { _id: pharmacy.ownerUserId, role: 'PHARMACY' },
+        entity: request
+      });
+    } catch (err) {
+      console.error(`Failed to notify pharmacy ${pharmacy._id} for request ${request._id}`, err);
+    }
+  }
+
   return request;
 };
 
