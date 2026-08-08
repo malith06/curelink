@@ -1,7 +1,6 @@
 const Notification = require('./notification.model');
 const { createNotificationPayload } = require('./notification.factory');
-// Will import socketService later
-// const socketService = require('../realtime/socket.service');
+const { sendNotificationToUser } = require('../../socket');
 
 /**
  * Creates a notification in the DB and attempts real-time emission
@@ -24,10 +23,7 @@ const createAndEmitNotification = async ({ type, recipient, entity, context = {}
 
     // Attempt Socket.io emission
     try {
-      // We will integrate this in the realtime commit
-      // if (socketService && socketService.emitToUser) {
-      //   socketService.emitToUser(recipient._id.toString(), 'notification:new', savedNotification);
-      // }
+      sendNotificationToUser(recipient._id.toString(), savedNotification);
     } catch (emitError) {
       // Do not roll back transaction if socket emit fails
       console.error('Failed to emit real-time notification:', emitError);
