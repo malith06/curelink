@@ -441,6 +441,24 @@ const acceptQuotation = async (requestId, quotationId, customerId) => {
     await quotation.save({ session });
 
     await session.commitTransaction();
+    
+    // Notify the accepted pharmacy outside transaction
+    try {
+      const { createAndEmitNotification } = require('../notifications/notification.service');
+      const { NOTIFICATION_EVENTS } = require('../notifications/notification.constants');
+      
+      const pharmacy = await Pharmacy.findById(quotation.pharmacyId);
+      if (pharmacy) {
+        await createAndEmitNotification({
+          type: NOTIFICATION_EVENTS.QUOTATION_ACCEPTED,
+          recipient: { _id: pharmacy.ownerUserId, role: 'PHARMACY' },
+          entity: quotation
+        });
+      }
+    } catch (err) {
+      console.error('Failed to notify pharmacy of accepted quotation', err);
+    }
+
     return request;
   } catch (error) {
     await session.abortTransaction();
