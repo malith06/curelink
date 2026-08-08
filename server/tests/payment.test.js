@@ -13,6 +13,7 @@ jest.mock('../src/modules/payments/payment.model');
 jest.mock('../src/modules/payment-events/paymentEvent.model');
 jest.mock('../src/modules/pharmacies/pharmacy.model');
 jest.mock('../src/modules/payment-gateways/stripeSandbox.adapter');
+jest.mock('../src/modules/notifications/notification.service');
 
 jest.mock('mongoose', () => {
   const actualMongoose = jest.requireActual('mongoose');
@@ -93,6 +94,12 @@ describe('Payment Service Business Rules', () => {
         save: jest.fn()
       };
       Order.findById.mockReturnValue({ session: jest.fn().mockResolvedValue(mockOrder) });
+
+      const mockPharmacy = {
+        _id: 'pharmacy1',
+        ownerUserId: 'owner1'
+      };
+      Pharmacy.findById.mockReturnValue({ session: jest.fn().mockResolvedValue(mockPharmacy) });
 
       const result = await paymentService.handleWebhookEvent('rawBody', 'good-sig');
 

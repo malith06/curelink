@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Feature (Day 10): Full-Stack Real-Time Notification system infrastructure.
+- Feature (Day 10): Notification Mongoose model with idempotency checks to prevent duplicates.
+- Feature (Day 10): Socket.IO server securely integrated with JWT authentication and individual user rooms.
+- Feature (Day 10): Real-Time frontend `NotificationContext` to sync notification counts instantly.
+- Feature (Day 10): Interactive `NotificationBell` with dropdown previews across all user layouts.
+- Feature (Day 10): Dedicated Inbox `/notifications` for history viewing.
+- Feature (Day 10): Centralized `NotificationFactory` to standardise payloads for requests, quotes, orders, and payments.
 - Feature (Day 9): Full-Stack Payment Integration supporting Stripe Sandbox for card payments and Cash on Delivery.
 - Feature (Day 9): Webhook signature verification and deduplication using MongoDB compound index on PaymentEvent to prevent duplicate processing.
 - Feature (Day 9): Card Checkout Sessions with seamless redirects to Stripe Hosted Checkout and server-side validation.

@@ -117,6 +117,8 @@ const mongoose = require('mongoose');
 jest.mock('../src/modules/quotations/quotation.model');
 jest.mock('../src/modules/requests/request.model');
 jest.mock('../src/modules/prescription-verifications/verification.model');
+jest.mock('../src/modules/pharmacies/pharmacy.model');
+jest.mock('../src/modules/notifications/notification.service');
 jest.mock('mongoose', () => {
   const actualMongoose = jest.requireActual('mongoose');
   return {
@@ -249,6 +251,9 @@ describe('Quotation Business Rules', () => {
       Quotation.findOne.mockReturnValue({
         session: jest.fn().mockResolvedValue(mockQuotation)
       });
+
+      const Pharmacy = require('../src/modules/pharmacies/pharmacy.model');
+      Pharmacy.findById.mockResolvedValue({ _id: 'pharmacy1', ownerUserId: 'owner1' });
 
       Quotation.updateMany.mockResolvedValue({ modifiedCount: 2 });
 

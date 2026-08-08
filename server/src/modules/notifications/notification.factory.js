@@ -15,8 +15,8 @@ const createNotificationPayload = ({ type, recipient, entity, context = {} }) =>
   let title, message, actionUrl, entityType, eventKey;
   let metadata = {};
   
-  const recipientRole = recipient.role;
-  const recipientUserId = recipient._id.toString();
+  const recipientRole = recipient?.role;
+  const recipientUserId = recipient?._id?.toString() || recipient?.id || 'unknown';
 
   switch (type) {
     case NOTIFICATION_EVENTS.REQUEST_RECEIVED:
@@ -156,7 +156,7 @@ const createNotificationPayload = ({ type, recipient, entity, context = {} }) =>
     title,
     message,
     entityType,
-    entityId: entity._id.toString(),
+    entityId: entity?._id?.toString() || entity?.id || 'unknown',
     actionUrl,
     eventKey,
     metadata,

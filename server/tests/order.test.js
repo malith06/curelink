@@ -10,9 +10,11 @@ const { REQUEST_STATUS } = require('../src/modules/requests/request.constants');
 
 jest.mock('../src/modules/orders/order.model');
 jest.mock('../src/modules/quotations/quotation.model');
+jest.mock('../src/modules/orders/order.model');
 jest.mock('../src/modules/requests/request.model');
 jest.mock('../src/modules/users/user.model');
 jest.mock('../src/modules/pharmacies/pharmacy.model');
+jest.mock('../src/modules/notifications/notification.service');
 
 jest.mock('mongoose', () => {
   const actualMongoose = jest.requireActual('mongoose');
