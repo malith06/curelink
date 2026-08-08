@@ -211,8 +211,24 @@ const submitRequest = async (requestId, customerId, pharmacyIds, customerLocatio
   const expiresAt = new Date();
   expiresAt.setHours(expiresAt.getHours() + 24);
   request.expiresAt = expiresAt;
-
   await request.save();
+
+  // Send notifications to selected pharmacies
+  const { createAndEmitNotification } = require('../notifications/notification.service');
+  const { NOTIFICATION_EVENTS } = require('../notifications/notification.constants');
+  
+  for (const pharmacy of pharmacies) {
+    try {
+      await createAndEmitNotification({
+        type: NOTIFICATION_EVENTS.REQUEST_RECEIVED,
+        recipient: { _id: pharmacy.ownerUserId, role: 'PHARMACY' },
+        entity: request
+      });
+    } catch (err) {
+      console.error(`Failed to notify pharmacy ${pharmacy._id} for request ${request._id}`, err);
+    }
+  }
+
   return request;
 };
 
@@ -425,6 +441,24 @@ const acceptQuotation = async (requestId, quotationId, customerId) => {
     await quotation.save({ session });
 
     await session.commitTransaction();
+    
+    // Notify the accepted pharmacy outside transaction
+    try {
+      const { createAndEmitNotification } = require('../notifications/notification.service');
+      const { NOTIFICATION_EVENTS } = require('../notifications/notification.constants');
+      
+      const pharmacy = await Pharmacy.findById(quotation.pharmacyId);
+      if (pharmacy) {
+        await createAndEmitNotification({
+          type: NOTIFICATION_EVENTS.QUOTATION_ACCEPTED,
+          recipient: { _id: pharmacy.ownerUserId, role: 'PHARMACY' },
+          entity: quotation
+        });
+      }
+    } catch (err) {
+      console.error('Failed to notify pharmacy of accepted quotation', err);
+    }
+
     return request;
   } catch (error) {
     await session.abortTransaction();

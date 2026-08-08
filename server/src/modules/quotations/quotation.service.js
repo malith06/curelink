@@ -244,6 +244,21 @@ class QuotationService {
       );
 
       await session.commitTransaction();
+      
+      // Notify customer outside transaction
+      const { createAndEmitNotification } = require('../notifications/notification.service');
+      const { NOTIFICATION_EVENTS } = require('../notifications/notification.constants');
+      try {
+        await createAndEmitNotification({
+          type: NOTIFICATION_EVENTS.QUOTATION_RECEIVED,
+          recipient: { _id: request.customerId, role: 'CUSTOMER' },
+          entity: quotation,
+          context: { requestId: request._id, requestShortId: request.shortId }
+        });
+      } catch (err) {
+        console.error('Failed to notify customer of new quotation', err);
+      }
+
     } catch (error) {
       await session.abortTransaction();
       throw error;
