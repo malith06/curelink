@@ -143,6 +143,24 @@ const cancelOrder = async (orderId, customerId, reason) => {
   order.customerCancellation = { reason, cancelledBy: customerId, cancelledAt: new Date() };
 
   await order.save();
+
+  // Notification: Customer cancelled the order
+  try {
+    const { createAndEmitNotification } = require('../notifications/notification.service');
+    const { NOTIFICATION_EVENTS } = require('../notifications/notification.constants');
+    const pharmacy = await Pharmacy.findById(order.pharmacyId);
+    if (pharmacy) {
+      await createAndEmitNotification({
+        type: NOTIFICATION_EVENTS.ORDER_CANCELLED,
+        recipient: { _id: pharmacy.ownerUserId, role: 'PHARMACY' },
+        entity: order,
+        context: { reason }
+      });
+    }
+  } catch (err) {
+    console.error('Failed to emit ORDER_CANCELLED notification:', err);
+  }
+
   return order;
 };
 
@@ -159,6 +177,21 @@ const rejectOrder = async (orderId, pharmacyId, reason) => {
   order.pharmacyRejection = { reason, rejectedBy: pharmacyId, rejectedAt: new Date() };
 
   await order.save();
+
+  // Notification: Pharmacy rejected the order
+  try {
+    const { createAndEmitNotification } = require('../notifications/notification.service');
+    const { NOTIFICATION_EVENTS } = require('../notifications/notification.constants');
+    await createAndEmitNotification({
+      type: NOTIFICATION_EVENTS.ORDER_REJECTED,
+      recipient: { _id: order.customerId, role: 'CUSTOMER' },
+      entity: order,
+      context: { reason }
+    });
+  } catch (err) {
+    console.error('Failed to emit ORDER_REJECTED notification:', err);
+  }
+
   return order;
 };
 
@@ -181,6 +214,31 @@ const updateOrderStatus = async (orderId, pharmacyId, newStatus, note) => {
 
   appendStatusHistory(order, newStatus, pharmacyId, 'PHARMACY', CHANGE_SOURCE.PHARMACY, note);
   await order.save();
+
+  // Map order statuses to notification events
+  const { NOTIFICATION_EVENTS } = require('../notifications/notification.constants');
+  let notificationType = null;
+  switch (newStatus) {
+    case ORDER_STATUS.PHARMACY_ACCEPTED: notificationType = NOTIFICATION_EVENTS.ORDER_ACCEPTED; break;
+    case ORDER_STATUS.PREPARING: notificationType = NOTIFICATION_EVENTS.ORDER_PREPARING; break;
+    case ORDER_STATUS.READY_FOR_PICKUP: notificationType = NOTIFICATION_EVENTS.ORDER_READY; break;
+    case ORDER_STATUS.OUT_FOR_DELIVERY: notificationType = NOTIFICATION_EVENTS.ORDER_OUT_FOR_DELIVERY; break;
+    case ORDER_STATUS.DELIVERED: notificationType = NOTIFICATION_EVENTS.ORDER_DELIVERED; break;
+  }
+
+  if (notificationType) {
+    try {
+      const { createAndEmitNotification } = require('../notifications/notification.service');
+      await createAndEmitNotification({
+        type: notificationType,
+        recipient: { _id: order.customerId, role: 'CUSTOMER' },
+        entity: order
+      });
+    } catch (err) {
+      console.error(`Failed to emit ${notificationType} notification:`, err);
+    }
+  }
+
   return order;
 };
 
