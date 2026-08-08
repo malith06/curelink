@@ -160,6 +160,7 @@ exports.handleWebhookEvent = async (rawBody, signature, provider = PAYMENT_PROVI
 
   // 4. Process the business logic within a transaction
   const session = await Order.startSession();
+  const notificationsToEmit = [];
   try {
     session.startTransaction();
 
@@ -182,6 +183,22 @@ exports.handleWebhookEvent = async (rawBody, signature, provider = PAYMENT_PROVI
               payment.gatewayPaymentReference = parsedEvent.gatewayPaymentReference;
             }
             await payment.save({ session });
+
+            // Queue notifications
+            const { NOTIFICATION_EVENTS } = require('../notifications/notification.constants');
+            notificationsToEmit.push({
+              type: NOTIFICATION_EVENTS.PAYMENT_SUCCESSFUL,
+              recipient: { _id: payment.customerId, role: 'CUSTOMER' },
+              entity: payment
+            });
+            const pharmacy = await Pharmacy.findById(payment.pharmacyId).session(session);
+            if (pharmacy) {
+              notificationsToEmit.push({
+                type: NOTIFICATION_EVENTS.PAYMENT_SUCCESSFUL,
+                recipient: { _id: pharmacy.ownerUserId, role: 'PHARMACY' },
+                entity: payment
+              });
+            }
           }
 
           if (order && order.paymentStatus !== PAYMENT_STATUS.PAID) {
@@ -210,6 +227,13 @@ exports.handleWebhookEvent = async (rawBody, signature, provider = PAYMENT_PROVI
             payment.failureCode = 'WEBHOOK_FAILED';
             payment.failureMessage = 'Payment failed during asynchronous processing';
             await payment.save({ session });
+
+            const { NOTIFICATION_EVENTS } = require('../notifications/notification.constants');
+            notificationsToEmit.push({
+              type: NOTIFICATION_EVENTS.PAYMENT_FAILED,
+              recipient: { _id: payment.customerId, role: 'CUSTOMER' },
+              entity: payment
+            });
           }
           break;
 
@@ -234,6 +258,17 @@ exports.handleWebhookEvent = async (rawBody, signature, provider = PAYMENT_PROVI
     await paymentEvent.save({ session });
 
     await session.commitTransaction();
+
+    // Emit queued notifications outside transaction
+    const { createAndEmitNotification } = require('../notifications/notification.service');
+    for (const notif of notificationsToEmit) {
+      try {
+        await createAndEmitNotification(notif);
+      } catch (err) {
+        console.error('Failed to emit payment notification:', err);
+      }
+    }
+
   } catch (error) {
     await session.abortTransaction();
     
