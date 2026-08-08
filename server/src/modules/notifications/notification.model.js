@@ -86,4 +86,10 @@ notificationSchema.index({
   createdAt: -1
 });
 
+// Sparse unique index to prevent duplicate notification events
+notificationSchema.index(
+  { eventKey: 1 },
+  { unique: true, sparse: true }
+);
+
 module.exports = mongoose.model('Notification', notificationSchema);
