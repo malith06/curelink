@@ -12,7 +12,7 @@ const createDraftRequest = async (req, res, next) => {
   try {
     const customerId = req.user.id;
     const request = await requestService.createDraftRequest(customerId);
-    
+
     res.status(201).json({
       success: true,
       message: 'Draft request created successfully',
@@ -35,7 +35,7 @@ const addItemToRequest = async (req, res, next) => {
     const itemData = req.body;
 
     const request = await requestService.addItemToRequest(requestId, customerId, itemData);
-    
+
     res.status(200).json({
       success: true,
       message: 'Item added to request successfully',
@@ -58,7 +58,7 @@ const updateRequestItem = async (req, res, next) => {
     const updateData = req.body;
 
     const request = await requestService.updateRequestItem(requestId, customerId, medicineId, updateData);
-    
+
     res.status(200).json({
       success: true,
       message: 'Item updated successfully',
@@ -80,7 +80,7 @@ const removeRequestItem = async (req, res, next) => {
     const { requestId, medicineId } = req.params;
 
     const request = await requestService.removeRequestItem(requestId, customerId, medicineId);
-    
+
     res.status(200).json({
       success: true,
       message: 'Item removed successfully',
@@ -103,7 +103,7 @@ const submitRequest = async (req, res, next) => {
     const { selectedPharmacyIds, customerLocation } = req.body;
 
     const request = await requestService.submitRequest(requestId, customerId, selectedPharmacyIds, customerLocation);
-    
+
     res.status(200).json({
       success: true,
       message: 'Request submitted successfully',
@@ -127,7 +127,7 @@ const getCustomerRequests = async (req, res, next) => {
     const result = await requestService.getCustomerRequests(customerId, {
       status, page, limit, sort
     });
-    
+
     res.status(200).json({
       success: true,
       data: result.data,
@@ -191,7 +191,7 @@ const getQuotationDetails = catchAsync(async (req, res) => {
   if (formattedQuotation.total !== undefined) formattedQuotation.total = formatCentsToDollars(formattedQuotation.total);
   if (formattedQuotation.subtotal !== undefined) formattedQuotation.subtotal = formatCentsToDollars(formattedQuotation.subtotal);
   if (formattedQuotation.deliveryFee !== undefined) formattedQuotation.deliveryFee = formatCentsToDollars(formattedQuotation.deliveryFee);
-  
+
   if (formattedQuotation.items) {
     formattedQuotation.items = formattedQuotation.items.map(item => {
       if (item.unitPrice !== undefined && item.unitPrice !== null) item.unitPrice = formatCentsToDollars(item.unitPrice);
@@ -218,7 +218,7 @@ const cancelRequest = async (req, res, next) => {
     const { reason } = req.body;
 
     const request = await requestService.cancelCustomerRequest(requestId, customerId, reason);
-    
+
     res.status(200).json({
       success: true,
       message: 'Request cancelled successfully',
@@ -240,7 +240,7 @@ const acceptQuotation = async (req, res, next) => {
     const { requestId, quotationId } = req.params;
 
     const request = await requestService.acceptQuotation(requestId, quotationId, customerId);
-    
+
     res.status(200).json({
       success: true,
       message: 'Quotation accepted successfully',
@@ -262,7 +262,7 @@ const declineQuotation = async (req, res, next) => {
     const { requestId, quotationId } = req.params;
 
     const request = await requestService.declineQuotation(requestId, quotationId, customerId);
-    
+
     res.status(200).json({
       success: true,
       message: 'Quotation declined successfully',
@@ -285,7 +285,7 @@ const processPayment = async (req, res, next) => {
     const paymentDetails = req.body;
 
     const request = await requestService.processPaymentForRequest(requestId, customerId, paymentDetails);
-    
+
     res.status(200).json({
       success: true,
       message: 'Payment processed successfully. Request converted to order.',
@@ -304,7 +304,7 @@ const processPayment = async (req, res, next) => {
 const triggerExpiry = async (req, res, next) => {
   try {
     const expiredCount = await requestService.expireOldRequests();
-    
+
     res.status(200).json({
       success: true,
       message: `Expired ${expiredCount} requests`,

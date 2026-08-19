@@ -47,17 +47,10 @@ const updateRequestStatusSchema = z.object({
   ])
 });
 
-const processPaymentSchema = z.object({
-  paymentMethod: z.string().optional(),
-  transactionId: z.string().optional(),
-  amount: z.number().optional()
-});
-
 module.exports = {
   addItemSchema,
   updateItemSchema,
   submitRequestSchema,
   provideQuotationSchema,
-  updateRequestStatusSchema,
-  processPaymentSchema
+  updateRequestStatusSchema
 };

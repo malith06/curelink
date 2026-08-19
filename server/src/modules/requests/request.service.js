@@ -43,7 +43,7 @@ const createDraftRequest = async (customerId) => {
     items: [],
     status: REQUEST_STATUS.DRAFT
   });
-  
+
   await request.save();
   return request;
 };
@@ -91,7 +91,7 @@ const addItemToRequest = async (requestId, customerId, itemData) => {
 
   request.requiresPrescription = calculatePrescriptionRequirement(request.items);
   await request.save();
-  
+
   return request;
 };
 
@@ -202,11 +202,11 @@ const submitRequest = async (requestId, customerId, pharmacyIds, customerLocatio
   request.selectedPharmacyIds = pharmacyIds;
   request.status = REQUEST_STATUS.PENDING;
   request.submittedAt = new Date();
-  
+
   if (customerLocation) {
     request.customerLocation = customerLocation;
   }
-  
+
   // Set expiration to 24 hours from submission
   const expiresAt = new Date();
   expiresAt.setHours(expiresAt.getHours() + 24);
@@ -216,7 +216,7 @@ const submitRequest = async (requestId, customerId, pharmacyIds, customerLocatio
   // Send notifications to selected pharmacies
   const { createAndEmitNotification } = require('../notifications/notification.service');
   const { NOTIFICATION_EVENTS } = require('../notifications/notification.constants');
-  
+
   for (const pharmacy of pharmacies) {
     try {
       await createAndEmitNotification({
@@ -248,7 +248,7 @@ const getCustomerRequests = async (customerId, queryParams = {}) => {
   if (queryParams.status) {
     filter.status = queryParams.status;
   }
-  
+
   const requests = await MedicineRequest.find(filter)
     .sort(sort)
     .skip(skip)
@@ -279,11 +279,11 @@ const getCustomerRequestById = async (requestId, customerId) => {
   const request = await MedicineRequest.findOne({ _id: requestId, customerId })
     .populate('selectedPharmacyIds', 'name address phone city')
     .lean();
-    
+
   if (!request) {
     throw new ApiError(404, 'Request not found');
   }
-  
+
   return request;
 };
 
@@ -303,18 +303,20 @@ const getPharmacyInbox = async (pharmacyId, queryParams = {}) => {
   if (queryParams.status) {
     filter.status = queryParams.status;
   } else {
-    filter.status = { $in: [
-      REQUEST_STATUS.SUBMITTED, 
-      REQUEST_STATUS.QUOTATIONS_RECEIVED, 
-      REQUEST_STATUS.QUOTATION_ACCEPTED,
-      REQUEST_STATUS.CONVERTED_TO_ORDER,
-      REQUEST_STATUS.PROCESSING,
-      REQUEST_STATUS.READY_FOR_PICKUP,
-      REQUEST_STATUS.DISPATCHED,
-      REQUEST_STATUS.COMPLETED
-    ] };
+    filter.status = {
+      $in: [
+        REQUEST_STATUS.SUBMITTED,
+        REQUEST_STATUS.QUOTATIONS_RECEIVED,
+        REQUEST_STATUS.QUOTATION_ACCEPTED,
+        REQUEST_STATUS.CONVERTED_TO_ORDER,
+        REQUEST_STATUS.PROCESSING,
+        REQUEST_STATUS.READY_FOR_PICKUP,
+        REQUEST_STATUS.DISPATCHED,
+        REQUEST_STATUS.COMPLETED
+      ]
+    };
   }
-  
+
   const requests = await MedicineRequest.find(filter)
     .sort(sort)
     .skip(skip)
@@ -342,20 +344,20 @@ const getPharmacyInbox = async (pharmacyId, queryParams = {}) => {
  * @returns {Promise<Object>} The request details
  */
 const getPharmacyRequestById = async (requestId, pharmacyId) => {
-  const request = await MedicineRequest.findOne({ 
-    _id: requestId, 
-    selectedPharmacyIds: pharmacyId 
+  const request = await MedicineRequest.findOne({
+    _id: requestId,
+    selectedPharmacyIds: pharmacyId
   })
     .populate('customerId', 'name')
     .lean();
-    
+
   if (!request) {
     throw new ApiError(404, 'Request not found or not assigned to this pharmacy');
   }
 
   // Security Rule: Strip out other selected pharmacies
   delete request.selectedPharmacyIds;
-  
+
   return request;
 };
 
@@ -368,22 +370,22 @@ const getPharmacyRequestById = async (requestId, pharmacyId) => {
  */
 const cancelCustomerRequest = async (requestId, customerId, reason) => {
   const request = await MedicineRequest.findOne({ _id: requestId, customerId });
-  
+
   if (!request) {
     throw new ApiError(404, 'Request not found');
   }
-  
+
   if (request.status === REQUEST_STATUS.CANCELLED || request.status === REQUEST_STATUS.COMPLETED) {
     throw new ApiError(400, `Cannot cancel a request that is already ${request.status.toLowerCase()}`);
   }
-  
+
   request.status = REQUEST_STATUS.CANCELLED;
   request.cancelledAt = new Date();
   request.cancelledBy = customerId;
   if (reason) {
     request.cancellationReason = reason;
   }
-  
+
   await request.save();
   return request;
 };
@@ -401,7 +403,7 @@ const acceptQuotation = async (requestId, quotationId, customerId) => {
     session.startTransaction();
 
     const request = await MedicineRequest.findOne({ _id: requestId, customerId }).session(session);
-    
+
     if (!request) {
       throw new ApiError(404, 'Request not found');
     }
@@ -426,7 +428,7 @@ const acceptQuotation = async (requestId, quotationId, customerId) => {
     // 1. Mark request as accepted
     request.status = REQUEST_STATUS.QUOTATION_ACCEPTED;
     request.acceptedQuotationId = quotation._id;
-    
+
     // 2. Mark this quotation as ACCEPTED
     quotation.status = QUOTATION_STATUS.ACCEPTED;
 
@@ -441,12 +443,12 @@ const acceptQuotation = async (requestId, quotationId, customerId) => {
     await quotation.save({ session });
 
     await session.commitTransaction();
-    
+
     // Notify the accepted pharmacy outside transaction
     try {
       const { createAndEmitNotification } = require('../notifications/notification.service');
       const { NOTIFICATION_EVENTS } = require('../notifications/notification.constants');
-      
+
       const pharmacy = await Pharmacy.findById(quotation.pharmacyId);
       if (pharmacy) {
         await createAndEmitNotification({
@@ -477,7 +479,7 @@ const acceptQuotation = async (requestId, quotationId, customerId) => {
  */
 const declineQuotation = async (requestId, quotationId, customerId) => {
   const request = await MedicineRequest.findOne({ _id: requestId, customerId });
-  
+
   if (!request) {
     throw new ApiError(404, 'Request not found');
   }
@@ -513,7 +515,7 @@ const declineQuotation = async (requestId, quotationId, customerId) => {
  */
 const processPaymentForRequest = async (requestId, customerId, paymentDetails = {}) => {
   const request = await MedicineRequest.findOne({ _id: requestId, customerId });
-  
+
   if (!request) {
     throw new ApiError(404, 'Request not found');
   }
@@ -523,9 +525,9 @@ const processPaymentForRequest = async (requestId, customerId, paymentDetails = 
   }
 
   // Mock payment processing logic here...
-  
+
   request.status = REQUEST_STATUS.CONVERTED_TO_ORDER;
-  
+
   await request.save();
   return request;
 };
@@ -539,7 +541,7 @@ const processPaymentForRequest = async (requestId, customerId, paymentDetails = 
  */
 const updatePharmacyRequestStatus = async (requestId, pharmacyId, newStatus) => {
   const request = await MedicineRequest.findOne({ _id: requestId });
-  
+
   if (!request) {
     throw new ApiError(404, 'Request not found');
   }
@@ -574,7 +576,7 @@ const updatePharmacyRequestStatus = async (requestId, pharmacyId, newStatus) => 
  */
 const expireOldRequests = async () => {
   const now = new Date();
-  
+
   const requests = await MedicineRequest.find({
     status: { $in: [REQUEST_STATUS.SUBMITTED, REQUEST_STATUS.QUOTATIONS_RECEIVED] },
     expiresAt: { $lt: now }

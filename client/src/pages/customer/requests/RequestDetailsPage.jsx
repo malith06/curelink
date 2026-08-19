@@ -114,16 +114,11 @@ const RequestDetailsPage = () => {
     try {
       setProcessing(true);
       await quotationService.acceptQuotation(id, quotationId);
-      toast.success('Quotation accepted!');
+      toast.success('Quotation accepted! Please proceed to checkout.');
       
-      // Auto-trigger payment for demonstration
-      await requestService.processPayment(id);
-      toast.success('Payment processed successfully!');
-      
-      fetchRequest();
+      navigate(`/customer/orders/create/${quotationId}`);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to accept quotation');
-    } finally {
       setProcessing(false);
     }
   };

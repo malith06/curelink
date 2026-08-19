@@ -32,10 +32,6 @@ const acceptQuotation = async (requestId, pharmacyId) => {
   return response.data;
 };
 
-const processPayment = async (requestId) => {
-  const response = await api.post(`/requests/${requestId}/payment`);
-  return response.data;
-};
 
 // --- PHARMACY ENDPOINTS ---
 
@@ -61,7 +57,6 @@ export const requestService = {
   addItemToRequest,
   submitRequest,
   acceptQuotation,
-  processPayment,
   getPharmacyInbox,
   submitQuotation,
   updateRequestStatus,
