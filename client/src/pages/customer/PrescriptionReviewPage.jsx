@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import prescriptionService from '../../../features/prescriptions/prescriptionService';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../../components/ui/Card';
+import Button from '../../../components/ui/Button';
+import Input from '../../../components/ui/Input';
+import Badge from '../../../components/ui/Badge';
+import Skeleton from '../../../components/ui/Skeleton';
+import { Plus, Check, ArrowLeft, AlertCircle } from 'lucide-react';
 
 const PrescriptionReviewPage = () => {
   const { requestId, prescriptionId } = useParams();
@@ -42,8 +48,15 @@ const PrescriptionReviewPage = () => {
     setEntries(updated);
   };
 
+  const handleManualNameChange = (index, value) => {
+    const updated = [...entries];
+    updated[index].medicineName = value;
+    updated[index].extractedText = value;
+    setEntries(updated);
+  };
+
   const handleAddManual = () => {
-    setEntries([...entries, { entryId: null, extractedText: '', medicineId: null, medicineName: '', confidenceLevel: 'LOW', quantity: 1 }]);
+    setEntries([...entries, { entryId: null, extractedText: '', medicineId: null, medicineName: '', confidenceLevel: 'MANUAL', quantity: 1 }]);
   };
 
   const handleConfirm = async () => {
@@ -61,64 +74,115 @@ const PrescriptionReviewPage = () => {
     }
   };
 
-  if (loading) return <div className="p-8 text-center">Loading OCR results...</div>;
+  if (loading) return (
+    <div className="mx-auto px-4 py-12 max-w-4xl">
+      <Skeleton className="h-10 w-64 mb-4" />
+      <Skeleton className="h-4 w-96 mb-8" />
+      <Card>
+        <CardContent className="p-6 space-y-4">
+          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-20 w-full" />
+        </CardContent>
+      </Card>
+    </div>
+  );
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md mt-10">
-      <h1 className="text-2xl font-bold mb-2">Review Detected Medicines</h1>
-      <p className="text-gray-600 mb-6">Please verify the AI-detected medicines and adjust quantities if necessary.</p>
-      
-      {error && <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">{error}</div>}
-
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold mb-3">Extracted Items</h2>
-        {entries.length === 0 ? (
-          <p className="text-gray-500 italic">No medicines detected. Please add them manually.</p>
-        ) : (
-          <ul className="divide-y divide-gray-200 border rounded-md">
-            {entries.map((entry, idx) => (
-              <li key={idx} className="p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="flex-1">
-                  <div className="font-medium">{entry.medicineName || "Unknown Medicine"}</div>
-                  <div className="text-sm text-gray-500">Detected as: "{entry.extractedText}"</div>
-                  {entry.confidenceLevel === 'HIGH' && <span className="inline-block mt-1 px-2 py-0.5 bg-green-100 text-green-800 text-xs rounded">High Confidence</span>}
-                  {entry.confidenceLevel === 'MEDIUM' && <span className="inline-block mt-1 px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded">Medium Confidence</span>}
-                  {entry.confidenceLevel === 'LOW' && <span className="inline-block mt-1 px-2 py-0.5 bg-red-100 text-red-800 text-xs rounded">Low Confidence - Please Verify</span>}
-                </div>
-                <div className="flex items-center gap-2">
-                  <label className="text-sm text-gray-700">Qty:</label>
-                  <input 
-                    type="number" 
-                    min="1"
-                    className="w-16 p-1 border rounded"
-                    value={entry.quantity}
-                    onChange={(e) => handleQuantityChange(idx, e.target.value)}
-                  />
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-        
-        <button onClick={handleAddManual} className="mt-4 text-blue-600 hover:text-blue-800 text-sm font-medium">
-          + Add Manual Item
-        </button>
+    <div className="mx-auto px-4 py-12 max-w-4xl">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Review Detected Medicines</h1>
+        <p className="mt-2 text-slate-600">Please verify the AI-detected medicines and adjust quantities if necessary.</p>
       </div>
+      
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-xl border border-red-100 flex items-center">
+          <AlertCircle className="w-5 h-5 mr-2 flex-shrink-0" />
+          <span className="text-sm font-medium">{error}</span>
+        </div>
+      )}
 
-      <div className="flex justify-end gap-4">
-        <button 
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle>Extracted Items</CardTitle>
+          <CardDescription>
+            Our AI has identified the following items from your prescription.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {entries.length === 0 ? (
+            <div className="text-center py-8 bg-slate-50 rounded-xl border border-slate-100">
+              <p className="text-slate-500 italic mb-4">No medicines detected automatically.</p>
+              <Button variant="outline" onClick={handleAddManual} icon={Plus}>Add Item Manually</Button>
+            </div>
+          ) : (
+            <ul className="divide-y divide-slate-100">
+              {entries.map((entry, idx) => (
+                <li key={idx} className="py-5 flex flex-col sm:flex-row sm:items-center gap-4 first:pt-0 last:pb-0">
+                  <div className="flex-1 space-y-2">
+                    {entry.confidenceLevel === 'MANUAL' ? (
+                       <Input 
+                         placeholder="Enter medicine name..."
+                         value={entry.medicineName}
+                         onChange={(e) => handleManualNameChange(idx, e.target.value)}
+                         className="max-w-sm"
+                       />
+                    ) : (
+                      <>
+                        <div className="font-semibold text-slate-900">{entry.medicineName || "Unknown Medicine"}</div>
+                        <div className="text-sm text-slate-500">Detected as: <span className="italic">"{entry.extractedText}"</span></div>
+                      </>
+                    )}
+                    
+                    <div className="flex items-center gap-2">
+                      {entry.confidenceLevel === 'HIGH' && <Badge variant="success">High Confidence</Badge>}
+                      {entry.confidenceLevel === 'MEDIUM' && <Badge variant="warning">Medium Confidence</Badge>}
+                      {entry.confidenceLevel === 'LOW' && <Badge variant="destructive">Low Confidence - Verify</Badge>}
+                      {entry.confidenceLevel === 'MANUAL' && <Badge variant="secondary">Manually Added</Badge>}
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-3 bg-slate-50 p-2 rounded-lg border border-slate-100">
+                    <label className="text-sm font-medium text-slate-700 pl-2">Qty:</label>
+                    <Input 
+                      type="number" 
+                      min="1"
+                      className="w-20 text-center"
+                      value={entry.quantity}
+                      onChange={(e) => handleQuantityChange(idx, e.target.value)}
+                    />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+          
+          {entries.length > 0 && (
+            <div className="mt-6 pt-6 border-t border-slate-100">
+              <Button variant="outline" onClick={handleAddManual} icon={Plus} size="sm">
+                Add Another Item
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <div className="flex flex-col sm:flex-row justify-end gap-4">
+        <Button 
+          variant="outline"
           onClick={() => navigate(`/customer/requests/${requestId}`)}
-          className="px-4 py-2 border rounded text-gray-700 hover:bg-gray-50"
+          icon={ArrowLeft}
         >
           Cancel
-        </button>
-        <button 
+        </Button>
+        <Button 
           onClick={handleConfirm}
           disabled={submitting}
-          className={`px-4 py-2 rounded font-bold text-white ${submitting ? 'bg-blue-300' : 'bg-blue-600 hover:bg-blue-700'}`}
+          loading={submitting}
+          icon={Check}
         >
-          {submitting ? 'Confirming...' : 'Confirm and Submit'}
-        </button>
+          Confirm and Submit
+        </Button>
       </div>
     </div>
   );

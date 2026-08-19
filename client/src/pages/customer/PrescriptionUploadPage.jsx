@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import prescriptionService from '../../../features/prescriptions/prescriptionService';
+import { Card, CardContent } from '../../../components/ui/Card';
+import Button from '../../../components/ui/Button';
+import { UploadCloud, FileText, CheckCircle } from 'lucide-react';
 
 const PrescriptionUploadPage = () => {
   const { requestId } = useParams();
@@ -40,31 +43,60 @@ const PrescriptionUploadPage = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-md mt-10">
-      <h1 className="text-2xl font-bold mb-4">Upload Prescription</h1>
-      <p className="text-gray-600 mb-6">Upload a clear image (JPG/PNG) or PDF of your prescription for request #{requestId}. Our AI will extract the medicine details for you.</p>
+    <div className="mx-auto px-4 py-12 max-w-2xl">
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Upload Prescription</h1>
+        <p className="mt-2 text-slate-600">
+          Upload a clear image or PDF for request #{requestId}. Our AI will extract the medicine details.
+        </p>
+      </div>
       
-      {error && <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">{error}</div>}
+      {error && <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-xl border border-red-100 text-sm font-medium">{error}</div>}
       
-      <form onSubmit={handleUpload}>
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Select File</label>
-          <input 
-            type="file" 
-            accept=".jpg,.jpeg,.png,.pdf" 
-            onChange={handleFileChange}
-            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-          />
-        </div>
-        
-        <button 
-          type="submit" 
-          disabled={loading || !file}
-          className={`w-full py-2 px-4 rounded font-bold text-white ${loading || !file ? 'bg-blue-300' : 'bg-blue-600 hover:bg-blue-700'}`}
-        >
-          {loading ? 'Processing OCR (This may take a moment)...' : 'Upload and Scan'}
-        </button>
-      </form>
+      <Card>
+        <CardContent className="p-8">
+          <form onSubmit={handleUpload} className="space-y-6">
+            
+            <div className="border-2 border-dashed border-slate-300 rounded-2xl p-12 text-center hover:bg-slate-50 transition-colors relative">
+              <input 
+                type="file" 
+                accept=".jpg,.jpeg,.png,.pdf" 
+                onChange={handleFileChange}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              />
+              <div className="flex flex-col items-center justify-center space-y-3">
+                {file ? (
+                  <>
+                    <div className="p-3 bg-emerald-100 text-emerald-600 rounded-full">
+                      <CheckCircle className="w-8 h-8" />
+                    </div>
+                    <p className="text-sm font-medium text-slate-900">{file.name}</p>
+                    <p className="text-xs text-slate-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                  </>
+                ) : (
+                  <>
+                    <div className="p-3 bg-primary-50 text-primary-600 rounded-full">
+                      <UploadCloud className="w-8 h-8" />
+                    </div>
+                    <p className="text-sm font-medium text-slate-900">Click or drag file to upload</p>
+                    <p className="text-xs text-slate-500">Supports JPG, PNG, PDF</p>
+                  </>
+                )}
+              </div>
+            </div>
+            
+            <Button 
+              type="submit" 
+              fullWidth 
+              disabled={loading || !file}
+              loading={loading}
+              icon={FileText}
+            >
+              {loading ? 'Processing OCR (This may take a moment)...' : 'Upload and Scan'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 };

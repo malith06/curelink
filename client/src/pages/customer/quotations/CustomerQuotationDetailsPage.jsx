@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Loader2, ArrowLeft, Check, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Check, AlertCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
 import requestService from '../../../features/requests/requestService';
 import quotationService from '../../../features/quotations/quotationService';
+import { Card, CardContent } from '../../../components/ui/Card';
+import StatusBadge from '../../../components/ui/StatusBadge';
+import Button from '../../../components/ui/Button';
+import Skeleton from '../../../components/ui/Skeleton';
 
 const CustomerQuotationDetailsPage = () => {
   const { id: requestId, quotationId } = useParams();
@@ -50,8 +54,15 @@ const CustomerQuotationDetailsPage = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="mx-auto px-4 py-12 max-w-4xl">
+        <Skeleton className="h-10 w-64 mb-4" />
+        <Card>
+          <CardContent className="p-6 space-y-4">
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-40 w-full" />
+            <Skeleton className="h-40 w-full" />
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -59,79 +70,72 @@ const CustomerQuotationDetailsPage = () => {
   if (!request || !quotation) return null;
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="mx-auto px-4 py-8 max-w-4xl">
       <div className="mb-6">
-        <Link to={`/customer/requests/${requestId}`} className="text-primary hover:text-primary-800 flex items-center text-sm font-medium">
-          <ArrowLeft className="w-4 h-4 mr-1" /> Back to Request
+        <Link to={`/customer/requests/${requestId}`} className="text-primary-600 hover:text-primary-800 flex items-center text-sm font-medium w-fit group transition-colors">
+          <ArrowLeft className="w-4 h-4 mr-1 transition-transform group-hover:-translate-x-1" /> Back to Request
         </Link>
       </div>
       
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-8">
-        <div className="flex justify-between items-center p-6 border-b border-gray-100 bg-gray-50">
+      <Card className="mb-8 overflow-hidden">
+        <div className="flex flex-col sm:flex-row justify-between sm:items-center p-6 border-b border-slate-100 bg-slate-50 gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{quotation.pharmacyId?.businessName}</h1>
-            <p className="text-gray-500 text-sm mt-1">
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{quotation.pharmacyId?.businessName}</h1>
+            <p className="text-slate-500 text-sm mt-1">
               Quotation for Request #{request._id.substring(request._id.length - 6).toUpperCase()}
             </p>
           </div>
-          <span className={`px-4 py-1.5 rounded-full text-sm font-medium border ${
-            quotation.status === 'ACCEPTED' ? 'bg-green-100 text-green-800 border-green-200' :
-            quotation.status === 'DECLINED' ? 'bg-red-100 text-red-800 border-red-200' :
-            'bg-blue-100 text-blue-800 border-blue-200'
-          }`}>
-            {quotation.status}
-          </span>
+          <StatusBadge status={quotation.status} />
         </div>
 
-        <div className="p-6">
+        <CardContent className="p-6">
           <div className="mb-8">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Item Breakdown</h3>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 border rounded-lg">
-                <thead className="bg-gray-50">
+            <h3 className="text-lg font-semibold text-slate-900 mb-4">Item Breakdown</h3>
+            <div className="overflow-x-auto rounded-xl border border-slate-200">
+              <table className="min-w-full divide-y divide-slate-200">
+                <thead className="bg-slate-50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Medicine</th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Requested</th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Available</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Price (Rs)</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Total (Rs)</th>
+                    <th className="px-4 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Medicine</th>
+                    <th className="px-4 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Requested</th>
+                    <th className="px-4 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Available</th>
+                    <th className="px-4 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Price (Rs)</th>
+                    <th className="px-4 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Total (Rs)</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white divide-y divide-slate-100">
                   {quotation.items.map((item) => {
                     const reqItem = request.items.find(i => i._id === item.requestItemId);
                     const isSubstitute = item.substitutionOffered;
                     return (
-                      <tr key={item._id} className={item.availabilityResult === 'NONE' ? 'bg-red-50 opacity-75' : ''}>
+                      <tr key={item._id} className={`${item.availabilityResult === 'NONE' ? 'bg-rose-50/50' : 'hover:bg-slate-50 transition-colors'}`}>
                         <td className="px-4 py-4">
-                          <div className="font-medium text-gray-900 line-clamp-1">
+                          <div className="font-semibold text-slate-900 line-clamp-1">
                             {isSubstitute && item.substitutionSnapshot ? (
-                              <span className="text-amber-700 flex items-center">
-                                <AlertCircle className="w-4 h-4 mr-1 inline" /> 
-                                {item.substitutionSnapshot.genericName}
-                                <span className="ml-2 text-xs bg-amber-100 px-2 py-0.5 rounded text-amber-800">Substitute</span>
+                              <span className="text-amber-700 flex flex-col sm:flex-row sm:items-center gap-1.5">
+                                <span className="flex items-center"><AlertCircle className="w-4 h-4 mr-1 inline" /> {item.substitutionSnapshot.genericName}</span>
+                                <span className="text-[10px] uppercase font-bold tracking-wider bg-amber-100 px-2 py-0.5 rounded-md text-amber-800 w-fit">Substitute</span>
                               </span>
                             ) : (
                               reqItem?.medicineId?.genericName || item.medicineSnapshot?.genericName || 'Medicine'
                             )}
                           </div>
                           {isSubstitute && item.substitutionNote && (
-                            <p className="text-xs text-gray-500 mt-1">Note: {item.substitutionNote}</p>
+                            <p className="text-xs text-slate-500 mt-1 font-medium">Note: {item.substitutionNote}</p>
                           )}
                           {!isSubstitute && item.pharmacyItemNote && (
-                            <p className="text-xs text-gray-500 mt-1">Note: {item.pharmacyItemNote}</p>
+                            <p className="text-xs text-slate-500 mt-1 font-medium">Note: {item.pharmacyItemNote}</p>
                           )}
                         </td>
-                        <td className="px-4 py-4 text-center text-gray-600">
+                        <td className="px-4 py-4 text-center text-slate-600 font-medium">
                           {item.requestedQuantity}
                         </td>
-                        <td className="px-4 py-4 text-center font-medium">
+                        <td className="px-4 py-4 text-center font-bold text-slate-900">
                           {item.availableQuantity}
                         </td>
-                        <td className="px-4 py-4 text-right text-gray-600">
+                        <td className="px-4 py-4 text-right text-slate-600 font-medium">
                           {item.unitPrice ? item.unitPrice.toFixed(2) : '-'}
                         </td>
-                        <td className="px-4 py-4 text-right font-medium text-gray-900">
+                        <td className="px-4 py-4 text-right font-bold text-primary-700">
                           {item.subtotal ? item.subtotal.toFixed(2) : '-'}
                         </td>
                       </tr>
@@ -143,86 +147,88 @@ const CustomerQuotationDetailsPage = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
-              <h4 className="font-semibold text-gray-900 mb-4">Fulfillment Details</h4>
-              <ul className="space-y-3 text-sm">
-                <li className="flex justify-between">
-                  <span className="text-gray-600">Preparation Time:</span>
-                  <span className="font-medium text-gray-900">{quotation.preparationMinutes} minutes</span>
+            <div className="bg-slate-50 rounded-2xl p-6 border border-slate-200">
+              <h4 className="font-bold text-slate-900 mb-5 text-lg">Fulfillment Details</h4>
+              <ul className="space-y-4 text-sm">
+                <li className="flex justify-between items-center">
+                  <span className="text-slate-600 font-medium">Preparation Time:</span>
+                  <span className="font-bold text-slate-900 bg-white px-3 py-1 rounded-lg border border-slate-200">{quotation.preparationMinutes} minutes</span>
                 </li>
-                <li className="flex justify-between">
-                  <span className="text-gray-600">Pickup Available:</span>
-                  <span className="font-medium text-gray-900">{quotation.pickupAvailable ? 'Yes' : 'No'}</span>
+                <li className="flex justify-between items-center">
+                  <span className="text-slate-600 font-medium">Pickup Available:</span>
+                  <span className="font-bold text-slate-900 bg-white px-3 py-1 rounded-lg border border-slate-200">{quotation.pickupAvailable ? 'Yes' : 'No'}</span>
                 </li>
-                <li className="flex justify-between">
-                  <span className="text-gray-600">Delivery Available:</span>
-                  <span className="font-medium text-gray-900">{quotation.deliveryAvailable ? 'Yes' : 'No'}</span>
+                <li className="flex justify-between items-center">
+                  <span className="text-slate-600 font-medium">Delivery Available:</span>
+                  <span className="font-bold text-slate-900 bg-white px-3 py-1 rounded-lg border border-slate-200">{quotation.deliveryAvailable ? 'Yes' : 'No'}</span>
                 </li>
                 {quotation.deliveryAvailable && (
-                  <li className="flex justify-between border-t border-gray-200 pt-3">
-                    <span className="text-gray-600">Delivery Fee:</span>
-                    <span className="font-medium text-gray-900">Rs. {quotation.deliveryFee?.toFixed(2)}</span>
+                  <li className="flex justify-between items-center border-t border-slate-200 pt-4">
+                    <span className="text-slate-600 font-medium">Delivery Fee:</span>
+                    <span className="font-bold text-slate-900">Rs. {quotation.deliveryFee?.toFixed(2)}</span>
                   </li>
                 )}
               </ul>
               
               {quotation.pharmacyNotes && (
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <span className="block text-gray-600 text-sm mb-1">Pharmacy Note:</span>
-                  <p className="text-sm text-gray-900">{quotation.pharmacyNotes}</p>
+                <div className="mt-6 pt-5 border-t border-slate-200">
+                  <span className="block text-slate-900 font-semibold text-sm mb-2">Pharmacy Note:</span>
+                  <p className="text-sm text-slate-600 bg-white p-3 rounded-xl border border-slate-200 leading-relaxed">{quotation.pharmacyNotes}</p>
                 </div>
               )}
             </div>
 
-            <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm flex flex-col justify-between">
+            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between">
               <div>
-                <h4 className="font-semibold text-gray-900 mb-4">Pricing Summary</h4>
-                <div className="space-y-3 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Items Subtotal:</span>
-                    <span className="font-medium">Rs. {quotation.subtotal?.toFixed(2)}</span>
+                <h4 className="font-bold text-slate-900 mb-5 text-lg">Pricing Summary</h4>
+                <div className="space-y-4 text-sm">
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-600 font-medium">Items Subtotal:</span>
+                    <span className="font-semibold text-slate-900">Rs. {quotation.subtotal?.toFixed(2)}</span>
                   </div>
                   {quotation.deliveryAvailable && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Delivery Fee:</span>
-                      <span className="font-medium">Rs. {quotation.deliveryFee?.toFixed(2)}</span>
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-600 font-medium">Delivery Fee:</span>
+                      <span className="font-semibold text-slate-900">Rs. {quotation.deliveryFee?.toFixed(2)}</span>
                     </div>
                   )}
-                  <div className="flex justify-between pt-3 border-t border-gray-100 text-lg font-bold">
-                    <span>Total Amount:</span>
-                    <span className="text-primary">Rs. {quotation.total?.toFixed(2)}</span>
+                  <div className="flex justify-between items-center pt-4 border-t border-slate-100 bg-primary-50 -mx-6 px-6 pb-2">
+                    <span className="font-bold text-primary-900">Total Amount:</span>
+                    <span className="text-2xl font-black text-primary-700">Rs. {quotation.total?.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
 
               <div className="mt-8 pt-4">
                 {request.status === 'QUOTATIONS_RECEIVED' && quotation.status === 'SUBMITTED' && (
-                  <button 
+                  <Button 
                     onClick={handleAcceptQuotation}
                     disabled={processing}
-                    className="w-full px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary-700 font-medium transition-colors flex items-center justify-center disabled:opacity-50 shadow-sm"
+                    loading={processing}
+                    icon={Check}
+                    size="lg"
+                    fullWidth
                   >
-                    {processing ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Check className="w-5 h-5 mr-2" />}
                     Accept & Pay
-                  </button>
+                  </Button>
                 )}
                 
                 {quotation.status === 'ACCEPTED' && request.paymentStatus === 'PAID' && (
-                  <div className="w-full px-4 py-3 bg-green-50 text-green-700 rounded-lg font-bold flex items-center justify-center border border-green-200">
+                  <div className="w-full px-4 py-3 bg-emerald-50 text-emerald-700 rounded-xl font-bold flex items-center justify-center border border-emerald-200">
                     <Check className="w-5 h-5 mr-2" /> Quotation Accepted & Paid
                   </div>
                 )}
                 
                 {quotation.status === 'DECLINED' && (
-                  <div className="w-full px-4 py-3 bg-red-50 text-red-700 rounded-lg font-bold flex items-center justify-center border border-red-200">
+                  <div className="w-full px-4 py-3 bg-rose-50 text-rose-700 rounded-xl font-bold flex items-center justify-center border border-rose-200">
                     Quotation Declined
                   </div>
                 )}
               </div>
             </div>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

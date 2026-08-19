@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { Loader2 } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import requestService from '../../../features/requests/requestService';
+import { Card, CardContent } from '../../../components/ui/Card';
+import Button from '../../../components/ui/Button';
 
 const CreateRequestPage = () => {
   const navigate = useNavigate();
@@ -23,25 +25,28 @@ const CreateRequestPage = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-2xl">
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden p-8 text-center">
-        <h1 className="text-2xl font-bold text-gray-900 mb-4">Start a New Medicine Request</h1>
-        <p className="text-gray-600 mb-8">
-          Send a request to up to 5 nearby pharmacies to check availability and get quotations for your prescriptions.
-        </p>
-        
-        <button
-          onClick={handleStartRequest}
-          disabled={loading}
-          className="px-6 py-3 bg-primary text-white font-medium rounded-lg hover:bg-primary-700 focus:ring-4 focus:ring-primary-200 transition-colors inline-flex items-center"
-        >
-          {loading ? (
-            <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Creating...</>
-          ) : (
-            'Start Request Draft'
-          )}
-        </button>
-      </div>
+    <div className="mx-auto px-4 py-12 max-w-2xl">
+      <Card>
+        <CardContent className="p-10 text-center">
+          <div className="mx-auto bg-primary-100 text-primary-600 w-16 h-16 rounded-full flex items-center justify-center mb-6">
+            <Sparkles className="w-8 h-8" />
+          </div>
+          <h1 className="text-3xl font-bold text-slate-900 mb-4 tracking-tight">Start a New Medicine Request</h1>
+          <p className="text-slate-600 mb-8 text-lg">
+            Send a request to up to 5 nearby pharmacies to check availability and get quotations for your prescriptions.
+          </p>
+          
+          <Button
+            onClick={handleStartRequest}
+            disabled={loading}
+            loading={loading}
+            size="lg"
+            className="w-full sm:w-auto"
+          >
+            Start Request Draft
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 };
