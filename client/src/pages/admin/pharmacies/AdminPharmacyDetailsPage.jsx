@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Loader2, ArrowLeft, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, CheckCircle, XCircle, AlertTriangle, Store, MapPin, Map, Calendar, ShieldCheck, Mail, Phone, Hash } from 'lucide-react';
 import { toast } from 'react-toastify';
 import adminService from '../../../features/admin/adminService';
+import { Card, CardContent, CardHeader } from '../../../components/ui/Card';
+import Skeleton from '../../../components/ui/Skeleton';
+import Badge from '../../../components/ui/Badge';
+import Button from '../../../components/ui/Button';
 
 const AdminPharmacyDetailsPage = () => {
   const { id } = useParams();
@@ -43,125 +47,191 @@ const AdminPharmacyDetailsPage = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="max-w-5xl mx-auto px-4 py-8 space-y-8">
+        <Skeleton className="h-6 w-32 mb-6" />
+        <Card>
+          <CardContent className="p-8 space-y-6">
+            <Skeleton className="h-10 w-1/3" />
+            <Skeleton className="h-4 w-1/4" />
+            <div className="mt-8 space-y-4">
+               {[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-full" />)}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   if (!pharmacy) return null;
 
+  const getStatusVariant = (status) => {
+    switch (status) {
+      case 'APPROVED': return 'success';
+      case 'REJECTED': return 'error';
+      case 'SUSPENDED': return 'error';
+      case 'PENDING': return 'warning';
+      default: return 'default';
+    }
+  };
+
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <div className="mb-6 flex justify-between items-center">
-        <Link to="/admin/pharmacies" className="text-primary hover:text-primary-800 flex items-center text-sm font-medium">
-          <ArrowLeft className="w-4 h-4 mr-1" /> Back to Pharmacies
-        </Link>
-        <span className={`px-3 py-1 rounded-full text-sm font-medium border ${
-          pharmacy.verificationStatus === 'APPROVED' ? 'bg-green-100 text-green-800 border-green-200' :
-          pharmacy.verificationStatus === 'REJECTED' ? 'bg-red-100 text-red-800 border-red-200' :
-          pharmacy.verificationStatus === 'SUSPENDED' ? 'bg-orange-100 text-orange-800 border-orange-200' :
-          'bg-yellow-100 text-yellow-800 border-yellow-200'
-        }`}>
-          {pharmacy.verificationStatus}
-        </span>
-      </div>
-
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
-        <div className="p-6 border-b border-gray-200">
-          <h1 className="text-2xl font-bold text-gray-900">{pharmacy.businessName}</h1>
-          <p className="text-gray-500 text-sm mt-1">Registered Owner: {pharmacy.ownerId?.email}</p>
-        </div>
-        
-        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div className="max-w-6xl mx-auto px-4 py-8 space-y-8 animate-in fade-in duration-500">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
+        <div className="flex items-center gap-4">
+          <button onClick={() => navigate('/admin/pharmacies')} className="p-2 hover:bg-slate-100 rounded-full transition-colors group">
+            <ArrowLeft className="w-5 h-5 text-slate-600 group-hover:-translate-x-1 transition-transform" />
+          </button>
           <div>
-            <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">Business Details</h3>
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm text-gray-500">Registration Number</p>
-                <p className="font-medium text-gray-900">{pharmacy.registrationNumber}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Phone</p>
-                <p className="font-medium text-gray-900">{pharmacy.phone}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Address</p>
-                <p className="font-medium text-gray-900">
-                  {pharmacy.address?.street}<br/>
-                  {pharmacy.address?.city}, {pharmacy.address?.state} {pharmacy.address?.zipCode}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">Location Data</h3>
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm text-gray-500">Coordinates</p>
-                {pharmacy.location?.coordinates ? (
-                  <p className="font-medium text-gray-900">
-                    Lat: {pharmacy.location.coordinates[1].toFixed(5)}, Lng: {pharmacy.location.coordinates[0].toFixed(5)}
-                  </p>
-                ) : (
-                  <p className="font-medium text-gray-400 italic">Not set</p>
-                )}
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Delivery Available</p>
-                <p className="font-medium text-gray-900">{pharmacy.deliveryAvailable ? 'Yes' : 'No'}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Created At</p>
-                <p className="font-medium text-gray-900">{new Date(pharmacy.createdAt).toLocaleString()}</p>
-              </div>
-            </div>
+            <h1 className="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-4">
+              Pharmacy Details
+            </h1>
+            <p className="text-slate-500 font-medium mt-1">Review registration and moderation actions</p>
           </div>
         </div>
+        <Badge variant={getStatusVariant(pharmacy.verificationStatus)} className="text-sm px-4 py-1.5 shadow-sm">
+           {pharmacy.verificationStatus}
+        </Badge>
       </div>
 
-      <div className="bg-gray-50 rounded-xl shadow-sm border border-gray-200 p-6 flex flex-wrap gap-4 items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900">Moderation Actions</h3>
-          <p className="text-sm text-gray-600">Update the verification status of this pharmacy.</p>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-8">
+          <Card>
+            <CardHeader className="bg-primary-50/50 border-b border-primary-100 pb-6 pt-8">
+              <div className="flex items-center gap-5">
+                <div className="w-16 h-16 rounded-2xl bg-primary-100 flex items-center justify-center text-primary-600 font-bold text-3xl shadow-inner border border-primary-200">
+                  {pharmacy.businessName?.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                   <h2 className="text-2xl font-black text-slate-900 tracking-tight">{pharmacy.businessName}</h2>
+                   <p className="text-primary-700 font-medium flex items-center gap-2 mt-1">
+                      <Mail className="w-4 h-4" /> {pharmacy.ownerId?.email}
+                   </p>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+               <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
+                  
+                  <div className="p-8 space-y-6">
+                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-2">
+                        <Store className="w-4 h-4 text-slate-400" /> Business Identity
+                     </h3>
+                     
+                     <div className="space-y-5">
+                        <div>
+                          <p className="text-sm text-slate-500 font-medium mb-1 flex items-center gap-1.5"><Hash className="w-4 h-4" /> Registration Number</p>
+                          <p className="font-mono text-lg font-bold text-slate-900 bg-slate-50 inline-block px-3 py-1 rounded-lg border border-slate-200">{pharmacy.registrationNumber}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-slate-500 font-medium mb-1 flex items-center gap-1.5"><Phone className="w-4 h-4" /> Contact Phone</p>
+                          <p className="font-bold text-slate-900">{pharmacy.phone}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-slate-500 font-medium mb-1 flex items-center gap-1.5"><Calendar className="w-4 h-4" /> Registered On</p>
+                          <p className="font-medium text-slate-900">{new Date(pharmacy.createdAt).toLocaleString()}</p>
+                        </div>
+                     </div>
+                  </div>
+
+                  <div className="p-8 space-y-6 bg-slate-50/50">
+                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-2">
+                        <MapPin className="w-4 h-4 text-slate-400" /> Location Details
+                     </h3>
+                     
+                     <div className="space-y-5">
+                        <div>
+                          <p className="text-sm text-slate-500 font-medium mb-1">Physical Address</p>
+                          <p className="font-bold text-slate-900 leading-relaxed">
+                            {pharmacy.address?.street}<br/>
+                            {pharmacy.address?.city}, {pharmacy.address?.state} {pharmacy.address?.zipCode}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-slate-500 font-medium mb-1 flex items-center gap-1.5"><Map className="w-4 h-4" /> Coordinates</p>
+                          {pharmacy.location?.coordinates ? (
+                            <div className="font-mono text-sm font-medium text-slate-700 bg-white inline-block px-3 py-1.5 rounded-lg border border-slate-200">
+                              {pharmacy.location.coordinates[1].toFixed(5)}, {pharmacy.location.coordinates[0].toFixed(5)}
+                            </div>
+                          ) : (
+                            <p className="font-medium text-slate-400 italic bg-white inline-block px-3 py-1 rounded-lg border border-slate-100">Not set</p>
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-sm text-slate-500 font-medium mb-1">Delivery Services</p>
+                          <Badge variant={pharmacy.deliveryAvailable ? 'success' : 'default'}>
+                            {pharmacy.deliveryAvailable ? 'Available' : 'Not Available'}
+                          </Badge>
+                        </div>
+                     </div>
+                  </div>
+
+               </div>
+            </CardContent>
+          </Card>
         </div>
-        
-        <div className="flex gap-3">
-          {pharmacy.verificationStatus === 'PENDING' && (
-            <>
-              <button 
-                onClick={() => handleAction('approve')} disabled={actionLoading}
-                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md font-medium flex items-center transition-colors disabled:opacity-50"
-              >
-                <CheckCircle className="w-4 h-4 mr-2" /> Approve
-              </button>
-              <button 
-                onClick={() => handleAction('reject')} disabled={actionLoading}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md font-medium flex items-center transition-colors disabled:opacity-50"
-              >
-                <XCircle className="w-4 h-4 mr-2" /> Reject
-              </button>
-            </>
-          )}
 
-          {pharmacy.verificationStatus === 'APPROVED' && (
-            <button 
-              onClick={() => handleAction('suspend')} disabled={actionLoading}
-              className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-md font-medium flex items-center transition-colors disabled:opacity-50"
-            >
-              <AlertTriangle className="w-4 h-4 mr-2" /> Suspend
-            </button>
-          )}
+        <div className="space-y-8">
+          <Card className="sticky top-24 shadow-lg shadow-primary-900/5 ring-1 ring-slate-200">
+            <CardHeader className="bg-slate-50 border-b border-slate-100 pb-4">
+              <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-primary-500" />
+                Moderation Panel
+              </h2>
+              <p className="text-sm text-slate-500 font-medium mt-1">Manage pharmacy access</p>
+            </CardHeader>
+            <CardContent className="p-6 space-y-4">
+               {pharmacy.verificationStatus === 'PENDING' && (
+                 <>
+                   <Button 
+                     onClick={() => handleAction('approve')} disabled={actionLoading} loading={actionLoading && pharmacy.verificationStatus === 'PENDING'}
+                     variant="success" fullWidth size="lg" icon={CheckCircle}
+                   >
+                     Approve Pharmacy
+                   </Button>
+                   <Button 
+                     onClick={() => handleAction('reject')} disabled={actionLoading}
+                     variant="outline" fullWidth size="lg" icon={XCircle}
+                     className="!text-red-600 !border-red-200 hover:!bg-red-50"
+                   >
+                     Reject Registration
+                   </Button>
+                   <p className="text-xs text-center text-slate-500 mt-2 font-medium">This action will notify the pharmacy owner via email.</p>
+                 </>
+               )}
 
-          {(pharmacy.verificationStatus === 'SUSPENDED' || pharmacy.verificationStatus === 'REJECTED') && (
-            <button 
-              onClick={() => handleAction('reactivate')} disabled={actionLoading}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium flex items-center transition-colors disabled:opacity-50"
-            >
-              <CheckCircle className="w-4 h-4 mr-2" /> Reactivate
-            </button>
-          )}
+               {pharmacy.verificationStatus === 'APPROVED' && (
+                 <div className="space-y-4">
+                    <div className="p-4 bg-green-50 rounded-xl border border-green-100">
+                       <p className="text-sm text-green-800 font-bold flex items-center gap-2"><CheckCircle className="w-4 h-4" /> Pharmacy is active</p>
+                    </div>
+                    <Button 
+                      onClick={() => handleAction('suspend')} disabled={actionLoading} loading={actionLoading}
+                      variant="outline" fullWidth size="lg" icon={AlertTriangle}
+                      className="!text-amber-600 !border-amber-200 hover:!bg-amber-50"
+                    >
+                      Suspend Pharmacy
+                    </Button>
+                 </div>
+               )}
+
+               {(pharmacy.verificationStatus === 'SUSPENDED' || pharmacy.verificationStatus === 'REJECTED') && (
+                 <div className="space-y-4">
+                    <div className={`p-4 rounded-xl border ${pharmacy.verificationStatus === 'SUSPENDED' ? 'bg-amber-50 border-amber-100' : 'bg-red-50 border-red-100'}`}>
+                       <p className={`text-sm font-bold flex items-center gap-2 ${pharmacy.verificationStatus === 'SUSPENDED' ? 'text-amber-800' : 'text-red-800'}`}>
+                          {pharmacy.verificationStatus === 'SUSPENDED' ? <AlertTriangle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
+                          Pharmacy is {pharmacy.verificationStatus.toLowerCase()}
+                       </p>
+                    </div>
+                    <Button 
+                      onClick={() => handleAction('reactivate')} disabled={actionLoading} loading={actionLoading}
+                      variant="primary" fullWidth size="lg" icon={CheckCircle}
+                    >
+                      Reactivate Pharmacy
+                    </Button>
+                 </div>
+               )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

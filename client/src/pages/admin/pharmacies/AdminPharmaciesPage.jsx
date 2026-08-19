@@ -1,12 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Loader2, Search, Store } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Search, Store, ArrowRight, Activity, MapPin } from 'lucide-react';
 import adminService from '../../../features/admin/adminService';
+import { Card } from '../../../components/ui/Card';
+import Skeleton from '../../../components/ui/Skeleton';
+import EmptyState from '../../../components/ui/EmptyState';
+import Badge from '../../../components/ui/Badge';
+import Input from '../../../components/ui/Input';
 
 const AdminPharmaciesPage = () => {
   const [pharmacies, setPharmacies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filter, setFilter] = useState('ALL');
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchPharmacies();
@@ -24,87 +31,114 @@ const AdminPharmaciesPage = () => {
     }
   };
 
-  const filteredPharmacies = pharmacies.filter(p => 
-    p.businessName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    p.registrationNumber?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredPharmacies = pharmacies.filter(p => {
+    const matchesSearch = p.businessName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          p.registrationNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          p.ownerId?.email?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter = filter === 'ALL' || p.verificationStatus === filter;
+    return matchesSearch && matchesFilter;
+  });
 
-  const getStatusColor = (status) => {
+  const getStatusVariant = (status) => {
     switch(status) {
-      case 'APPROVED': return 'bg-green-100 text-green-800 border-green-200';
-      case 'PENDING': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'REJECTED': return 'bg-red-100 text-red-800 border-red-200';
-      case 'SUSPENDED': return 'bg-orange-100 text-orange-800 border-orange-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'APPROVED': return 'success';
+      case 'PENDING': return 'warning';
+      case 'REJECTED': return 'error';
+      case 'SUSPENDED': return 'error';
+      default: return 'default';
     }
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      <div className="flex justify-between items-center mb-6">
+    <div className="max-w-7xl mx-auto px-4 py-8 animate-in fade-in duration-500">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Manage Pharmacies</h1>
-          <p className="mt-2 text-gray-600">Review and verify pharmacy registrations.</p>
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Manage Pharmacies</h1>
+          <p className="mt-2 text-slate-600 font-medium">Review and verify pharmacy registrations across the platform.</p>
         </div>
       </div>
 
-      <div className="bg-white p-4 rounded-t-xl border border-b-0 border-gray-200 flex justify-between items-center">
-        <div className="relative w-72">
-          <input
-            type="text"
-            placeholder="Search by name or reg number..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
-          />
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+      <Card className="overflow-hidden mb-8">
+        <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex flex-col md:flex-row justify-between items-center gap-5">
+           <div className="flex flex-wrap gap-2">
+            {['ALL', 'PENDING', 'APPROVED', 'SUSPENDED', 'REJECTED'].map(status => (
+              <button
+                key={status}
+                onClick={() => setFilter(status)}
+                className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+                  filter === status 
+                    ? 'bg-primary-600 text-white shadow-md shadow-primary-600/20' 
+                    : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                }`}
+              >
+                {status}
+              </button>
+            ))}
+          </div>
+          <div className="w-full md:w-80">
+            <Input
+              icon={Search}
+              placeholder="Search by name, reg number, or email..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
         </div>
-      </div>
 
-      <div className="bg-white rounded-b-xl shadow-sm border border-gray-200 overflow-hidden">
         {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <div className="p-6 space-y-4">
+            {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-16 w-full" />)}
           </div>
         ) : filteredPharmacies.length === 0 ? (
-          <div className="text-center py-12 text-gray-500 flex flex-col items-center">
-            <Store className="w-12 h-12 text-gray-300 mb-3" />
-            <p>No pharmacies found.</p>
-          </div>
+          <EmptyState
+            icon={Store}
+            title="No pharmacies found"
+            description="There are no pharmacies matching your search or filter criteria."
+          />
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-slate-200">
+              <thead className="bg-slate-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Business Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reg Number</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">City</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Business Info</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Reg Number</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Location</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white divide-y divide-slate-100">
                 {filteredPharmacies.map((pharmacy) => (
-                  <tr key={pharmacy._id} className="hover:bg-gray-50">
+                  <tr key={pharmacy._id} className="hover:bg-slate-50 transition-colors group cursor-pointer" onClick={() => navigate(`/admin/pharmacies/${pharmacy._id}`)}>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{pharmacy.businessName}</div>
-                      <div className="text-xs text-gray-500">{pharmacy.ownerId?.email}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {pharmacy.registrationNumber}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {pharmacy.address?.city || 'N/A'}
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 font-bold">
+                          {pharmacy.businessName?.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <div className="text-sm font-bold text-slate-900">{pharmacy.businessName}</div>
+                          <div className="text-xs font-medium text-slate-500">{pharmacy.ownerId?.email}</div>
+                        </div>
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2.5 py-0.5 inline-flex text-xs font-medium rounded-full border ${getStatusColor(pharmacy.verificationStatus)}`}>
-                        {pharmacy.verificationStatus}
-                      </span>
+                       <span className="font-mono text-sm font-bold text-slate-900 bg-slate-100 px-2 py-1 rounded border border-slate-200">
+                          {pharmacy.registrationNumber || 'N/A'}
+                       </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-slate-700 flex items-center gap-1.5">
+                        <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                        {pharmacy.address?.city || 'Not set'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                       <Badge variant={getStatusVariant(pharmacy.verificationStatus)}>{pharmacy.verificationStatus}</Badge>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <Link to={`/admin/pharmacies/${pharmacy._id}`} className="text-primary hover:text-primary-800 font-semibold">
-                        Review
-                      </Link>
+                      <div className="text-primary-600 hover:text-primary-800 font-bold flex items-center justify-end transition-colors">
+                        Review <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -112,7 +146,7 @@ const AdminPharmaciesPage = () => {
             </table>
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 };
