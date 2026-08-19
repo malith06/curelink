@@ -17,6 +17,7 @@ const request = require("./modules/requests/request.routes");
 const prescription = require("./modules/prescriptions/prescription.routes");
 const quotation = require("./modules/quotations/quotation.routes");
 const { customerOrderRouter, pharmacyOrderRouter } = require("./modules/orders/order.routes");
+const dashboardRoutes = require("./modules/dashboards/dashboard.routes");
 const { webhookRouter, customerPaymentRouter, pharmacyPaymentRouter } = require("./modules/payments/payment.routes");
 const notifications = require("./modules/notifications/notification.routes");
 
@@ -51,6 +52,7 @@ app.use("/api/v1/quotations", quotation);
 app.use("/api/v1/orders", customerOrderRouter);
 app.use("/api/v1/pharmacy/orders", pharmacyOrderRouter);
 app.use("/api/v1/notifications", notifications);
+app.use("/api/v1/dashboards", dashboardRoutes);
 
 // Handle undefined routes
 app.use(notFound);
