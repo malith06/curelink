@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Loader2, ArrowLeft, Send, Save, AlertCircle } from 'lucide-react';
+import { Loader2, ArrowLeft, Send, Save, AlertCircle, FileText, Package, Clock, Truck, Store } from 'lucide-react';
 import { toast } from 'react-toastify';
 import requestService from '../../../features/requests/requestService';
 import quotationService from '../../../features/quotations/quotationService';
 import { QUOTATION_STATUS } from '../../../constants/quotation';
+import { Card, CardContent, CardHeader } from '../../../components/ui/Card';
+import Button from '../../../components/ui/Button';
+import Skeleton from '../../../components/ui/Skeleton';
+import Badge from '../../../components/ui/Badge';
+import Input from '../../../components/ui/Input';
 
 const PharmacyRequestDetailsPage = () => {
   const { id } = useParams();
@@ -140,8 +145,17 @@ const PharmacyRequestDetailsPage = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="max-w-5xl mx-auto px-4 py-8 space-y-8">
+        <Skeleton className="h-6 w-32 mb-6" />
+        <Card>
+          <CardContent className="p-8 space-y-6">
+            <Skeleton className="h-10 w-1/3" />
+            <Skeleton className="h-4 w-1/4" />
+            <div className="mt-8 space-y-4">
+               {[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-full" />)}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -151,103 +165,123 @@ const PharmacyRequestDetailsPage = () => {
   const isDraft = quotation && quotation.status === QUOTATION_STATUS.DRAFT;
   const isSubmitted = quotation && quotation.status !== QUOTATION_STATUS.DRAFT;
 
+  const renderStatusBadge = (status) => {
+    switch (status) {
+      case 'ACCEPTED':
+        return <Badge variant="success">Quote: {status}</Badge>;
+      case 'DECLINED':
+        return <Badge variant="error">Quote: {status}</Badge>;
+      case 'SUBMITTED':
+        return <Badge variant="info">Quote: {status}</Badge>;
+      default:
+        return <Badge variant="default">Quote: {status}</Badge>;
+    }
+  };
+
   return (
-    <div className="container mx-auto px-4 py-8 max-w-5xl">
-      <div className="mb-6">
-        <Link to="/pharmacy/inbox" className="text-primary hover:text-primary-800 flex items-center text-sm font-medium">
-          <ArrowLeft className="w-4 h-4 mr-1" /> Back to Inbox
-        </Link>
+    <div className="max-w-6xl mx-auto px-4 py-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="flex items-center space-x-4 mb-2">
+        <button
+          onClick={() => navigate('/pharmacy/inbox')}
+          className="p-2 hover:bg-slate-100 rounded-full transition-colors group"
+        >
+          <ArrowLeft className="w-5 h-5 text-slate-600 group-hover:-translate-x-1 transition-transform" />
+        </button>
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Review Request</h1>
+        </div>
       </div>
 
-      {/* Header */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
-        <div className="p-6 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Request #{request._id.substring(request._id.length - 6).toUpperCase()}</h1>
-            <p className="text-gray-500 text-sm mt-1">Customer Request Status: {request.status.replace(/_/g, ' ')}</p>
+      <Card className="overflow-hidden">
+        <div className="p-6 md:p-8 bg-slate-50 border-b border-slate-100 flex flex-col md:flex-row justify-between md:items-center gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center space-x-3">
+              <h2 className="text-xl font-bold text-slate-900">Request #{request._id.substring(request._id.length - 6).toUpperCase()}</h2>
+              <Badge variant="default">{request.status.replace(/_/g, ' ')}</Badge>
+            </div>
+            <p className="text-slate-500 font-medium flex items-center">
+              <Clock className="w-4 h-4 mr-1.5" />
+              Received {new Date(request.createdAt).toLocaleString()}
+            </p>
           </div>
           {quotation && (
             <div>
-              <span className={`px-4 py-1.5 rounded-full text-sm font-bold border ${
-                quotation.status === 'ACCEPTED' ? 'bg-green-100 text-green-800 border-green-200' :
-                quotation.status === 'DECLINED' ? 'bg-red-100 text-red-800 border-red-200' :
-                quotation.status === 'SUBMITTED' ? 'bg-blue-100 text-blue-800 border-blue-200' :
-                'bg-gray-100 text-gray-800 border-gray-200'
-              }`}>
-                Quote: {quotation.status}
-              </span>
+              {renderStatusBadge(quotation.status)}
             </div>
           )}
         </div>
 
-        {/* Quotation Editor */}
-        <div className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quotation Items</h3>
-          <div className="overflow-x-auto mb-8">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-slate-200">
+              <thead className="bg-white">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Medicine</th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Req Qty</th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Avail Qty</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Unit Price (Rs)</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Subtotal (Rs)</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Medicine</th>
+                  <th className="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Req Qty</th>
+                  <th className="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Avail Qty</th>
+                  <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Unit Price (Rs)</th>
+                  <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Subtotal (Rs)</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white divide-y divide-slate-100">
                 {quotation?.items.map((qItem) => {
                   const reqItem = request.items.find(i => i._id === qItem.requestItemId);
                   const isEditing = isDraft;
                   
                   return (
-                    <tr key={qItem._id}>
-                      <td className="px-4 py-4">
-                        <div className="font-medium text-gray-900">
+                    <tr key={qItem._id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-6 py-5">
+                        <div className="font-bold text-slate-900 text-sm">
                           {qItem.medicineSnapshot?.genericName || reqItem?.medicineId?.genericName || 'Medicine'}
                         </div>
                         {reqItem?.prescriptionRequired && (
-                          <span className="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded mt-1 inline-block">Prescription Required</span>
+                          <div className="mt-1.5">
+                             <Badge variant="error" className="text-[10px]">Prescription Required</Badge>
+                          </div>
                         )}
                       </td>
-                      <td className="px-4 py-4 text-center font-bold">
+                      <td className="px-6 py-5 text-center font-bold text-slate-700">
                         {qItem.requestedQuantity}
                       </td>
                       
                       {/* Available Quantity */}
-                      <td className="px-4 py-4 text-center">
+                      <td className="px-6 py-5 text-center">
                         {isEditing ? (
                           <input 
                             type="number" 
                             min="0"
                             max={qItem.requestedQuantity}
-                            className="w-20 px-2 py-1 border border-gray-300 rounded focus:ring-1 focus:ring-primary outline-none"
+                            className="w-20 px-3 py-1.5 text-center font-bold border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
                             value={draftItems[qItem.requestItemId]?.availableQuantity ?? ''}
                             onChange={(e) => handleItemChange(qItem.requestItemId, 'availableQuantity', parseInt(e.target.value) || 0)}
                           />
                         ) : (
-                          <span className="font-medium">{qItem.availableQuantity}</span>
+                          <span className="font-bold text-slate-900">{qItem.availableQuantity}</span>
                         )}
                       </td>
 
                       {/* Unit Price */}
-                      <td className="px-4 py-4 text-right">
+                      <td className="px-6 py-5 text-right">
                         {isEditing ? (
-                          <input 
-                            type="number" 
-                            min="0"
-                            step="0.01"
-                            className="w-24 px-2 py-1 border border-gray-300 rounded focus:ring-1 focus:ring-primary outline-none"
-                            value={draftItems[qItem.requestItemId]?.unitPrice ?? ''}
-                            onChange={(e) => handleItemChange(qItem.requestItemId, 'unitPrice', parseFloat(e.target.value) || 0)}
-                            placeholder="0.00"
-                          />
+                          <div className="flex justify-end relative">
+                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 font-medium">Rs</span>
+                            <input 
+                              type="number" 
+                              min="0"
+                              step="0.01"
+                              className="w-28 pl-8 pr-3 py-1.5 text-right font-bold border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
+                              value={draftItems[qItem.requestItemId]?.unitPrice ?? ''}
+                              onChange={(e) => handleItemChange(qItem.requestItemId, 'unitPrice', parseFloat(e.target.value) || 0)}
+                              placeholder="0.00"
+                            />
+                          </div>
                         ) : (
-                          <span>{qItem.unitPrice?.toFixed(2) || '0.00'}</span>
+                          <span className="font-medium text-slate-700">{qItem.unitPrice?.toFixed(2) || '0.00'}</span>
                         )}
                       </td>
                       
                       {/* Subtotal */}
-                      <td className="px-4 py-4 text-right font-medium text-gray-900">
+                      <td className="px-6 py-5 text-right font-bold text-primary-600 text-lg">
                         {isEditing ? (
                           <span>{((draftItems[qItem.requestItemId]?.availableQuantity || 0) * (draftItems[qItem.requestItemId]?.unitPrice || 0)).toFixed(2)}</span>
                         ) : (
@@ -260,145 +294,187 @@ const PharmacyRequestDetailsPage = () => {
               </tbody>
             </table>
           </div>
+        </CardContent>
+      </Card>
 
-          {/* Quotation Metadata */}
-          {quotation && (
-            <div className="bg-gray-50 rounded-xl p-6 border border-gray-200 mb-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h4 className="font-semibold text-gray-900 mb-4">Fulfillment Details</h4>
-                
-                <div className="mb-4">
-                  <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
+      {/* Quotation Metadata */}
+      {quotation && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <Card>
+            <CardHeader>
+              <h4 className="font-bold text-slate-900 flex items-center text-lg">
+                <Truck className="w-5 h-5 mr-2 text-primary-500" />
+                Fulfillment Details
+              </h4>
+            </CardHeader>
+            <CardContent className="p-6 space-y-6">
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <label className={`flex items-start p-4 border-2 rounded-xl cursor-pointer transition-all ${
+                    (isDraft ? draftMeta.pickupAvailable : quotation.pickupAvailable) 
+                      ? 'border-primary-600 bg-primary-50 ring-2 ring-primary-500/10' 
+                      : 'border-slate-200 hover:border-primary-300'
+                  }`}>
+                  <div className="flex items-center h-5">
                     <input 
                       type="checkbox" 
                       disabled={!isDraft}
                       checked={isDraft ? draftMeta.pickupAvailable : quotation.pickupAvailable}
                       onChange={(e) => handleMetaChange('pickupAvailable', e.target.checked)}
-                      className="mr-2 rounded text-primary focus:ring-primary"
+                      className="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-600"
                     />
-                    Pickup Available
-                  </label>
-                </div>
-                
-                <div className="mb-4">
-                  <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
+                  </div>
+                  <div className="ml-3">
+                    <span className="block font-bold text-slate-900">Pickup</span>
+                    <span className="block text-xs text-slate-500 font-medium">Customer picks up</span>
+                  </div>
+                </label>
+
+                <label className={`flex items-start p-4 border-2 rounded-xl cursor-pointer transition-all ${
+                    (isDraft ? draftMeta.deliveryAvailable : quotation.deliveryAvailable) 
+                      ? 'border-primary-600 bg-primary-50 ring-2 ring-primary-500/10' 
+                      : 'border-slate-200 hover:border-primary-300'
+                  }`}>
+                  <div className="flex items-center h-5">
                     <input 
                       type="checkbox" 
                       disabled={!isDraft}
                       checked={isDraft ? draftMeta.deliveryAvailable : quotation.deliveryAvailable}
                       onChange={(e) => handleMetaChange('deliveryAvailable', e.target.checked)}
-                      className="mr-2 rounded text-primary focus:ring-primary"
+                      className="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-600"
                     />
-                    Delivery Available
-                  </label>
-                </div>
+                  </div>
+                  <div className="ml-3">
+                    <span className="block font-bold text-slate-900">Delivery</span>
+                    <span className="block text-xs text-slate-500 font-medium">Deliver to address</span>
+                  </div>
+                </label>
+              </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {(isDraft ? draftMeta.deliveryAvailable : quotation.deliveryAvailable) && (
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Delivery Fee (Rs)</label>
+                  <div className="space-y-1.5">
+                    <label className="block text-sm font-bold text-slate-700">Delivery Fee (Rs)</label>
                     {isDraft ? (
-                      <input 
+                      <Input 
                         type="number"
                         min="0"
                         step="0.01"
-                        className="w-32 px-3 py-1 border border-gray-300 rounded focus:ring-1 focus:ring-primary outline-none"
                         value={draftMeta.deliveryFee}
                         onChange={(e) => handleMetaChange('deliveryFee', parseFloat(e.target.value) || 0)}
                       />
                     ) : (
-                      <div className="font-medium">Rs. {quotation.deliveryFee?.toFixed(2)}</div>
+                      <div className="font-bold text-slate-900 p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                        Rs. {quotation.deliveryFee?.toFixed(2)}
+                      </div>
                     )}
                   </div>
                 )}
                 
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Prep Time (Minutes)</label>
+                <div className="space-y-1.5">
+                  <label className="block text-sm font-bold text-slate-700">Prep Time (Minutes)</label>
                   {isDraft ? (
-                    <input 
+                    <Input 
                       type="number"
                       min="15"
                       step="5"
-                      className="w-32 px-3 py-1 border border-gray-300 rounded focus:ring-1 focus:ring-primary outline-none"
                       value={draftMeta.preparationMinutes}
                       onChange={(e) => handleMetaChange('preparationMinutes', parseInt(e.target.value) || 30)}
                     />
                   ) : (
-                    <div className="font-medium">{quotation.preparationMinutes} mins</div>
+                    <div className="font-bold text-slate-900 p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                      {quotation.preparationMinutes} mins
+                    </div>
                   )}
                 </div>
               </div>
-              
-              <div>
-                <h4 className="font-semibold text-gray-900 mb-4">Notes & Summary</h4>
-                
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Additional Notes</label>
-                  {isDraft ? (
-                    <textarea 
-                      className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-primary outline-none"
-                      rows="3"
-                      value={draftMeta.pharmacyNotes}
-                      onChange={(e) => handleMetaChange('pharmacyNotes', e.target.value)}
-                      placeholder="Special instructions or information..."
-                    />
-                  ) : (
-                    <p className="text-gray-600 bg-white p-3 rounded border text-sm">{quotation.pharmacyNotes || 'No notes provided.'}</p>
-                  )}
-                </div>
+            </CardContent>
+          </Card>
+          
+          <div className="space-y-8">
+            <Card>
+              <CardHeader>
+                <h4 className="font-bold text-slate-900 flex items-center text-lg">
+                  <FileText className="w-5 h-5 mr-2 text-primary-500" />
+                  Notes to Customer
+                </h4>
+              </CardHeader>
+              <CardContent className="p-6">
+                {isDraft ? (
+                  <textarea 
+                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all resize-none shadow-sm font-medium"
+                    rows="3"
+                    value={draftMeta.pharmacyNotes}
+                    onChange={(e) => handleMetaChange('pharmacyNotes', e.target.value)}
+                    placeholder="Add special instructions, alternative brands, or general information..."
+                  />
+                ) : (
+                  <p className="text-slate-700 bg-slate-50 p-4 rounded-xl border border-slate-200 text-sm font-medium leading-relaxed">
+                    {quotation.pharmacyNotes || 'No additional notes provided.'}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
 
-                {isSubmitted && (
-                  <div className="bg-white p-4 rounded-lg border border-gray-200 mt-4">
-                    <div className="flex justify-between text-sm mb-2">
-                      <span className="text-gray-500">Subtotal:</span>
-                      <span className="font-medium">Rs. {quotation.subtotal?.toFixed(2)}</span>
+            {isSubmitted && (
+              <Card className="bg-primary-50 border-primary-100 overflow-hidden">
+                <CardContent className="p-6">
+                  <h4 className="font-bold text-primary-900 mb-4 text-lg">Quotation Summary</h4>
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-sm font-medium">
+                      <span className="text-primary-700/70">Subtotal:</span>
+                      <span className="text-primary-900">Rs. {quotation.subtotal?.toFixed(2)}</span>
                     </div>
                     {quotation.deliveryAvailable && (
-                      <div className="flex justify-between text-sm mb-2">
-                        <span className="text-gray-500">Delivery Fee:</span>
-                        <span className="font-medium">Rs. {quotation.deliveryFee?.toFixed(2)}</span>
+                      <div className="flex justify-between text-sm font-medium">
+                        <span className="text-primary-700/70">Delivery Fee:</span>
+                        <span className="text-primary-900">Rs. {quotation.deliveryFee?.toFixed(2)}</span>
                       </div>
                     )}
-                    <div className="flex justify-between text-lg font-bold mt-2 pt-2 border-t">
-                      <span>Total:</span>
-                      <span className="text-primary">Rs. {quotation.total?.toFixed(2)}</span>
+                    <div className="flex justify-between items-center text-lg font-black mt-4 pt-4 border-t border-primary-200/50">
+                      <span className="text-primary-900">Total:</span>
+                      <span className="text-primary-700 text-2xl">Rs. {quotation.total?.toFixed(2)}</span>
                     </div>
                   </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Action Buttons */}
-          {isDraft && (
-            <div className="flex justify-end space-x-4">
-              <button 
-                onClick={handleSaveDraft}
-                disabled={saving || submitting}
-                className="px-6 py-2 bg-gray-100 text-gray-700 font-medium rounded hover:bg-gray-200 flex items-center"
-              >
-                {saving ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Save className="w-5 h-5 mr-2" />}
-                Save Draft
-              </button>
-              
-              <button 
-                onClick={handleSubmitQuotation}
-                disabled={saving || submitting}
-                className="px-6 py-2 bg-primary text-white font-medium rounded hover:bg-primary-700 flex items-center shadow-sm"
-              >
-                {submitting ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Send className="w-5 h-5 mr-2" />}
-                Submit Quotation
-              </button>
-            </div>
-          )}
-          
-          {isDraft && (
-            <div className="mt-4 flex items-start text-amber-700 bg-amber-50 p-3 rounded-lg text-sm">
-              <AlertCircle className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" />
-              <p>Submitting this quotation is final. You will not be able to edit the prices or quantities once submitted to the customer.</p>
-            </div>
-          )}
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Action Buttons */}
+      {isDraft && (
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div className="flex items-start text-amber-700 bg-amber-50 p-4 rounded-xl text-sm border border-amber-100 flex-1">
+            <AlertCircle className="w-5 h-5 mr-3 flex-shrink-0 mt-0.5" />
+            <p className="font-medium leading-relaxed">Submitting this quotation is final. You will not be able to edit the prices or quantities once submitted to the customer.</p>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
+            <Button
+              onClick={handleSaveDraft}
+              disabled={saving || submitting}
+              loading={saving}
+              variant="outline"
+              icon={Save}
+              size="lg"
+            >
+              Save Draft
+            </Button>
+            
+            <Button 
+              onClick={handleSubmitQuotation}
+              disabled={saving || submitting}
+              loading={submitting}
+              icon={Send}
+              size="lg"
+            >
+              Submit Quotation
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

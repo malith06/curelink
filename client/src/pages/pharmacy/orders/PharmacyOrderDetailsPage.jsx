@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Package, User, MapPin, Banknote, CreditCard, Clock, CheckCircle2, FileText, Loader2, DollarSign } from 'lucide-react';
+import { ArrowLeft, Package, User, MapPin, Banknote, CreditCard, Clock, CheckCircle2, FileText, DollarSign, Store } from 'lucide-react';
 import { toast } from 'react-toastify';
 import orderService from '../../../features/orders/orderService';
 import { ORDER_STATUS, PAYMENT_STATUS, FULFILMENT_METHOD, PAYMENT_METHOD } from '../../../features/orders/orderConstants';
+import { Card, CardContent, CardHeader } from '../../../components/ui/Card';
+import Button from '../../../components/ui/Button';
+import Skeleton from '../../../components/ui/Skeleton';
+import Badge from '../../../components/ui/Badge';
 
 const PharmacyOrderDetailsPage = () => {
   const { id } = useParams();
@@ -69,8 +73,17 @@ const PharmacyOrderDetailsPage = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+      <div className="max-w-5xl mx-auto px-4 py-8 space-y-8">
+        <Skeleton className="h-6 w-32 mb-6" />
+        <Card>
+          <CardContent className="p-8 space-y-6">
+            <Skeleton className="h-10 w-1/3" />
+            <Skeleton className="h-4 w-1/4" />
+            <div className="mt-8 space-y-4">
+               {[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-full" />)}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -83,42 +96,52 @@ const PharmacyOrderDetailsPage = () => {
   // Can collect COD if order is in a fulfillable state
   const canCollectCOD = isCODPending && [ORDER_STATUS.READY_FOR_PICKUP, ORDER_STATUS.OUT_FOR_DELIVERY, ORDER_STATUS.DELIVERED, ORDER_STATUS.COMPLETED].includes(order.orderStatus);
 
-  const getStatusBadge = (status) => {
+  const getStatusVariant = (status) => {
     switch (status) {
       case ORDER_STATUS.PENDING_PAYMENT:
       case ORDER_STATUS.PAYMENT_CONFIRMED:
-        return 'bg-purple-100 text-purple-800 border-purple-200';
+        return 'info';
       case ORDER_STATUS.PHARMACY_ACCEPTED:
       case ORDER_STATUS.PREPARING:
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        return 'warning';
       case ORDER_STATUS.READY_FOR_PICKUP:
       case ORDER_STATUS.OUT_FOR_DELIVERY:
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+        return 'success';
       case ORDER_STATUS.DELIVERED:
       case ORDER_STATUS.COMPLETED:
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'success';
       case ORDER_STATUS.CANCELLED:
       case ORDER_STATUS.REJECTED:
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'error';
       default:
-        return 'bg-slate-100 text-slate-800 border-slate-200';
+        return 'default';
     }
   };
 
   const renderActionButtons = () => {
     if (order.orderStatus === ORDER_STATUS.PENDING_PAYMENT) {
-      return <div className="text-sm text-amber-600 font-medium">Waiting for customer to complete payment...</div>;
+      return (
+        <div className="p-4 bg-amber-50 rounded-xl border border-amber-100 flex items-start gap-3">
+           <Clock className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+           <div>
+              <p className="text-sm text-amber-800 font-bold">Waiting for Payment</p>
+              <p className="text-sm text-amber-700/80 mt-1 font-medium">Customer has not yet completed payment. No action required yet.</p>
+           </div>
+        </div>
+      );
     }
 
     if (order.orderStatus === ORDER_STATUS.PAYMENT_CONFIRMED) {
       return (
-        <button
+        <Button
           onClick={() => handleUpdateStatus(ORDER_STATUS.PHARMACY_ACCEPTED)}
           disabled={actionLoading}
-          className="w-full bg-indigo-600 text-white py-3 rounded-xl font-medium hover:bg-indigo-700 transition-colors flex items-center justify-center disabled:opacity-50"
+          loading={actionLoading}
+          fullWidth
+          size="lg"
         >
-          {actionLoading ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : 'Accept & Start Preparing'}
-        </button>
+          Accept & Start Preparing
+        </Button>
       );
     }
 
@@ -128,48 +151,58 @@ const PharmacyOrderDetailsPage = () => {
         : ORDER_STATUS.READY_FOR_PICKUP;
       
       return (
-        <div className="space-y-3">
-          <button
+        <div className="space-y-4">
+          <Button
             onClick={() => handleUpdateStatus(ORDER_STATUS.PREPARING)}
             disabled={actionLoading || order.orderStatus === ORDER_STATUS.PREPARING}
-            className="w-full bg-yellow-500 text-white py-3 rounded-xl font-medium hover:bg-yellow-600 transition-colors flex items-center justify-center disabled:opacity-50"
+            variant="outline"
+            fullWidth
+            size="lg"
           >
             Mark as Preparing
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => handleUpdateStatus(nextStatus)}
             disabled={actionLoading}
-            className="w-full bg-blue-600 text-white py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors flex items-center justify-center disabled:opacity-50"
+            loading={actionLoading}
+            fullWidth
+            size="lg"
           >
             Mark as {nextStatus.replace(/_/g, ' ')}
-          </button>
+          </Button>
         </div>
       );
     }
 
     if (order.orderStatus === ORDER_STATUS.OUT_FOR_DELIVERY || order.orderStatus === ORDER_STATUS.READY_FOR_PICKUP) {
       return (
-        <div className="space-y-3">
-          <button
+        <div className="space-y-4">
+          <Button
             onClick={() => handleUpdateStatus(order.fulfilmentMethod === FULFILMENT_METHOD.DELIVERY ? ORDER_STATUS.DELIVERED : ORDER_STATUS.COMPLETED)}
             disabled={actionLoading}
-            className="w-full bg-green-600 text-white py-3 rounded-xl font-medium hover:bg-green-700 transition-colors flex items-center justify-center disabled:opacity-50"
+            loading={actionLoading}
+            fullWidth
+            size="lg"
+            variant="success"
           >
             Mark as {order.fulfilmentMethod === FULFILMENT_METHOD.DELIVERY ? 'Delivered' : 'Completed'}
-          </button>
+          </Button>
         </div>
       );
     }
 
     if (order.orderStatus === ORDER_STATUS.DELIVERED) {
       return (
-        <button
+        <Button
           onClick={() => handleUpdateStatus(ORDER_STATUS.COMPLETED)}
           disabled={actionLoading}
-          className="w-full bg-green-600 text-white py-3 rounded-xl font-medium hover:bg-green-700 transition-colors flex items-center justify-center disabled:opacity-50"
+          loading={actionLoading}
+          fullWidth
+          size="lg"
+          variant="success"
         >
           Close & Mark Completed
-        </button>
+        </Button>
       );
     }
 
@@ -177,173 +210,202 @@ const PharmacyOrderDetailsPage = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-5xl animate-in fade-in duration-500">
-      <div className="mb-6 flex items-center gap-4">
-        <Link to="/pharmacy/orders" className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-          <ArrowLeft className="w-5 h-5 text-slate-600" />
-        </Link>
+    <div className="max-w-6xl mx-auto px-4 py-8 space-y-8 animate-in fade-in duration-500">
+      <div className="flex items-center gap-4 mb-2">
+        <button onClick={() => navigate('/pharmacy/orders')} className="p-2 hover:bg-slate-100 rounded-full transition-colors group">
+          <ArrowLeft className="w-5 h-5 text-slate-600 group-hover:-translate-x-1 transition-transform" />
+        </button>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-4">
             Order #{order.orderNumber || order._id.substring(order._id.length - 6).toUpperCase()}
-            <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${getStatusBadge(order.orderStatus)}`}>
+            <Badge variant={getStatusVariant(order.orderStatus)}>
               {order.orderStatus.replace(/_/g, ' ')}
-            </span>
+            </Badge>
           </h1>
-          <p className="text-slate-500 text-sm mt-1">Placed on {new Date(order.createdAt).toLocaleString()}</p>
+          <p className="text-slate-500 font-medium mt-1 flex items-center">
+             <Clock className="w-4 h-4 mr-1.5" /> Placed on {new Date(order.createdAt).toLocaleString()}
+          </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-8">
           {/* Order Items */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-              <Package className="w-5 h-5 text-slate-400" />
-              Order Items
-            </h2>
-            <div className="space-y-4">
-              {order.items?.map((item, index) => (
-                <div key={index} className="flex justify-between items-center py-3 border-b border-slate-100 last:border-0 last:pb-0">
-                  <div>
-                    <div className="font-medium text-slate-900">{item.medicineName}</div>
-                    <div className="text-sm text-slate-500">
-                      {item.quantity} x Rs. {(item.unitPrice / 100).toFixed(2)}
+          <Card>
+            <CardHeader>
+              <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                <Package className="w-5 h-5 text-primary-500" />
+                Order Items
+              </h2>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="space-y-4">
+                {order.items?.map((item, index) => (
+                  <div key={index} className="flex justify-between items-center py-4 border-b border-slate-100 last:border-0 last:pb-0">
+                    <div>
+                      <div className="font-bold text-slate-900">{item.medicineName}</div>
+                      <div className="text-sm font-medium text-slate-500 mt-1">
+                        {item.quantity} x Rs. {(item.unitPrice / 100).toFixed(2)}
+                      </div>
+                    </div>
+                    <div className="font-black text-slate-900 text-lg">
+                      Rs. {((item.quantity * item.unitPrice) / 100).toFixed(2)}
                     </div>
                   </div>
-                  <div className="font-semibold text-slate-900">
-                    Rs. {((item.quantity * item.unitPrice) / 100).toFixed(2)}
+                ))}
+              </div>
+              
+              <div className="mt-6 pt-6 border-t border-slate-100 space-y-3">
+                <div className="flex justify-between text-sm font-medium text-slate-600">
+                  <span>Subtotal</span>
+                  <span className="font-bold text-slate-900">Rs. {((order.totalAmount - (order.deliveryFee || 0)) / 100).toFixed(2)}</span>
+                </div>
+                {order.fulfilmentMethod === FULFILMENT_METHOD.DELIVERY && (
+                  <div className="flex justify-between text-sm font-medium text-slate-600">
+                    <span>Delivery Fee</span>
+                    <span className="font-bold text-slate-900">Rs. {((order.deliveryFee || 0) / 100).toFixed(2)}</span>
                   </div>
+                )}
+                <div className="flex justify-between items-center text-lg font-black text-slate-900 pt-4 border-t border-slate-200 mt-4">
+                  <span>Total</span>
+                  <span className="text-primary-600 text-2xl">Rs. {(order.totalAmount / 100).toFixed(2)}</span>
                 </div>
-              ))}
-            </div>
-            <div className="mt-6 pt-4 border-t border-slate-200">
-              <div className="flex justify-between text-sm text-slate-600 mb-2">
-                <span>Subtotal</span>
-                <span>Rs. {((order.totalAmount - (order.deliveryFee || 0)) / 100).toFixed(2)}</span>
               </div>
-              {order.fulfilmentMethod === FULFILMENT_METHOD.DELIVERY && (
-                <div className="flex justify-between text-sm text-slate-600 mb-2">
-                  <span>Delivery Fee</span>
-                  <span>Rs. {((order.deliveryFee || 0) / 100).toFixed(2)}</span>
-                </div>
-              )}
-              <div className="flex justify-between text-lg font-bold text-slate-900 pt-2 border-t border-slate-100 mt-2">
-                <span>Total</span>
-                <span className="text-indigo-600">Rs. {(order.totalAmount / 100).toFixed(2)}</span>
-              </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
           {/* Customer Details */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-              <User className="w-5 h-5 text-slate-400" />
-              Customer Details
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <p className="text-sm text-slate-500 mb-1">Customer Name</p>
-                <p className="font-medium text-slate-900">{order.customerSnapshot?.name}</p>
-                <p className="text-sm text-slate-500 mt-3 mb-1">Phone Number</p>
-                <p className="font-medium text-slate-900">{order.customerSnapshot?.phone}</p>
-              </div>
-              <div>
-                <p className="text-sm text-slate-500 mb-1">Fulfilment Method</p>
-                <p className="font-medium text-slate-900 flex items-center gap-2">
-                  {order.fulfilmentMethod === FULFILMENT_METHOD.DELIVERY ? (
-                    <><MapPin className="w-4 h-4 text-indigo-500" /> Delivery</>
-                  ) : (
-                    <><Package className="w-4 h-4 text-indigo-500" /> Pickup</>
+          <Card>
+             <CardHeader>
+              <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                <User className="w-5 h-5 text-primary-500" />
+                Customer & Fulfilment
+              </h2>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Customer Details</p>
+                  <p className="font-bold text-slate-900 text-lg">{order.customerSnapshot?.name}</p>
+                  <p className="font-medium text-slate-700 mt-2 flex items-center">
+                    <User className="w-4 h-4 mr-2 text-slate-400" />
+                    {order.customerSnapshot?.phone}
+                  </p>
+                </div>
+                
+                <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Fulfilment</p>
+                  <div className="inline-flex items-center px-3 py-1.5 bg-white border border-slate-200 rounded-lg font-bold text-slate-900 shadow-sm">
+                    {order.fulfilmentMethod === FULFILMENT_METHOD.DELIVERY ? (
+                      <><MapPin className="w-4 h-4 text-primary-600 mr-2" /> Delivery</>
+                    ) : (
+                      <><Store className="w-4 h-4 text-primary-600 mr-2" /> Pickup</>
+                    )}
+                  </div>
+                  
+                  {order.fulfilmentMethod === FULFILMENT_METHOD.DELIVERY && order.deliveryAddress && (
+                    <div className="mt-4 pt-4 border-t border-slate-200">
+                      <p className="text-sm font-medium text-slate-900 leading-relaxed">
+                        {order.deliveryAddress.line1}<br />
+                        {order.deliveryAddress.line2 && <>{order.deliveryAddress.line2}<br /></>}
+                        {order.deliveryAddress.city}, {order.deliveryAddress.district}
+                      </p>
+                    </div>
                   )}
-                </p>
-                {order.fulfilmentMethod === FULFILMENT_METHOD.DELIVERY && order.deliveryAddress && (
-                  <div className="mt-3">
-                    <p className="text-sm text-slate-500 mb-1">Delivery Address</p>
-                    <p className="text-sm font-medium text-slate-900">
-                      {order.deliveryAddress.line1}<br />
-                      {order.deliveryAddress.line2 && <>{order.deliveryAddress.line2}<br /></>}
-                      {order.deliveryAddress.city}, {order.deliveryAddress.district}
-                    </p>
-                  </div>
-                )}
-                {order.deliveryInstructions && (
-                  <div className="mt-3">
-                    <p className="text-sm text-slate-500 mb-1">Instructions</p>
-                    <p className="text-sm text-slate-700 bg-slate-50 p-2 rounded border border-slate-100">
-                      {order.deliveryInstructions}
-                    </p>
-                  </div>
-                )}
+                  {order.deliveryInstructions && (
+                    <div className="mt-4">
+                      <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Instructions</p>
+                      <p className="text-sm font-medium text-slate-700 bg-white p-3 rounded-lg border border-slate-200">
+                        {order.deliveryInstructions}
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-8">
+          {/* Action Card */}
+          <Card className="sticky top-24 shadow-lg shadow-primary-900/5 ring-1 ring-slate-200">
+            <CardHeader className="bg-slate-50 border-b border-slate-100 pb-4">
+              <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                <FileText className="w-5 h-5 text-primary-500" />
+                Order Actions
+              </h2>
+            </CardHeader>
+            <CardContent className="p-6 space-y-6">
+              {renderActionButtons()}
+              
+              {(order.orderStatus === ORDER_STATUS.PAYMENT_CONFIRMED || order.orderStatus === ORDER_STATUS.PHARMACY_ACCEPTED) && (
+                <div className="pt-6 border-t border-slate-100">
+                  <Button
+                    onClick={() => handleUpdateStatus(ORDER_STATUS.CANCELLED)} 
+                    disabled={actionLoading}
+                    variant="outline"
+                    fullWidth
+                    className="!text-red-600 !border-red-200 hover:!bg-red-50 hover:!border-red-300"
+                  >
+                    Reject Order
+                  </Button>
+                  <p className="text-xs text-center text-slate-500 font-medium mt-3">This will cancel the order and notify the customer.</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+          
           {/* Payment Status Card */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-slate-400" />
-              Payment Info
-            </h2>
-            
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-full ${order.paymentMethod === 'CARD' ? 'bg-indigo-100 text-indigo-600' : 'bg-green-100 text-green-600'}`}>
-                  {order.paymentMethod === 'CARD' ? <CreditCard className="w-5 h-5" /> : <Banknote className="w-5 h-5" />}
+          <Card>
+            <CardHeader className="pb-2">
+              <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                <DollarSign className="w-5 h-5 text-primary-500" />
+                Payment Info
+              </h2>
+            </CardHeader>
+            <CardContent className="p-6 space-y-6">
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Method</p>
+                  <div className="flex items-center gap-2">
+                    {order.paymentMethod === 'CARD' ? <CreditCard className="w-4 h-4 text-primary-600" /> : <Banknote className="w-4 h-4 text-green-600" />}
+                    <span className="font-bold text-slate-900 text-sm">
+                      {order.paymentMethod === 'CARD' ? 'Card Payment' : order.paymentMethod === 'COD' ? 'COD' : 'None'}
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm text-slate-500">Method</p>
-                  <p className="font-semibold text-slate-900">{order.paymentMethod === 'CARD' ? 'Card Payment (Stripe)' : order.paymentMethod === 'COD' ? 'Cash on Delivery' : 'Not Selected'}</p>
-                </div>
-              </div>
 
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-full ${order.paymentStatus === 'PAID' || order.paymentStatus === 'COD_COLLECTED' ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'}`}>
-                  {order.paymentStatus === 'PAID' || order.paymentStatus === 'COD_COLLECTED' ? <CheckCircle2 className="w-5 h-5" /> : <Clock className="w-5 h-5" />}
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500">Status</p>
-                  <p className="font-semibold text-slate-900">{order.paymentStatus?.replace(/_/g, ' ') || 'PENDING'}</p>
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Status</p>
+                   <div className="flex items-center gap-2">
+                     {order.paymentStatus === 'PAID' || order.paymentStatus === 'COD_COLLECTED' ? <CheckCircle2 className="w-4 h-4 text-green-600" /> : <Clock className="w-4 h-4 text-amber-500" />}
+                     <span className="font-bold text-slate-900 text-sm">
+                        {order.paymentStatus?.replace(/_/g, ' ') || 'PENDING'}
+                     </span>
+                   </div>
                 </div>
               </div>
 
               {canCollectCOD && (
-                <div className="mt-4 pt-4 border-t border-slate-100">
-                  <button
+                <div className="p-5 bg-green-50 rounded-xl border border-green-200">
+                  <Button
                     onClick={handleCollectCOD}
                     disabled={actionLoading}
-                    className="w-full bg-green-600 text-white py-2 rounded-xl font-medium hover:bg-green-700 transition-colors flex items-center justify-center disabled:opacity-50"
+                    loading={actionLoading}
+                    variant="success"
+                    fullWidth
+                    icon={Banknote}
                   >
-                    {actionLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Banknote className="w-4 h-4 mr-2" />}
                     Mark COD Collected
-                  </button>
-                  <p className="text-xs text-slate-500 text-center mt-2">
-                    Click this only after you have received the cash.
+                  </Button>
+                  <p className="text-xs font-medium text-green-800 text-center mt-3 leading-relaxed">
+                    Click this only after you have physically received the cash from the customer or rider.
                   </p>
                 </div>
               )}
-            </div>
-          </div>
-
-          {/* Action Card */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sticky top-24">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-              <FileText className="w-5 h-5 text-slate-400" />
-              Update Status
-            </h2>
-            {renderActionButtons()}
-            
-            {(order.orderStatus === ORDER_STATUS.PAYMENT_CONFIRMED || order.orderStatus === ORDER_STATUS.PHARMACY_ACCEPTED) && (
-              <button
-                onClick={() => handleUpdateStatus(ORDER_STATUS.CANCELLED)} // Assuming simple reject maps to CANCELLED for simplicity here, or REJECTED.
-                disabled={actionLoading}
-                className="w-full mt-3 bg-white border border-red-200 text-red-600 py-3 rounded-xl font-medium hover:bg-red-50 transition-colors flex items-center justify-center disabled:opacity-50"
-              >
-                Reject Order
-              </button>
-            )}
-          </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

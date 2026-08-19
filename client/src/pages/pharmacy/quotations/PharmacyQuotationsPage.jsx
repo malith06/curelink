@@ -1,14 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Loader2, Search, FileText, ArrowRight } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Search, FileText, ArrowRight, Clock } from 'lucide-react';
 import { toast } from 'react-toastify';
 import quotationService from '../../../features/quotations/quotationService';
-import { STATUS_COLORS } from '../../../constants/quotation';
+import { Card } from '../../../components/ui/Card';
+import Skeleton from '../../../components/ui/Skeleton';
+import Badge from '../../../components/ui/Badge';
+import Input from '../../../components/ui/Input';
+import EmptyState from '../../../components/ui/EmptyState';
 
 const PharmacyQuotationsPage = () => {
   const [quotations, setQuotations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('ALL');
+  const [searchTerm, setSearchTerm] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchQuotations();
@@ -26,103 +32,116 @@ const PharmacyQuotationsPage = () => {
     }
   };
 
-  const filteredQuotations = quotations.filter(q => filter === 'ALL' || q.status === filter);
+  const filteredQuotations = quotations.filter(q => {
+    const matchesFilter = filter === 'ALL' || q.status === filter;
+    const matchesSearch = !searchTerm || (q.requestId && q.requestId.toLowerCase().includes(searchTerm.toLowerCase()));
+    return matchesFilter && matchesSearch;
+  });
+
+  const getStatusVariant = (status) => {
+    switch (status) {
+      case 'ACCEPTED': return 'success';
+      case 'DECLINED': return 'error';
+      case 'SUBMITTED': return 'info';
+      case 'DRAFT': return 'warning';
+      default: return 'default';
+    }
+  };
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
+        <Skeleton className="h-10 w-64 mb-2" />
+        <Skeleton className="h-5 w-96 mb-8" />
+        <Card className="p-4 space-y-4">
+           {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-16 w-full" />)}
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+    <div className="max-w-7xl mx-auto px-4 py-8 animate-in fade-in duration-500">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">My Quotations</h1>
-          <p className="text-gray-600 mt-1">Track and manage all quotations you've drafted or sent.</p>
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">My Quotations</h1>
+          <p className="mt-2 text-slate-600 font-medium">Track and manage all quotations you've drafted or sent.</p>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <Card className="overflow-hidden mb-8">
         {/* Filters and Search */}
-        <div className="p-4 border-b border-gray-200 bg-gray-50 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div className="flex space-x-2">
+        <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex flex-col md:flex-row justify-between items-center gap-5">
+          <div className="flex flex-wrap gap-2">
             {['ALL', 'DRAFT', 'SUBMITTED', 'ACCEPTED', 'DECLINED'].map(status => (
               <button
                 key={status}
                 onClick={() => setFilter(status)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
                   filter === status 
-                    ? 'bg-primary text-white shadow-sm' 
-                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                    ? 'bg-primary-600 text-white shadow-md shadow-primary-600/20' 
+                    : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                 }`}
               >
                 {status}
               </button>
             ))}
           </div>
-          <div className="relative w-full sm:w-64">
-            <input 
-              type="text" 
-              placeholder="Search by Request ID..." 
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
-            />
-            <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <div className="w-full md:w-72">
+             <Input 
+                icon={Search} 
+                placeholder="Search by Request ID..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+             />
           </div>
         </div>
 
         {/* Quotations List */}
         <div className="overflow-x-auto">
           {filteredQuotations.length === 0 ? (
-            <div className="p-12 text-center text-gray-500">
-              <FileText className="w-12 h-12 mx-auto text-gray-300 mb-3" />
-              <p className="text-lg font-medium text-gray-900 mb-1">No quotations found</p>
-              <p>You haven't created any quotations with this status.</p>
-            </div>
+            <EmptyState 
+              icon={FileText}
+              title="No quotations found"
+              description="You haven't created any quotations matching these filters."
+            />
           ) : (
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-slate-200">
+              <thead className="bg-slate-50">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Request ID</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Items</th>
-                  <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Total (Rs)</th>
-                  <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Action</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Request ID / Date</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Items</th>
+                  <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Total (Rs)</th>
+                  <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Action</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white divide-y divide-slate-100">
                 {filteredQuotations.map((quotation) => (
-                  <tr key={quotation._id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {new Date(quotation.createdAt).toLocaleDateString()}
-                    </td>
+                  <tr key={quotation._id} className="hover:bg-slate-50 transition-colors group cursor-pointer" onClick={() => navigate(`/pharmacy/requests/${quotation.requestId}`)}>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="font-mono text-sm font-medium text-gray-900 bg-gray-100 px-2 py-1 rounded">
+                      <div className="font-mono text-sm font-bold text-slate-900 bg-slate-100 px-2.5 py-1 rounded-md inline-block mb-1 border border-slate-200">
                         #{quotation.requestId?.substring(quotation.requestId.length - 6).toUpperCase()}
-                      </span>
+                      </div>
+                      <div className="text-xs font-medium text-slate-500 flex items-center">
+                        <Clock className="w-3 h-3 mr-1" />
+                        {new Date(quotation.createdAt).toLocaleDateString()}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full border ${STATUS_COLORS[quotation.status] || 'bg-gray-100 text-gray-800 border-gray-200'}`}>
-                        {quotation.status}
-                      </span>
+                       <Badge variant={getStatusVariant(quotation.status)}>{quotation.status.replace(/_/g, ' ')}</Badge>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 text-center font-medium">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-700 text-center font-bold">
                       {quotation.items?.length || 0}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-bold">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-primary-600 text-right font-black">
                       {quotation.total ? quotation.total.toFixed(2) : '0.00'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <Link 
-                        to={`/pharmacy/requests/${quotation.requestId}`} 
-                        className="text-primary hover:text-primary-800 flex items-center justify-end"
-                      >
+                      <div className="text-primary-600 hover:text-primary-800 flex items-center justify-end font-bold transition-colors">
                         {quotation.status === 'DRAFT' ? 'Edit Draft' : 'View Details'}
-                        <ArrowRight className="w-4 h-4 ml-1" />
-                      </Link>
+                        <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -130,7 +149,7 @@ const PharmacyQuotationsPage = () => {
             </table>
           )}
         </div>
-      </div>
+      </Card>
     </div>
   );
 };
