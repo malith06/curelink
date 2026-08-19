@@ -2,7 +2,6 @@ const MedicineRequest = require('../requests/request.model');
 const Quotation = require('../quotations/quotation.model');
 const Order = require('../orders/order.model');
 const Prescription = require('../prescriptions/prescription.model');
-const Notification = require('../notifications/notification.model');
 const { REQUEST_STATUS } = require('../requests/request.constants');
 const { QUOTATION_STATUS } = require('../quotations/quotation.constants');
 const { ORDER_STATUS } = require('../orders/order.constants');
@@ -43,11 +42,6 @@ exports.getCustomerDashboard = async (customerId) => {
 
   const recentPrescriptionsCount = await Prescription.countDocuments({ customerId });
 
-  const unreadNotificationsCount = await Notification.countDocuments({
-    recipientUserId: customerId,
-    isRead: false,
-  });
-
   // 2. Recent lists
   const activeRequests = await MedicineRequest.find({
     customerId,
@@ -80,11 +74,6 @@ exports.getCustomerDashboard = async (customerId) => {
     .sort({ createdAt: -1 })
     .limit(RECENT_ITEMS_LIMIT)
     .select('requestId uploadStatus ocrStatus customerReviewStatus createdAt');
-
-  const recentNotifications = await Notification.find({ recipientUserId: customerId })
-    .sort({ createdAt: -1 })
-    .limit(RECENT_ITEMS_LIMIT)
-    .select('type title message actionUrl isRead createdAt');
 
   // Format quotations array
   const formattedQuotations = recentQuotations.map((q) => ({
@@ -121,12 +110,10 @@ exports.getCustomerDashboard = async (customerId) => {
       quotationsReceived: quotationsReceivedCount,
       activeOrders: activeOrdersCount,
       recentPrescriptions: Math.min(recentPrescriptionsCount, RECENT_ITEMS_LIMIT), // As per instructions "Latest N records", but showing count of recent
-      unreadNotifications: unreadNotificationsCount,
     },
     activeRequests,
     recentQuotations: formattedQuotations,
     activeOrders: formattedOrders,
     recentPrescriptions,
-    recentNotifications,
   };
 };
