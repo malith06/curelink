@@ -6,6 +6,7 @@ const PharmacyProfileForm = ({ initialData, onSuccess }) => {
     name: '',
     registrationNumber: '',
     phone: '',
+    email: '',
     address: {
       street: '',
       city: '',
@@ -76,10 +77,42 @@ const PharmacyProfileForm = ({ initialData, onSuccess }) => {
     setLoading(true);
     setError(null);
     try {
+      // Map frontend data to backend schema
+      const mapHours = (day) => ({
+        isOpen: !day.isClosed,
+        openTime: day.isClosed ? null : day.open,
+        closeTime: day.isClosed ? null : day.close
+      });
+
+      const payload = {
+        name: formData.name,
+        registrationNumber: formData.registrationNumber,
+        phone: formData.phone,
+        email: formData.email || 'pharmacy@example.com',
+        address: {
+          line1: formData.address.street,
+          city: formData.address.city,
+          district: formData.address.state,
+          postalCode: formData.address.zipCode,
+          country: 'Sri Lanka'
+        },
+        deliveryAvailable: formData.deliveryAvailable,
+        pickupAvailable: formData.pickupAvailable,
+        openingHours: {
+          monday: mapHours(formData.openingHours.monday),
+          tuesday: mapHours(formData.openingHours.tuesday),
+          wednesday: mapHours(formData.openingHours.wednesday),
+          thursday: mapHours(formData.openingHours.thursday),
+          friday: mapHours(formData.openingHours.friday),
+          saturday: mapHours(formData.openingHours.saturday),
+          sunday: mapHours(formData.openingHours.sunday),
+        }
+      };
+
       if (initialData) {
-        await pharmacyService.updatePharmacyProfile(formData);
+        await pharmacyService.updatePharmacyProfile(payload);
       } else {
-        await pharmacyService.createPharmacyProfile(formData);
+        await pharmacyService.createPharmacyProfile(payload);
       }
       if (onSuccess) onSuccess();
     } catch (err) {
@@ -132,6 +165,18 @@ const PharmacyProfileForm = ({ initialData, onSuccess }) => {
           type="text"
           name="phone"
           value={formData.phone}
+          onChange={handleChange}
+          required
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700">Email Address</label>
+        <input
+          type="email"
+          name="email"
+          value={formData.email}
           onChange={handleChange}
           required
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"

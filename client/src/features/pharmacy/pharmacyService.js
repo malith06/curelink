@@ -1,4 +1,4 @@
-import api from '../../api/axios';
+import api from '../../api/axiosClient';
 
 const getMyPharmacyProfile = async () => {
   const response = await api.get('/pharmacies/me/profile');
