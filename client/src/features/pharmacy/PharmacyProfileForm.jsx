@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import pharmacyService from './pharmacyService';
+import Input from '../../components/ui/Input';
+import Button from '../../components/ui/Button';
+import { Store, Hash, Phone, Mail, MapPin, Truck, Package, Save } from 'lucide-react';
+import { Card, CardContent, CardHeader } from '../../components/ui/Card';
 
 const PharmacyProfileForm = ({ initialData, onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -125,140 +129,194 @@ const PharmacyProfileForm = ({ initialData, onSuccess }) => {
   const isReadOnly = initialData && ['PENDING', 'APPROVED', 'SUSPENDED'].includes(initialData.verificationStatus);
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 max-w-3xl mx-auto p-6 bg-white rounded shadow">
-      <h2 className="text-2xl font-semibold mb-4 text-gray-800">
-        {initialData ? 'Update Pharmacy Profile' : 'Create Pharmacy Profile'}
-      </h2>
-
-      {error && <div className="p-3 bg-red-100 text-red-700 rounded">{error}</div>}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Pharmacy Name</label>
-          <input
-            type="text"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            disabled={isReadOnly}
-            required
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-          />
+    <form onSubmit={handleSubmit} className="divide-y divide-slate-100">
+      
+      {error && (
+        <div className="p-4 mx-6 mt-6 bg-red-50 text-red-700 font-medium rounded-xl border border-red-100">
+          {error}
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Registration Number</label>
-          <input
-            type="text"
-            name="registrationNumber"
-            value={formData.registrationNumber}
-            onChange={handleChange}
-            disabled={isReadOnly}
-            required
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-          />
-        </div>
+      )}
+
+      {/* Business Details Section */}
+      <div className="p-6 md:p-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+         <div className="md:col-span-1">
+            <h3 className="text-lg font-bold text-slate-900 mb-1">Business Identity</h3>
+            <p className="text-sm font-medium text-slate-500">Provide the official name and registration number of your pharmacy.</p>
+         </div>
+         <div className="md:col-span-2 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Pharmacy Name <span className="text-red-500">*</span></label>
+                <Input
+                  icon={Store}
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  disabled={isReadOnly}
+                  required
+                  placeholder="e.g. City Pharmacy"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Registration Number <span className="text-red-500">*</span></label>
+                <Input
+                  icon={Hash}
+                  type="text"
+                  name="registrationNumber"
+                  value={formData.registrationNumber}
+                  onChange={handleChange}
+                  disabled={isReadOnly}
+                  required
+                  placeholder="e.g. PH-12345"
+                />
+              </div>
+            </div>
+         </div>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Phone</label>
-        <input
-          type="text"
-          name="phone"
-          value={formData.phone}
-          onChange={handleChange}
-          required
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-        />
+      {/* Contact Details Section */}
+      <div className="p-6 md:p-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+         <div className="md:col-span-1">
+            <h3 className="text-lg font-bold text-slate-900 mb-1">Contact Information</h3>
+            <p className="text-sm font-medium text-slate-500">How customers and CureLink administrators can reach you.</p>
+         </div>
+         <div className="md:col-span-2 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Phone Number <span className="text-red-500">*</span></label>
+                <Input
+                  icon={Phone}
+                  type="text"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  required
+                  placeholder="+94 77 123 4567"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Email Address <span className="text-red-500">*</span></label>
+                <Input
+                  icon={Mail}
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  placeholder="pharmacy@example.com"
+                />
+              </div>
+            </div>
+         </div>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Email Address</label>
-        <input
-          type="email"
-          name="email"
-          value={formData.email}
-          onChange={handleChange}
-          required
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-        />
+      {/* Address Section */}
+      <div className="p-6 md:p-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+         <div className="md:col-span-1">
+            <h3 className="text-lg font-bold text-slate-900 mb-1">Location Details</h3>
+            <p className="text-sm font-medium text-slate-500">The physical address where customers will pick up their orders.</p>
+         </div>
+         <div className="md:col-span-2 space-y-6">
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-2">Street Address <span className="text-red-500">*</span></label>
+              <Input
+                icon={MapPin}
+                type="text"
+                name="address.street"
+                value={formData.address.street}
+                onChange={handleChange}
+                disabled={isReadOnly}
+                required
+                placeholder="123 Main Street"
+              />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">City <span className="text-red-500">*</span></label>
+                <Input
+                  type="text"
+                  name="address.city"
+                  value={formData.address.city}
+                  onChange={handleChange}
+                  disabled={isReadOnly}
+                  required
+                  placeholder="Colombo"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">District/State <span className="text-red-500">*</span></label>
+                <Input
+                  type="text"
+                  name="address.state"
+                  value={formData.address.state}
+                  onChange={handleChange}
+                  disabled={isReadOnly}
+                  required
+                  placeholder="Western Province"
+                />
+              </div>
+            </div>
+         </div>
       </div>
 
-      <fieldset className="border p-4 rounded">
-        <legend className="text-sm font-medium text-gray-700 px-2">Address</legend>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">Street</label>
-            <input
-              type="text"
-              name="address.street"
-              value={formData.address.street}
-              onChange={handleChange}
-              disabled={isReadOnly}
-              required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">City</label>
-            <input
-              type="text"
-              name="address.city"
-              value={formData.address.city}
-              onChange={handleChange}
-              disabled={isReadOnly}
-              required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">State</label>
-            <input
-              type="text"
-              name="address.state"
-              value={formData.address.state}
-              onChange={handleChange}
-              disabled={isReadOnly}
-              required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            />
-          </div>
-        </div>
-      </fieldset>
+      {/* Settings Section */}
+      <div className="p-6 md:p-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+         <div className="md:col-span-1">
+            <h3 className="text-lg font-bold text-slate-900 mb-1">Operational Settings</h3>
+            <p className="text-sm font-medium text-slate-500">Configure what services you offer to customers.</p>
+         </div>
+         <div className="md:col-span-2 space-y-4">
+            
+            <label className="flex items-start gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors">
+              <div className="flex items-center h-5 mt-0.5">
+                 <input
+                   type="checkbox"
+                   name="deliveryAvailable"
+                   checked={formData.deliveryAvailable}
+                   onChange={handleChange}
+                   className="h-4 w-4 text-primary-600 rounded border-slate-300 focus:ring-primary-500"
+                 />
+              </div>
+              <div className="flex-1">
+                 <div className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <Truck className="w-4 h-4 text-slate-500" /> Offer Delivery Services
+                 </div>
+                 <p className="text-sm font-medium text-slate-500 mt-1">Check this if you can deliver medicines to customers' homes.</p>
+              </div>
+            </label>
 
-      <fieldset className="border p-4 rounded">
-        <legend className="text-sm font-medium text-gray-700 px-2">Settings</legend>
-        <div className="flex items-center space-x-4">
-          <label className="flex items-center">
-            <input
-              type="checkbox"
-              name="deliveryAvailable"
-              checked={formData.deliveryAvailable}
-              onChange={handleChange}
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-            />
-            <span className="ml-2 text-sm text-gray-700">Delivery Available</span>
-          </label>
-          <label className="flex items-center">
-            <input
-              type="checkbox"
-              name="pickupAvailable"
-              checked={formData.pickupAvailable}
-              onChange={handleChange}
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-            />
-            <span className="ml-2 text-sm text-gray-700">Pickup Available</span>
-          </label>
-        </div>
-      </fieldset>
+            <label className="flex items-start gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors">
+              <div className="flex items-center h-5 mt-0.5">
+                 <input
+                   type="checkbox"
+                   name="pickupAvailable"
+                   checked={formData.pickupAvailable}
+                   onChange={handleChange}
+                   className="h-4 w-4 text-primary-600 rounded border-slate-300 focus:ring-primary-500"
+                 />
+              </div>
+              <div className="flex-1">
+                 <div className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <Package className="w-4 h-4 text-slate-500" /> Offer In-Store Pickup
+                 </div>
+                 <p className="text-sm font-medium text-slate-500 mt-1">Check this to allow customers to pick up orders directly from your pharmacy.</p>
+              </div>
+            </label>
+            
+         </div>
+      </div>
 
-      <div className="flex justify-end">
-        <button
+      <div className="p-6 md:p-8 bg-slate-50/50 flex justify-end">
+        <Button
           type="submit"
           disabled={loading}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+          loading={loading}
+          icon={Save}
+          size="lg"
         >
-          {loading ? 'Saving...' : (initialData ? 'Update Profile' : 'Create Profile')}
-        </button>
+          {initialData ? 'Update Profile' : 'Create Profile'}
+        </Button>
       </div>
     </form>
   );

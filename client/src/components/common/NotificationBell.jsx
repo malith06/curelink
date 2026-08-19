@@ -41,8 +41,6 @@ const NotificationBell = () => {
       case 'REQUEST_RECEIVED':
         return `/pharmacy/requests/${entityId}`;
       case 'QUOTATION_RECEIVED':
-        // For customer, link to quotation details if we have request context, or just request page
-        // Here we link to the request as a safe fallback
         return `/customer/requests/${notification.entity?.requestId || entityId}`;
       case 'QUOTATION_ACCEPTED':
         return `/pharmacy/quotations`;
@@ -67,72 +65,76 @@ const NotificationBell = () => {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 text-gray-600 hover:text-primary transition-colors focus:outline-none rounded-full hover:bg-gray-100"
+        className={`relative p-2.5 transition-all focus:outline-none rounded-xl ${
+          isOpen ? 'bg-primary-50 text-primary-600' : 'text-slate-600 hover:text-primary-600 hover:bg-slate-100'
+        }`}
         aria-label="Notifications"
       >
-        <Bell className="w-6 h-6" />
+        <Bell className="w-5 h-5" />
         {unreadCount > 0 && (
-          <span className="absolute top-1 right-1 flex items-center justify-center min-w-[1.25rem] h-5 px-1 text-xs font-bold text-white bg-red-500 rounded-full">
+          <span className="absolute top-1.5 right-1.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-black text-white bg-red-500 rounded-full border-2 border-white shadow-sm ring-1 ring-red-500/20 animate-in zoom-in">
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50 overflow-hidden flex flex-col max-h-[80vh]">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50">
-            <h3 className="font-semibold text-gray-800">Notifications</h3>
+        <div className="absolute right-0 mt-3 w-[360px] bg-white rounded-2xl shadow-xl shadow-slate-900/10 border border-slate-100 z-50 overflow-hidden flex flex-col max-h-[85vh] animate-in slide-in-from-top-2 fade-in duration-200">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/50">
+            <h3 className="font-bold text-slate-900 flex items-center gap-2">
+              <Bell className="w-4 h-4 text-primary-500" /> Notifications
+            </h3>
             {unreadCount > 0 && (
               <button
                 onClick={markAllAsRead}
-                className="text-xs text-primary hover:text-primary-700 font-medium flex items-center"
+                className="text-xs text-primary-600 hover:text-primary-800 font-bold flex items-center bg-primary-50 hover:bg-primary-100 px-2 py-1 rounded-md transition-colors"
               >
                 <Check className="w-3 h-3 mr-1" />
-                Mark all as read
+                Mark all read
               </button>
             )}
           </div>
 
-          <div className="overflow-y-auto flex-grow">
+          <div className="overflow-y-auto flex-grow custom-scrollbar">
             {loading && notifications.length === 0 ? (
-              <div className="p-4 text-center text-gray-500 text-sm">
+              <div className="p-8 text-center text-slate-500 text-sm font-medium">
+                <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
                 Loading notifications...
               </div>
             ) : notifications.length === 0 ? (
-              <div className="p-8 text-center flex flex-col items-center">
-                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
-                  <Bell className="w-6 h-6 text-gray-400" />
+              <div className="p-10 text-center flex flex-col items-center">
+                <div className="w-14 h-14 bg-slate-50 rounded-full flex items-center justify-center mb-4 border border-slate-100">
+                  <Bell className="w-6 h-6 text-slate-300" />
                 </div>
-                <p className="text-gray-500 text-sm">No notifications yet</p>
+                <p className="text-slate-500 text-sm font-medium">You're all caught up!</p>
               </div>
             ) : (
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-slate-50">
                 {notifications.slice(0, 5).map((notification) => (
                   <Link
                     key={notification._id}
                     to={getNotificationLink(notification)}
                     onClick={() => handleNotificationClick(notification)}
-                    className={`block p-4 hover:bg-gray-50 transition-colors ${
-                      !notification.isRead ? 'bg-primary-50/30' : ''
+                    className={`block p-4 hover:bg-slate-50 transition-colors relative ${
+                      !notification.isRead ? 'bg-primary-50/20' : ''
                     }`}
                   >
-                    <div className="flex items-start gap-3">
-                      {!notification.isRead && (
-                        <div className="w-2 h-2 mt-1.5 rounded-full bg-primary flex-shrink-0" />
-                      )}
-                      <div className={`flex-1 ${notification.isRead ? 'ml-5' : ''}`}>
-                        <p className="text-sm font-medium text-gray-900 mb-1">
+                    {!notification.isRead && (
+                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary-500"></div>
+                    )}
+                    <div className="flex items-start gap-3 pl-2">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${!notification.isRead ? 'bg-primary-100 text-primary-600' : 'bg-slate-100 text-slate-400'}`}>
+                         <Bell className="w-4 h-4" />
+                      </div>
+                      <div className="flex-1">
+                        <p className={`text-sm font-bold mb-0.5 ${!notification.isRead ? 'text-slate-900' : 'text-slate-700'}`}>
                           {notification.title}
                         </p>
-                        <p className="text-xs text-gray-600 line-clamp-2">
+                        <p className="text-xs font-medium text-slate-500 line-clamp-2 leading-relaxed">
                           {notification.message}
                         </p>
-                        <span className="text-[10px] text-gray-400 mt-2 block">
-                          {new Date(notification.createdAt).toLocaleDateString()} at{' '}
-                          {new Date(notification.createdAt).toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
+                        <span className="text-[10px] font-bold text-slate-400 mt-2 block uppercase tracking-wider">
+                          {new Date(notification.createdAt).toLocaleDateString()} • {new Date(notification.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </div>
                     </div>
@@ -142,17 +144,15 @@ const NotificationBell = () => {
             )}
           </div>
 
-          {notifications.length > 5 && (
-            <div className="border-t border-gray-100 p-2 bg-gray-50 text-center">
-              <Link
-                to="/notifications" // We'll implement this page next
-                onClick={() => setIsOpen(false)}
-                className="text-xs font-medium text-primary hover:text-primary-700 block py-1"
-              >
-                View all notifications
-              </Link>
-            </div>
-          )}
+          <div className="p-3 bg-slate-50 border-t border-slate-100">
+            <Link
+              to="/notifications"
+              onClick={() => setIsOpen(false)}
+              className="text-sm font-bold text-primary-600 hover:text-primary-800 block text-center py-2 bg-white border border-primary-100 hover:border-primary-200 rounded-xl transition-colors shadow-sm"
+            >
+              View All Notifications
+            </Link>
+          </div>
         </div>
       )}
     </div>
