@@ -7,6 +7,10 @@ import DashboardSection from '../../components/dashboard/DashboardSection';
 import StatusChart from '../../components/dashboard/StatusChart';
 import TrendChart from '../../components/dashboard/TrendChart';
 import { Inbox, FileSignature, ShoppingBag, CheckCircle, DollarSign, Clock } from 'lucide-react';
+import { Card, CardContent } from '../../components/ui/Card';
+import StatusBadge from '../../components/ui/StatusBadge';
+import Skeleton from '../../components/ui/Skeleton';
+import EmptyState from '../../components/ui/EmptyState';
 
 const PharmacyDashboardPage = () => {
   const { user } = useAuth();
@@ -35,33 +39,34 @@ const PharmacyDashboardPage = () => {
 
   if (loading && !data) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-7xl animate-pulse">
-        <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+      <div className="mx-auto px-4 py-8 max-w-7xl">
+        <Skeleton className="h-10 w-64 mb-2" />
+        <Skeleton className="h-5 w-48 mb-8" />
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-          {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="h-24 bg-gray-200 rounded-xl"></div>)}
+          {[1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} className="h-32 w-full rounded-xl" />)}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="h-64 bg-gray-200 rounded-xl"></div>
-          <div className="h-64 bg-gray-200 rounded-xl"></div>
+          <Skeleton className="h-64 w-full rounded-xl" />
+          <Skeleton className="h-64 w-full rounded-xl" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
+    <div className="mx-auto px-4 py-8 max-w-7xl">
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Pharmacy Dashboard</h1>
-          <p className="mt-2 text-gray-600">Overview for {user?.pharmacy?.name || 'your pharmacy'}</p>
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Pharmacy Dashboard</h1>
+          <p className="mt-1 text-slate-600">Overview for {user?.pharmacy?.name || 'your pharmacy'}</p>
         </div>
-        <div className="flex items-center">
-          <label htmlFor="range" className="text-sm font-medium text-gray-700 mr-2">Time Range:</label>
+        <div className="flex items-center bg-white border border-slate-200 rounded-lg p-1 shadow-sm">
+          <label htmlFor="range" className="text-sm font-medium text-slate-500 mx-3">Time Range:</label>
           <select
             id="range"
             value={range}
             onChange={handleRangeChange}
-            className="border-gray-300 rounded-lg text-sm focus:ring-primary-500 focus:border-primary-500"
+            className="border-0 bg-transparent text-sm font-medium text-slate-900 focus:ring-0 cursor-pointer py-1.5 pl-2 pr-8"
           >
             <option value="7d">Last 7 Days</option>
             <option value="30d">Last 30 Days</option>
@@ -70,7 +75,7 @@ const PharmacyDashboardPage = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-10">
         <StatCard 
           title="Incoming Requests" 
           value={data?.summary?.incomingRequests || 0} 
@@ -95,13 +100,13 @@ const PharmacyDashboardPage = () => {
           title="Completed Orders" 
           value={data?.summary?.completedOrders || 0} 
           icon={CheckCircle} 
-          colorClass="text-green-600 bg-green-100" 
+          colorClass="text-emerald-600 bg-emerald-100" 
         />
         <StatCard 
           title="Gross Value (LKR)" 
           value={(data?.summary?.grossFulfilledOrderValue || 0).toLocaleString()} 
           icon={DollarSign} 
-          colorClass="text-emerald-600 bg-emerald-100" 
+          colorClass="text-green-600 bg-green-100" 
         />
         <StatCard 
           title="Avg Response (Min)" 
@@ -111,65 +116,75 @@ const PharmacyDashboardPage = () => {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
         <DashboardSection title="Order Fulfillment Value">
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <TrendChart data={data?.charts?.fulfilledValueTrend} color="#10b981" />
-          </div>
+          <Card>
+            <CardContent className="p-6">
+              <TrendChart data={data?.charts?.fulfilledValueTrend} color="#10b981" />
+            </CardContent>
+          </Card>
         </DashboardSection>
         <DashboardSection title="Orders by Status">
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <StatusChart data={data?.charts?.ordersByStatus} />
-          </div>
+          <Card>
+            <CardContent className="p-6">
+              <StatusChart data={data?.charts?.ordersByStatus} />
+            </CardContent>
+          </Card>
         </DashboardSection>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <DashboardSection title="Recent Incoming Requests">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <Card>
             {data?.incomingRequests?.length > 0 ? (
-              <ul className="divide-y divide-gray-100">
+              <ul className="divide-y divide-slate-100">
                 {data.incomingRequests.map(req => (
-                  <li key={req.id} className="p-4 hover:bg-gray-50 flex justify-between items-center">
+                  <li key={req.id} className="p-5 hover:bg-slate-50 transition-colors flex justify-between items-center">
                     <div>
-                      <Link to={`/pharmacy/requests/${req.id}`} className="font-semibold text-primary-600 hover:text-primary-800">
+                      <Link to={`/pharmacy/requests/${req.id}`} className="font-semibold text-primary-600 hover:text-primary-800 transition-colors">
                         {req.requestNumber}
                       </Link>
-                      <p className="text-sm text-gray-500">{req.medicineCount} items • {new Date(req.submittedAt).toLocaleDateString()}</p>
+                      <p className="text-sm text-slate-500 mt-1">{req.medicineCount} items • {new Date(req.submittedAt).toLocaleDateString()}</p>
                     </div>
                   </li>
                 ))}
               </ul>
             ) : (
-              <div className="p-8 text-center text-gray-500">No recent requests in inbox.</div>
+              <EmptyState 
+                icon={Inbox}
+                title="Inbox is empty"
+                description="No recent requests from customers."
+              />
             )}
-          </div>
+          </Card>
         </DashboardSection>
 
         <DashboardSection title="Active Orders To Prepare">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <Card>
              {data?.activeOrders?.length > 0 ? (
-              <ul className="divide-y divide-gray-100">
+              <ul className="divide-y divide-slate-100">
                 {data.activeOrders.map(order => (
-                  <li key={order.id} className="p-4 hover:bg-gray-50 flex justify-between items-center">
+                  <li key={order.id} className="p-5 hover:bg-slate-50 transition-colors flex justify-between items-center">
                     <div>
-                      <Link to={`/pharmacy/orders/${order.id}`} className="font-semibold text-primary-600 hover:text-primary-800">
+                      <Link to={`/pharmacy/orders/${order.id}`} className="font-semibold text-primary-600 hover:text-primary-800 transition-colors">
                         {order.orderNumber}
                       </Link>
-                      <p className="text-sm text-gray-500">{order.safeCustomerName}</p>
+                      <p className="text-sm text-slate-500 mt-1">{order.safeCustomerName}</p>
                     </div>
                     <div className="text-right">
-                       <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
-                        {order.orderStatus.replace(/_/g, ' ')}
-                      </span>
+                      <StatusBadge status={order.orderStatus} />
                     </div>
                   </li>
                 ))}
               </ul>
             ) : (
-              <div className="p-8 text-center text-gray-500">No active orders needing attention.</div>
+              <EmptyState 
+                icon={ShoppingBag}
+                title="All caught up"
+                description="No active orders needing attention right now."
+              />
             )}
-          </div>
+          </Card>
         </DashboardSection>
       </div>
     </div>
