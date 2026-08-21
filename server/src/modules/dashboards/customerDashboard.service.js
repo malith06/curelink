@@ -84,7 +84,7 @@ exports.getCustomerDashboard = async (customerId) => {
     requestId: q.requestId?._id,
     pharmacyName: q.pharmacyId?.name,
     coveragePercentage: q.coveragePercentage,
-    total: q.total,
+    total: q.total ? parseFloat((q.total / 100).toFixed(2)) : 0,
     currency: q.currency,
     expiresAt: q.expiresAt,
     status: q.status,
@@ -99,7 +99,7 @@ exports.getCustomerDashboard = async (customerId) => {
     orderStatus: o.orderStatus,
     paymentStatus: o.paymentStatus,
     fulfilmentMethod: o.fulfilmentMethod,
-    total: o.total,
+    total: o.total ? parseFloat((o.total / 100).toFixed(2)) : 0,
     currency: o.currency,
     createdAt: o.createdAt,
   }));

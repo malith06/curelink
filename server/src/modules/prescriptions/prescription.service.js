@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const crypto = require("crypto");
 const FileType = require("file-type");
 const Prescription = require("./prescription.model");

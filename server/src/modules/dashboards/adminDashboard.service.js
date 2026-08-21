@@ -37,7 +37,7 @@ exports.getAdminDashboard = async (rangeDays = 30) => {
     { $match: { paymentStatus: { $in: [PAYMENT_STATUS.PAID, PAYMENT_STATUS.COD_COLLECTED] } } },
     { $group: { _id: null, totalValue: { $sum: '$total' } } }
   ]);
-  const totalPayments = totalPaymentsAgg.length > 0 ? totalPaymentsAgg[0].totalValue : 0;
+  const totalPayments = totalPaymentsAgg.length > 0 ? parseFloat((totalPaymentsAgg[0].totalValue / 100).toFixed(2)) : 0;
 
   const failedPayments = await PaymentEvent.countDocuments({ status: 'FAILED', createdAt: { $gte: dateRange } }); // status enum inside payment gateway webhook
 

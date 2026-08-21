@@ -102,7 +102,7 @@ const PaymentSelectionPage = () => {
               <p className="text-sm text-slate-500 font-medium">Includes delivery and taxes</p>
             </div>
             <div className="text-3xl font-black text-primary-600">
-              Rs. {(order.totalAmount / 100).toFixed(2)}
+              Rs. {(order.total / 100).toFixed(2)}
             </div>
           </div>
 

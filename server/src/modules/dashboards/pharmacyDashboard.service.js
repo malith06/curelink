@@ -59,7 +59,7 @@ exports.getPharmacyDashboard = async (pharmacyId, rangeDays = 30) => {
       },
     },
   ]);
-  const grossFulfilledOrderValue = grossFulfilledAgg.length > 0 ? grossFulfilledAgg[0].totalValue : 0;
+  const grossFulfilledOrderValue = grossFulfilledAgg.length > 0 ? parseFloat((grossFulfilledAgg[0].totalValue / 100).toFixed(2)) : 0;
 
   // 3. Average Response Time
   const responseTimeAgg = await Quotation.aggregate([
@@ -141,7 +141,7 @@ exports.getPharmacyDashboard = async (pharmacyId, rangeDays = 30) => {
     orderStatus: o.orderStatus,
     paymentStatus: o.paymentStatus,
     fulfilmentMethod: o.fulfilmentMethod,
-    total: o.total,
+    total: o.total ? parseFloat((o.total / 100).toFixed(2)) : 0,
     currency: o.currency,
     createdAt: o.createdAt,
   }));
@@ -152,7 +152,7 @@ exports.getPharmacyDashboard = async (pharmacyId, rangeDays = 30) => {
     quotationNumber: q.quotationNumber,
     requestNumber: q.requestId?.requestNumber,
     status: q.status,
-    total: q.total,
+    total: q.total ? parseFloat((q.total / 100).toFixed(2)) : 0,
     currency: q.currency,
     submittedAt: q.submittedAt,
     expiresAt: q.expiresAt,
@@ -213,7 +213,7 @@ exports.getPharmacyDashboard = async (pharmacyId, rangeDays = 30) => {
 
   const fulfilledValueTrend = fulfilledValueTrendAgg.map((o) => ({
     date: o._id,
-    value: o.value,
+    value: o.value ? parseFloat((o.value / 100).toFixed(2)) : 0,
   }));
 
   return {

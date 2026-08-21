@@ -152,7 +152,7 @@ const PharmacyOrdersPage = () => {
                       </Badge>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-black text-primary-600 text-right">
-                      {(order.totalAmount / 100).toFixed(2)}
+                      {(order.total / 100).toFixed(2)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="text-primary-600 hover:text-primary-800 flex items-center justify-end font-bold transition-colors">

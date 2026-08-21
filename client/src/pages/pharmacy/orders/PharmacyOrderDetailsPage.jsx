@@ -258,7 +258,7 @@ const PharmacyOrderDetailsPage = () => {
               <div className="mt-6 pt-6 border-t border-slate-100 space-y-3">
                 <div className="flex justify-between text-sm font-medium text-slate-600">
                   <span>Subtotal</span>
-                  <span className="font-bold text-slate-900">Rs. {((order.totalAmount - (order.deliveryFee || 0)) / 100).toFixed(2)}</span>
+                  <span className="font-bold text-slate-900">Rs. {((order.total - (order.deliveryFee || 0)) / 100).toFixed(2)}</span>
                 </div>
                 {order.fulfilmentMethod === FULFILMENT_METHOD.DELIVERY && (
                   <div className="flex justify-between text-sm font-medium text-slate-600">
@@ -268,7 +268,7 @@ const PharmacyOrderDetailsPage = () => {
                 )}
                 <div className="flex justify-between items-center text-lg font-black text-slate-900 pt-4 border-t border-slate-200 mt-4">
                   <span>Total</span>
-                  <span className="text-primary-600 text-2xl">Rs. {(order.totalAmount / 100).toFixed(2)}</span>
+                  <span className="text-primary-600 text-2xl">Rs. {(order.total / 100).toFixed(2)}</span>
                 </div>
               </div>
             </CardContent>

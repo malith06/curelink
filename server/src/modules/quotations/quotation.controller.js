@@ -96,10 +96,10 @@ const quotationController = {
 
   getQuotation: catchAsync(async (req, res) => {
     const { quotationId } = req.params;
-    const pharmacyId = req.user.role === 'pharmacy' ? req.user.pharmacyId : null;
+    const pharmacyId = req.user.role === 'PHARMACY' ? req.user.pharmacyId : null;
     
     // If not pharmacy, maybe customer? Handled differently later, but for now we enforce pharmacyId protection
-    if (req.user.role === 'pharmacy' && !pharmacyId) {
+    if (req.user.role === 'PHARMACY' && !pharmacyId) {
       throw new ApiError(403, 'User does not belong to a pharmacy');
     }
 

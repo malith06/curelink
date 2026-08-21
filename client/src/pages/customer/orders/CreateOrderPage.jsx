@@ -30,17 +30,8 @@ const CreateOrderPage = () => {
   const [deliveryInstructions, setDeliveryInstructions] = useState('');
   const [submitting, setSubmitting] = useState(false);
   
-  // Minimal subtotal calculation for display (backend does actual math)
-  const calculateDisplaySubtotal = () => {
-    if (!quotation || !quotation.items) return 0;
-    return quotation.items.reduce((sum, item) => {
-      const q = (item.availabilityResult === 'AVAILABLE' || item.availabilityResult === 'SUBSTITUTION_OFFERED') ? item.quantity : 0;
-      return sum + (q * item.unitPrice);
-    }, 0);
-  };
-
-  const displaySubtotal = calculateDisplaySubtotal();
-  const deliveryFee = fulfilmentMethod === FULFILMENT_METHOD.DELIVERY ? 50000 : 0;
+  const displaySubtotal = quotation?.subtotal || 0;
+  const deliveryFee = fulfilmentMethod === FULFILMENT_METHOD.DELIVERY ? (quotation?.deliveryFee || 0) : 0;
   const displayTotal = displaySubtotal + deliveryFee;
 
   const handleInputChange = (e) => {
@@ -259,17 +250,17 @@ const CreateOrderPage = () => {
               <div className="space-y-4 text-sm text-slate-600 mb-8">
                 <div className="flex justify-between items-center">
                   <span className="font-medium">Subtotal</span>
-                  <span className="font-semibold text-slate-900">Rs. {(displaySubtotal / 100).toFixed(2)}</span>
+                  <span className="font-semibold text-slate-900">Rs. {(displaySubtotal).toFixed(2)}</span>
                 </div>
                 {fulfilmentMethod === FULFILMENT_METHOD.DELIVERY && (
                   <div className="flex justify-between items-center">
                     <span className="font-medium">Delivery Fee</span>
-                    <span className="font-semibold text-slate-900">Rs. {(deliveryFee / 100).toFixed(2)}</span>
+                    <span className="font-semibold text-slate-900">Rs. {(deliveryFee).toFixed(2)}</span>
                   </div>
                 )}
                 <div className="pt-4 border-t border-slate-100 flex justify-between items-center">
                   <span className="font-bold text-slate-900 text-base">Total</span>
-                  <span className="font-black text-primary-600 text-xl">Rs. {(displayTotal / 100).toFixed(2)}</span>
+                  <span className="font-black text-primary-600 text-xl">Rs. {(displayTotal).toFixed(2)}</span>
                 </div>
               </div>
 

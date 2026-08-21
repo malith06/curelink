@@ -3,7 +3,7 @@ import api from '../../api/axiosClient';
 // --- CUSTOMER ENDPOINTS ---
 
 const getMyRequests = async (params = {}) => {
-  const response = await api.get('/requests/customer', { params });
+  const response = await api.get('/requests', { params });
   return response.data;
 };
 
@@ -39,17 +39,17 @@ const acceptQuotation = async (requestId, pharmacyId) => {
 // --- PHARMACY ENDPOINTS ---
 
 const getPharmacyInbox = async (params = {}) => {
-  const response = await api.get('/requests/pharmacy', { params });
+  const response = await api.get('/pharmacies/me/requests', { params });
   return response.data;
 };
 
 const submitQuotation = async (requestId, items) => {
-  const response = await api.post(`/requests/${requestId}/quotations`, { items });
+  const response = await api.post(`/pharmacies/me/requests/${requestId}/quote`, { items });
   return response.data;
 };
 
 const updateRequestStatus = async (requestId, status) => {
-  const response = await api.patch(`/requests/${requestId}/status`, { status });
+  const response = await api.patch(`/pharmacies/me/requests/${requestId}/status`, { status });
   return response.data;
 };
 

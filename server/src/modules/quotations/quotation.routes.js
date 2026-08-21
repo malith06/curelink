@@ -10,7 +10,7 @@ const { updateDraftSchema } = require('./quotation.validation');
 router.use(protect);
 
 // Pharmacy routes
-router.use(authorize('pharmacy'));
+router.use(authorize('PHARMACY'));
 
 // Create or get draft for a specific request
 router.post('/requests/:requestId/draft', quotationController.getOrCreateDraft);

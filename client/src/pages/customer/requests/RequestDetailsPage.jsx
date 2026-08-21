@@ -122,7 +122,8 @@ const RequestDetailsPage = () => {
       await quotationService.acceptQuotation(id, quotationId);
       toast.success('Quotation accepted! Please proceed to checkout.');
       
-      navigate(`/customer/orders/create/${quotationId}`);
+      const acceptedQuotation = quotations.find(q => q._id === quotationId);
+      navigate(`/customer/orders/create/${quotationId}`, { state: { quotation: acceptedQuotation } });
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to accept quotation');
       setProcessing(false);

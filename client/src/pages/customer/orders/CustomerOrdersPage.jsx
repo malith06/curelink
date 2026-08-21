@@ -102,7 +102,7 @@ const CustomerOrdersPage = () => {
                       <StatusBadge status={order.orderStatus} />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-primary-600">
-                      Rs. {(order.totalAmount / 100).toFixed(2)}
+                      Rs. {(order.total / 100).toFixed(2)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end text-primary-600 group-hover:text-primary-800 transition-colors">
