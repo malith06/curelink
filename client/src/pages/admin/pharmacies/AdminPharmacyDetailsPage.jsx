@@ -183,7 +183,7 @@ const AdminPharmacyDetailsPage = () => {
                {pharmacy.verificationStatus === 'PENDING' && (
                  <>
                    <Button 
-                     onClick={() => handleAction('approve')} disabled={actionLoading} loading={actionLoading && pharmacy.verificationStatus === 'PENDING'}
+                     onClick={() => handleAction('approve')} disabled={actionLoading} isLoading={actionLoading && pharmacy.verificationStatus === 'PENDING'}
                      variant="success" fullWidth size="lg" icon={CheckCircle}
                    >
                      Approve Pharmacy
@@ -205,7 +205,7 @@ const AdminPharmacyDetailsPage = () => {
                        <p className="text-sm text-green-800 font-bold flex items-center gap-2"><CheckCircle className="w-4 h-4" /> Pharmacy is active</p>
                     </div>
                     <Button 
-                      onClick={() => handleAction('suspend')} disabled={actionLoading} loading={actionLoading}
+                      onClick={() => handleAction('suspend')} disabled={actionLoading} isLoading={actionLoading}
                       variant="outline" fullWidth size="lg" icon={AlertTriangle}
                       className="!text-amber-600 !border-amber-200 hover:!bg-amber-50"
                     >
@@ -223,7 +223,7 @@ const AdminPharmacyDetailsPage = () => {
                        </p>
                     </div>
                     <Button 
-                      onClick={() => handleAction('reactivate')} disabled={actionLoading} loading={actionLoading}
+                      onClick={() => handleAction('reactivate')} disabled={actionLoading} isLoading={actionLoading}
                       variant="primary" fullWidth size="lg" icon={CheckCircle}
                     >
                       Reactivate Pharmacy

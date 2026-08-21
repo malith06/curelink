@@ -455,7 +455,7 @@ const PharmacyRequestDetailsPage = () => {
             <Button
               onClick={handleSaveDraft}
               disabled={saving || submitting}
-              loading={saving}
+              isLoading={saving}
               variant="outline"
               icon={Save}
               size="lg"
@@ -466,7 +466,7 @@ const PharmacyRequestDetailsPage = () => {
             <Button 
               onClick={handleSubmitQuotation}
               disabled={saving || submitting}
-              loading={submitting}
+              isLoading={submitting}
               icon={Send}
               size="lg"
             >

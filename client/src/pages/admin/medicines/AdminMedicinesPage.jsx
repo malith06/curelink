@@ -257,7 +257,7 @@ const AdminMedicinesPage = () => {
                 <Button
                   type="submit"
                   disabled={submitting}
-                  loading={submitting}
+                  isLoading={submitting}
                 >
                   {isEditMode ? 'Update Medicine' : 'Save Medicine'}
                 </Button>

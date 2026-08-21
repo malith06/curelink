@@ -136,7 +136,7 @@ const PharmacyOrderDetailsPage = () => {
         <Button
           onClick={() => handleUpdateStatus(ORDER_STATUS.PHARMACY_ACCEPTED)}
           disabled={actionLoading}
-          loading={actionLoading}
+          isLoading={actionLoading}
           fullWidth
           size="lg"
         >
@@ -164,7 +164,7 @@ const PharmacyOrderDetailsPage = () => {
           <Button
             onClick={() => handleUpdateStatus(nextStatus)}
             disabled={actionLoading}
-            loading={actionLoading}
+            isLoading={actionLoading}
             fullWidth
             size="lg"
           >
@@ -180,7 +180,7 @@ const PharmacyOrderDetailsPage = () => {
           <Button
             onClick={() => handleUpdateStatus(order.fulfilmentMethod === FULFILMENT_METHOD.DELIVERY ? ORDER_STATUS.DELIVERED : ORDER_STATUS.COMPLETED)}
             disabled={actionLoading}
-            loading={actionLoading}
+            isLoading={actionLoading}
             fullWidth
             size="lg"
             variant="success"
@@ -196,7 +196,7 @@ const PharmacyOrderDetailsPage = () => {
         <Button
           onClick={() => handleUpdateStatus(ORDER_STATUS.COMPLETED)}
           disabled={actionLoading}
-          loading={actionLoading}
+          isLoading={actionLoading}
           fullWidth
           size="lg"
           variant="success"
@@ -392,7 +392,7 @@ const PharmacyOrderDetailsPage = () => {
                   <Button
                     onClick={handleCollectCOD}
                     disabled={actionLoading}
-                    loading={actionLoading}
+                    isLoading={actionLoading}
                     variant="success"
                     fullWidth
                     icon={Banknote}

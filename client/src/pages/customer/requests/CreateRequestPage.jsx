@@ -39,7 +39,7 @@ const CreateRequestPage = () => {
           <Button
             onClick={handleStartRequest}
             disabled={loading}
-            loading={loading}
+            isLoading={loading}
             size="lg"
             className="w-full sm:w-auto"
           >

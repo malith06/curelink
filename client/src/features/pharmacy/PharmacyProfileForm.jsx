@@ -311,7 +311,7 @@ const PharmacyProfileForm = ({ initialData, onSuccess }) => {
         <Button
           type="submit"
           disabled={loading}
-          loading={loading}
+          isLoading={loading}
           icon={Save}
           size="lg"
         >

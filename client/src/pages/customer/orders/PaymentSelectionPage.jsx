@@ -157,7 +157,7 @@ const PaymentSelectionPage = () => {
             <Button
               onClick={handlePaymentSubmit}
               disabled={!selectedMethod || processing}
-              loading={processing}
+              isLoading={processing}
               size="lg"
               fullWidth
             >

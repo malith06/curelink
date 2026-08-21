@@ -89,7 +89,7 @@ const PrescriptionUploadPage = () => {
               type="submit" 
               fullWidth 
               disabled={loading || !file}
-              loading={loading}
+              isLoading={loading}
               icon={FileText}
             >
               {loading ? 'Processing OCR (This may take a moment)...' : 'Upload and Scan'}

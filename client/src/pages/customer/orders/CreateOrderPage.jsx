@@ -276,7 +276,7 @@ const CreateOrderPage = () => {
               <Button
                 onClick={handleSubmit}
                 disabled={submitting}
-                loading={submitting}
+                isLoading={submitting}
                 size="lg"
                 fullWidth
               >

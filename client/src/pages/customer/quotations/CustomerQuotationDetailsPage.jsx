@@ -204,7 +204,7 @@ const CustomerQuotationDetailsPage = () => {
                   <Button 
                     onClick={handleAcceptQuotation}
                     disabled={processing}
-                    loading={processing}
+                    isLoading={processing}
                     icon={Check}
                     size="lg"
                     fullWidth

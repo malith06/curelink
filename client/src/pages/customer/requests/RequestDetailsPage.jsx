@@ -400,7 +400,7 @@ const RequestDetailsPage = () => {
                                   <Button 
                                     onClick={() => handleAcceptQuotation(q._id)}
                                     disabled={processing}
-                                    loading={processing}
+                                    isLoading={processing}
                                     className="w-full"
                                   >
                                     Accept Quote
@@ -480,7 +480,7 @@ const RequestDetailsPage = () => {
                               <Button 
                                 onClick={() => handleAcceptQuotation(quotation._id)}
                                 disabled={processing}
-                                loading={processing}
+                                isLoading={processing}
                                 className="w-full"
                               >
                                 Accept

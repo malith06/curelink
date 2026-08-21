@@ -22,8 +22,11 @@ const addItemToRequest = async (requestId, itemData) => {
   return response.data;
 };
 
-const submitRequest = async (requestId, pharmacyIds) => {
-  const response = await api.post(`/requests/${requestId}/submit`, { pharmacyIds });
+const submitRequest = async (requestId, selectedPharmacyIds) => {
+  const response = await api.post(`/requests/${requestId}/submit`, { 
+    selectedPharmacyIds,
+    customerLocation: { coordinates: [79.8612, 6.9271] } // Default coordinates (e.g. Colombo)
+  });
   return response.data;
 };
 

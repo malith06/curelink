@@ -178,7 +178,7 @@ const PrescriptionReviewPage = () => {
         <Button 
           onClick={handleConfirm}
           disabled={submitting}
-          loading={submitting}
+          isLoading={submitting}
           icon={Check}
         >
           Confirm and Submit
