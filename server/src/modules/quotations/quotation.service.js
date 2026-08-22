@@ -21,13 +21,11 @@ class QuotationService {
       throw new ApiError(404, 'Medicine request not found');
     }
 
-    // Check if the request is still open for quotations
-    if (['CANCELLED', 'EXPIRED', 'QUOTATION_ACCEPTED', 'CONVERTED_TO_ORDER', 'PROCESSING', 'READY_FOR_PICKUP', 'DISPATCHED', 'COMPLETED'].includes(request.status)) {
-      throw new ApiError(400, 'This request is no longer accepting quotations');
-    }
-
     // Verify the pharmacy was actually selected by the customer
-    if (!request.selectedPharmacyIds.includes(pharmacyId)) {
+    const isSelected = request.selectedPharmacyIds.some(
+      id => id.toString() === pharmacyId.toString()
+    );
+    if (!isSelected) {
       throw new ApiError(403, 'You do not have permission to quote on this request');
     }
 
@@ -35,6 +33,11 @@ class QuotationService {
     let quotation = await Quotation.findOne({ requestId, pharmacyId });
     if (quotation) {
       return quotation;
+    }
+
+    // Check if the request is still open for NEW quotations
+    if (['CANCELLED', 'EXPIRED', 'QUOTATION_ACCEPTED', 'CONVERTED_TO_ORDER', 'PROCESSING', 'READY_FOR_PICKUP', 'DISPATCHED', 'COMPLETED'].includes(request.status)) {
+      throw new ApiError(400, 'This request is no longer accepting quotations');
     }
 
     // Map request items to quotation draft items
@@ -123,10 +126,10 @@ class QuotationService {
                 const substitute = await Medicine.findById(updateItem.substitutionMedicineId);
                 if (substitute) {
                   item.substitutionSnapshot = {
-                    genericName: substitute.genericName,
-                    brandName: substitute.brandName,
-                    strength: substitute.strength,
-                    dosageForm: substitute.dosageForm
+                    name: substitute.name,
+                    brand: substitute.brand,
+                    category: substitute.category,
+                    manufacturer: substitute.manufacturer
                   };
                 }
               }
@@ -188,14 +191,17 @@ class QuotationService {
       throw new ApiError(400, 'Preparation time is required');
     }
 
-    if (!quotation.expiresAt || new Date(quotation.expiresAt) <= new Date()) {
-      throw new ApiError(400, 'A valid future expiration date is required');
-    }
-
     // 2. Enforce Prescription Verification
     const request = await MedicineRequest.findById(quotation.requestId);
     if (!request) {
       throw new ApiError(404, 'Associated medicine request not found');
+    }
+
+    if (!quotation.expiresAt || new Date(quotation.expiresAt) <= new Date()) {
+      // Use request's expiration date if valid, otherwise default to 24 hours from now
+      quotation.expiresAt = (request.expiresAt && new Date(request.expiresAt) > new Date()) 
+        ? request.expiresAt 
+        : new Date(Date.now() + 24 * 60 * 60 * 1000);
     }
 
     if (request.requiresPrescription) {

@@ -118,6 +118,7 @@ const calculateQuotationCompleteness = (items) => {
 module.exports = {
   toCents,
   fromCents,
+  formatCentsToDollars: fromCents,
   calculateItemSubtotal,
   calculateQuotationTotal,
   calculateItemAvailability,

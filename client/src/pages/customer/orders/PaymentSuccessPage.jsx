@@ -91,7 +91,7 @@ const PaymentSuccessPage = () => {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-slate-500 font-medium">Amount Paid</span>
-                <span className="font-bold text-slate-900 bg-white px-2 py-1 rounded border border-slate-200">Rs. {(order.total / 100).toFixed(2)}</span>
+                <span className="font-bold text-slate-900 bg-white px-2 py-1 rounded border border-slate-200">Rs. {Number(order.total).toFixed(2)}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-slate-500 font-medium">Payment Method</span>

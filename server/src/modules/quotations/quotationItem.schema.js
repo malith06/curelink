@@ -2,10 +2,10 @@ const mongoose = require('mongoose');
 const { AVAILABILITY_RESULT } = require('./quotation.constants');
 
 const medicineSnapshotSchema = new mongoose.Schema({
-  genericName: { type: String, required: true },
-  brandName: { type: String },
-  strength: { type: String },
-  dosageForm: { type: String }
+  name: { type: String, required: true },
+  brand: { type: String },
+  category: { type: String },
+  manufacturer: { type: String }
 }, { _id: false });
 
 const quotationItemSchema = new mongoose.Schema({

@@ -19,26 +19,31 @@ exports.protect = async (req, res, next) => {
 
   // Make sure token exists
   if (!token) {
+    console.log("No token found");
     return next(new ApiError("Not authorized to access this route", 401));
   }
 
   try {
     // Verify token
     const decoded = verifyToken(token);
+    // console.log("Decoded token:", decoded);
 
     req.user = await User.findById(decoded.id);
 
     if (!req.user) {
+      console.log("User not found for id:", decoded.id);
       return next(new ApiError("Not authorized to access this route", 401));
     }
     
     // Check if user is active
     if (!req.user.isActive) {
+      console.log("User is not active");
       return next(new ApiError("User account is suspended", 403));
     }
 
     next();
   } catch (err) {
+    console.log("Catch block error:", err);
     return next(new ApiError("Not authorized to access this route", 401));
   }
 };

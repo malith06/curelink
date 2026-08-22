@@ -34,7 +34,11 @@ const PharmacyQuotationsPage = () => {
 
   const filteredQuotations = quotations.filter(q => {
     const matchesFilter = filter === 'ALL' || q.status === filter;
-    const matchesSearch = !searchTerm || (q.requestId && q.requestId.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    // Safely get the request ID as a string, handling both populated objects and raw ObjectIds
+    const reqIdString = q.requestId?._id ? String(q.requestId._id) : String(q.requestId || '');
+    const matchesSearch = !searchTerm || (reqIdString && reqIdString.toLowerCase().includes(searchTerm.toLowerCase()));
+    
     return matchesFilter && matchesSearch;
   });
 
@@ -118,10 +122,16 @@ const PharmacyQuotationsPage = () => {
               </thead>
               <tbody className="bg-white divide-y divide-slate-100">
                 {filteredQuotations.map((quotation) => (
-                  <tr key={quotation._id} className="hover:bg-slate-50 transition-colors group cursor-pointer" onClick={() => navigate(`/pharmacy/requests/${quotation.requestId}`)}>
+                  <tr key={quotation._id} className="hover:bg-slate-50 transition-colors group cursor-pointer" onClick={() => {
+                    const reqId = quotation.requestId?._id ? String(quotation.requestId._id) : String(quotation.requestId || '');
+                    navigate(`/pharmacy/requests/${reqId}`);
+                  }}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="font-mono text-sm font-bold text-slate-900 bg-slate-100 px-2.5 py-1 rounded-md inline-block mb-1 border border-slate-200">
-                        #{quotation.requestId?.substring(quotation.requestId.length - 6).toUpperCase()}
+                        #{(() => {
+                           const reqId = quotation.requestId?._id ? String(quotation.requestId._id) : String(quotation.requestId || '');
+                           return reqId.substring(Math.max(0, reqId.length - 6)).toUpperCase();
+                        })()}
                       </div>
                       <div className="text-xs font-medium text-slate-500 flex items-center">
                         <Clock className="w-3 h-3 mr-1" />

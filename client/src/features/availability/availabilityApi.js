@@ -1,12 +1,12 @@
-import api from '../../api/axios';
+import api from '../../api/axiosClient';
 
 const getMyAvailability = async (params = {}) => {
-  const response = await api.get('/pharmacies/me/availability', { params });
+  const response = await api.get('/availability/inventory', { params });
   return response.data;
 };
 
 const updateAvailability = async (medicineId, data) => {
-  const response = await api.put(`/pharmacies/me/availability/${medicineId}`, data);
+  const response = await api.put(`/availability/${medicineId}`, data);
   return response.data;
 };
 

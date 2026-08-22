@@ -8,20 +8,16 @@ const catchAsync = require('../../utils/asyncHandler');
  * @route   POST /api/v1/requests
  * @access  Private (Customer only)
  */
-const createDraftRequest = async (req, res, next) => {
-  try {
-    const customerId = req.user.id;
-    const request = await requestService.createDraftRequest(customerId);
+const createDraftRequest = catchAsync(async (req, res) => {
+  const customerId = req.user._id;
+  const request = await requestService.createDraftRequest(customerId);
 
-    res.status(201).json({
-      success: true,
-      message: 'Draft request created successfully',
-      data: request
-    });
-  } catch (error) {
-    next(error);
-  }
-};
+  res.status(201).json({
+    success: true,
+    message: 'Draft request created successfully',
+    data: request
+  });
+});
 
 /**
  * @desc    Add a medicine item to a draft request

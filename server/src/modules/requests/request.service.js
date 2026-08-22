@@ -15,10 +15,10 @@ const mongoose = require('mongoose');
  */
 const buildMedicineSnapshot = (medicine) => {
   return {
-    genericName: medicine.genericName,
-    brandName: medicine.brandName,
-    strength: medicine.strength,
-    dosageForm: medicine.dosageForm
+    name: medicine.name,
+    brand: medicine.brand,
+    category: medicine.category,
+    manufacturer: medicine.manufacturer
   };
 };
 
@@ -29,7 +29,7 @@ const buildMedicineSnapshot = (medicine) => {
  */
 const calculatePrescriptionRequirement = (items) => {
   if (!items || !Array.isArray(items) || items.length === 0) return false;
-  return items.some(item => item.requiresPrescription === true);
+  return items.some(item => item.prescriptionRequired === true);
 };
 
 /**
@@ -85,11 +85,11 @@ const addItemToRequest = async (requestId, customerId, itemData) => {
     request.items.push({
       ...itemData,
       medicineSnapshot: snapshot,
-      requiresPrescription: medicine.requiresPrescription
+      prescriptionRequired: medicine.prescriptionRequired
     });
   }
 
-  request.requiresPrescription = calculatePrescriptionRequirement(request.items);
+  request.prescriptionRequired = calculatePrescriptionRequirement(request.items);
   await request.save();
 
   return request;
@@ -156,7 +156,7 @@ const removeRequestItem = async (requestId, customerId, medicineId) => {
   }
 
   request.items.splice(existingItemIndex, 1);
-  request.requiresPrescription = calculatePrescriptionRequirement(request.items);
+  request.prescriptionRequired = calculatePrescriptionRequirement(request.items);
 
   await request.save();
   return request;
@@ -181,7 +181,7 @@ const submitRequest = async (requestId, customerId, pharmacyIds, customerLocatio
   if (request.items.length === 0) {
     throw new ApiError(400, 'Cannot submit an empty request');
   }
-  if (request.requiresPrescription && !request.prescriptionId) {
+  if (request.prescriptionRequired && !request.prescriptionId) {
     throw new ApiError(400, 'A prescription is required for one or more items in this request');
   }
 
@@ -192,7 +192,7 @@ const submitRequest = async (requestId, customerId, pharmacyIds, customerLocatio
   // Validate pharmacies exist and are verified
   const pharmacies = await Pharmacy.find({
     _id: { $in: pharmacyIds },
-    verificationStatus: 'VERIFIED'
+    verificationStatus: 'APPROVED'
   });
 
   if (pharmacies.length !== pharmacyIds.length) {
@@ -200,18 +200,26 @@ const submitRequest = async (requestId, customerId, pharmacyIds, customerLocatio
   }
 
   request.selectedPharmacyIds = pharmacyIds;
-  request.status = REQUEST_STATUS.PENDING;
+  request.status = REQUEST_STATUS.SUBMITTED;
   request.submittedAt = new Date();
 
-  if (customerLocation) {
-    request.customerLocation = customerLocation;
+  if (customerLocation && customerLocation.coordinates) {
+    request.customerLocation = {
+      type: 'Point',
+      coordinates: customerLocation.coordinates
+    };
   }
 
-  // Set expiration to 24 hours from submission
   const expiresAt = new Date();
   expiresAt.setHours(expiresAt.getHours() + 24);
   request.expiresAt = expiresAt;
-  await request.save();
+  
+  try {
+    await request.save();
+  } catch (err) {
+    console.error('SAVE VALIDATION ERROR:', err);
+    throw err;
+  }
 
   // Send notifications to selected pharmacies
   const { createAndEmitNotification } = require('../notifications/notification.service');
@@ -278,6 +286,8 @@ const getCustomerRequests = async (customerId, queryParams = {}) => {
 const getCustomerRequestById = async (requestId, customerId) => {
   const request = await MedicineRequest.findOne({ _id: requestId, customerId })
     .populate('selectedPharmacyIds', 'name address phone city')
+    .populate('items.medicineId', 'name prescriptionRequired')
+    .populate('prescriptionId', 'fileUrl originalFileName ocrStatus')
     .lean();
 
   if (!request) {

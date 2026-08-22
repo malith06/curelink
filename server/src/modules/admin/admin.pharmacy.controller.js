@@ -35,7 +35,7 @@ const approvePharmacy = asyncHandler(async (req, res) => {
 });
 
 const rejectPharmacy = asyncHandler(async (req, res) => {
-  const profile = await pharmacyService.rejectPharmacy(req.params.pharmacyId, req.body.reason, req.user._id);
+  const profile = await pharmacyService.rejectPharmacy(req.params.pharmacyId, req.body?.reason, req.user._id);
   res.status(200).json({
     success: true,
     data: profile,
@@ -43,7 +43,7 @@ const rejectPharmacy = asyncHandler(async (req, res) => {
 });
 
 const suspendPharmacy = asyncHandler(async (req, res) => {
-  const profile = await pharmacyService.suspendPharmacy(req.params.pharmacyId, req.body.reason, req.user._id);
+  const profile = await pharmacyService.suspendPharmacy(req.params.pharmacyId, req.body?.reason, req.user._id);
   res.status(200).json({
     success: true,
     data: profile,

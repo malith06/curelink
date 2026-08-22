@@ -139,11 +139,11 @@ const NearbyPharmacySearchPage = () => {
                   {medicineResults.map(med => (
                     <li 
                       key={med._id}
-                      onClick={() => handleSelectMedicine(med._id, med.genericName)}
+                      onClick={() => handleSelectMedicine(med._id, med.name)}
                       className="px-4 py-2 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-b-0 transition-colors"
                     >
-                      <p className="font-medium text-slate-900 text-sm">{med.genericName}</p>
-                      {med.brandName && <p className="text-xs text-slate-500 mt-0.5">{med.brandName}</p>}
+                      <p className="font-medium text-slate-900 text-sm">{med.name}</p>
+                      {med.brand && <p className="text-xs text-slate-500 mt-0.5">{med.brand}</p>}
                     </li>
                   ))}
                 </ul>

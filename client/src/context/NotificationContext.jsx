@@ -42,10 +42,10 @@ export const NotificationProvider = ({ children }) => {
     setLoading(true);
     try {
       const res = await axiosClient.get('/notifications?limit=20');
-      setNotifications(res.data.data.items);
+      setNotifications(res.data.data || []);
       
       const countRes = await axiosClient.get('/notifications/unread/count');
-      setUnreadCount(countRes.data.data.count);
+      setUnreadCount(countRes.data.count || 0);
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
     } finally {

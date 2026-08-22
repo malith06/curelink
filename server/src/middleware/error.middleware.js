@@ -37,6 +37,7 @@ const errorHandler = (err, req, res, next) => {
 
   if (process.env.NODE_ENV === 'development') {
     console.error(err);
+    require('fs').appendFileSync('error_debug.log', new Date().toISOString() + ': ' + err.stack + '\n');
   }
 
   res.status(error.statusCode).json(response);

@@ -7,51 +7,120 @@ const createOrder = catchAsync(async (req, res) => {
 
   const order = await orderService.createOrderFromQuotation(customerId, quotationId, req.body);
 
+  const formatted = { ...order.toObject() };
+  if (formatted.total !== undefined) formatted.total = formatCentsToDollars(formatted.total);
+  if (formatted.subtotal !== undefined) formatted.subtotal = formatCentsToDollars(formatted.subtotal);
+  if (formatted.deliveryFee !== undefined) formatted.deliveryFee = formatCentsToDollars(formatted.deliveryFee);
+  if (formatted.items) {
+    formatted.items = formatted.items.map(item => {
+      if (item.unitPrice !== undefined) item.unitPrice = formatCentsToDollars(item.unitPrice);
+      if (item.subtotal !== undefined) item.subtotal = formatCentsToDollars(item.subtotal);
+      return item;
+    });
+  }
+
   res.status(201).json({
     status: 'success',
     data: {
-      order
+      order: formatted
     }
   });
 });
+
+const { formatCentsToDollars } = require('../quotations/quotation.calculator');
 
 const getCustomerOrders = catchAsync(async (req, res) => {
   const customerId = req.user._id;
   const orders = await orderService.getCustomerOrders(customerId, req.query);
 
+  const formattedOrders = orders.map(order => {
+    const formatted = { ...order.toObject() };
+    if (formatted.total !== undefined) formatted.total = formatCentsToDollars(formatted.total);
+    if (formatted.subtotal !== undefined) formatted.subtotal = formatCentsToDollars(formatted.subtotal);
+    if (formatted.deliveryFee !== undefined) formatted.deliveryFee = formatCentsToDollars(formatted.deliveryFee);
+    if (formatted.items) {
+      formatted.items = formatted.items.map(item => {
+        if (item.unitPrice !== undefined) item.unitPrice = formatCentsToDollars(item.unitPrice);
+        if (item.subtotal !== undefined) item.subtotal = formatCentsToDollars(item.subtotal);
+        return item;
+      });
+    }
+    return formatted;
+  });
+
   res.status(200).json({
     status: 'success',
-    results: orders.length,
+    results: formattedOrders.length,
     data: {
-      orders
+      orders: formattedOrders
     }
   });
 });
 
 const getPharmacyOrders = catchAsync(async (req, res) => {
-  const pharmacyId = req.user._id; // Assuming pharmacy is logged in
-  const orders = await orderService.getPharmacyOrders(pharmacyId, req.query);
+  const Pharmacy = require('../pharmacies/pharmacy.model');
+  const pharmacy = await Pharmacy.findOne({ ownerUserId: req.user._id }).lean();
+  if (!pharmacy) throw new ApiError('Pharmacy profile not found', 404);
+  
+  const pharmacyId = pharmacy._id;
+  const orders = await orderService.getPharmacyOrders(pharmacy._id, req.query);
+
+  const formattedOrders = orders.map(order => {
+    const formatted = { ...order.toObject() };
+    if (formatted.total !== undefined) formatted.total = formatCentsToDollars(formatted.total);
+    if (formatted.subtotal !== undefined) formatted.subtotal = formatCentsToDollars(formatted.subtotal);
+    if (formatted.deliveryFee !== undefined) formatted.deliveryFee = formatCentsToDollars(formatted.deliveryFee);
+    if (formatted.items) {
+      formatted.items = formatted.items.map(item => {
+        if (item.unitPrice !== undefined) item.unitPrice = formatCentsToDollars(item.unitPrice);
+        if (item.subtotal !== undefined) item.subtotal = formatCentsToDollars(item.subtotal);
+        return item;
+      });
+    }
+    return formatted;
+  });
 
   res.status(200).json({
     status: 'success',
-    results: orders.length,
+    results: formattedOrders.length,
     data: {
-      orders
+      orders: formattedOrders
     }
   });
 });
 
 const getOrderById = catchAsync(async (req, res) => {
   const { id } = req.params;
-  const userId = req.user._id;
+  
+  let entityId = req.user._id;
   const userRole = req.user.role; // CUSTOMER or PHARMACY
+  
+  if (userRole === 'PHARMACY') {
+    const Pharmacy = require('../pharmacies/pharmacy.model');
+    const pharmacy = await Pharmacy.findOne({ ownerUserId: req.user._id }).lean();
+    if (pharmacy) {
+      entityId = pharmacy._id;
+    }
+  }
 
-  const order = await orderService.getOrderById(id, userId, userRole);
+  const order = await orderService.getOrderById(id, entityId, userRole);
+
+  const formatted = { ...order.toObject() };
+  if (formatted.total !== undefined) formatted.total = formatCentsToDollars(formatted.total);
+  if (formatted.subtotal !== undefined) formatted.subtotal = formatCentsToDollars(formatted.subtotal);
+  if (formatted.deliveryFee !== undefined) formatted.deliveryFee = formatCentsToDollars(formatted.deliveryFee);
+  if (formatted.items) {
+    formatted.items = formatted.items.map(item => {
+      if (item.unitPrice !== undefined) item.unitPrice = formatCentsToDollars(item.unitPrice);
+      if (item.subtotal !== undefined) item.subtotal = formatCentsToDollars(item.subtotal);
+      return item;
+    });
+  }
 
   res.status(200).json({
     status: 'success',
     data: {
-      order
+      order: formatted
     }
   });
 });
@@ -73,7 +142,11 @@ const cancelOrder = catchAsync(async (req, res) => {
 
 const rejectOrder = catchAsync(async (req, res) => {
   const { id } = req.params;
-  const pharmacyId = req.user._id;
+  const Pharmacy = require('../pharmacies/pharmacy.model');
+  const pharmacy = await Pharmacy.findOne({ ownerUserId: req.user._id }).lean();
+  if (!pharmacy) throw new ApiError('Pharmacy profile not found', 404);
+  
+  const pharmacyId = pharmacy._id;
   const { reason } = req.body;
 
   const order = await orderService.rejectOrder(id, pharmacyId, reason);
@@ -88,7 +161,11 @@ const rejectOrder = catchAsync(async (req, res) => {
 
 const updateOrderStatus = catchAsync(async (req, res) => {
   const { id } = req.params;
-  const pharmacyId = req.user._id;
+  const Pharmacy = require('../pharmacies/pharmacy.model');
+  const pharmacy = await Pharmacy.findOne({ ownerUserId: req.user._id }).lean();
+  if (!pharmacy) throw new ApiError('Pharmacy profile not found', 404);
+  
+  const pharmacyId = pharmacy._id;
   const { status, note } = req.body;
 
   const order = await orderService.updateOrderStatus(id, pharmacyId, status, note);

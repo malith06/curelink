@@ -18,11 +18,12 @@ const AdminMedicinesPage = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    genericName: '',
-    brandName: '',
+    name: '',
+    brand: '',
     category: '',
     description: '',
-    requiresPrescription: false
+    manufacturer: '',
+    prescriptionRequired: false
   });
   const [editingId, setEditingId] = useState(null);
 
@@ -47,21 +48,23 @@ const AdminMedicinesPage = () => {
       setIsEditMode(true);
       setEditingId(medicine._id);
       setFormData({
-        genericName: medicine.genericName || '',
-        brandName: medicine.brandName || '',
+        name: medicine.name || '',
+        brand: medicine.brand || '',
         category: medicine.category || '',
         description: medicine.description || '',
-        requiresPrescription: medicine.requiresPrescription || false
+        manufacturer: medicine.manufacturer || '',
+        prescriptionRequired: medicine.prescriptionRequired || false
       });
     } else {
       setIsEditMode(false);
       setEditingId(null);
       setFormData({
-        genericName: '',
-        brandName: '',
+        name: '',
+        brand: '',
         category: '',
         description: '',
-        requiresPrescription: false
+        manufacturer: '',
+        prescriptionRequired: false
       });
     }
     setIsModalOpen(true);
@@ -81,7 +84,8 @@ const AdminMedicinesPage = () => {
       setIsModalOpen(false);
       fetchMedicines();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to save medicine');
+      const errorMsg = error.response?.data?.errors?.[0] || error.response?.data?.message || 'Failed to save medicine';
+      toast.error(errorMsg);
     } finally {
       setSubmitting(false);
     }
@@ -141,16 +145,16 @@ const AdminMedicinesPage = () => {
                 {medicines.map((med) => (
                   <tr key={med._id} className="hover:bg-slate-50 transition-colors group">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-bold text-slate-900">{med.genericName}</div>
+                      <div className="text-sm font-bold text-slate-900">{med.name}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-slate-600">{med.brandName || '-'}</div>
+                      <div className="text-sm font-medium text-slate-600">{med.brand || '-'}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-slate-600">{med.category || '-'}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {med.requiresPrescription ? (
+                      {med.prescriptionRequired ? (
                         <Badge variant="error" className="bg-red-50 text-red-700 border-red-200">Required</Badge>
                       ) : (
                         <Badge variant="success" className="bg-green-50 text-green-700 border-green-200">No</Badge>
@@ -189,31 +193,44 @@ const AdminMedicinesPage = () => {
             </div>
             
             <form onSubmit={handleSubmit} className="p-6 space-y-5">
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">Generic Name <span className="text-red-500">*</span></label>
-                <Input
-                  required
-                  placeholder="e.g. Paracetamol"
-                  value={formData.genericName}
-                  onChange={(e) => setFormData({...formData, genericName: e.target.value})}
-                />
+              <div className="grid grid-cols-2 gap-5 mb-5">
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Generic Name <span className="text-red-500">*</span></label>
+                  <Input
+                    required
+                    placeholder="e.g. Paracetamol"
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  />
+                </div>
+                 <div>
+                   <label className="block text-sm font-bold text-slate-700 mb-2">Brand Name <span className="text-red-500">*</span></label>
+                   <Input
+                     required
+                     placeholder="e.g. Panadol"
+                     value={formData.brand}
+                     onChange={(e) => setFormData({...formData, brand: e.target.value})}
+                   />
+                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-5">
+              <div className="grid grid-cols-2 gap-5 mb-5">
                  <div>
-                   <label className="block text-sm font-bold text-slate-700 mb-2">Brand Name</label>
+                   <label className="block text-sm font-bold text-slate-700 mb-2">Category <span className="text-red-500">*</span></label>
                    <Input
-                     placeholder="e.g. Panadol"
-                     value={formData.brandName}
-                     onChange={(e) => setFormData({...formData, brandName: e.target.value})}
+                     required
+                     placeholder="e.g. Pain Relief"
+                     value={formData.category}
+                     onChange={(e) => setFormData({...formData, category: e.target.value})}
                    />
                  </div>
                  <div>
-                   <label className="block text-sm font-bold text-slate-700 mb-2">Category</label>
+                   <label className="block text-sm font-bold text-slate-700 mb-2">Manufacturer <span className="text-red-500">*</span></label>
                    <Input
-                     placeholder="e.g. Painkiller"
-                     value={formData.category}
-                     onChange={(e) => setFormData({...formData, category: e.target.value})}
+                     required
+                     placeholder="e.g. GSK"
+                     value={formData.manufacturer}
+                     onChange={(e) => setFormData({...formData, manufacturer: e.target.value})}
                    />
                  </div>
               </div>
@@ -229,17 +246,17 @@ const AdminMedicinesPage = () => {
               </div>
               
               <div className="flex items-start gap-3 p-4 bg-slate-50 rounded-xl border border-slate-100">
-                <div className="flex items-center h-5 mt-0.5">
+                 <div className="flex items-center h-5 mt-0.5">
                    <input
                      type="checkbox"
-                     id="requiresPrescription"
-                     checked={formData.requiresPrescription}
-                     onChange={(e) => setFormData({...formData, requiresPrescription: e.target.checked})}
+                     id="prescriptionRequired"
+                     checked={formData.prescriptionRequired}
+                     onChange={(e) => setFormData({...formData, prescriptionRequired: e.target.checked})}
                      className="h-4 w-4 text-primary-600 rounded border-slate-300 focus:ring-primary-500"
                    />
                 </div>
                 <div>
-                   <label htmlFor="requiresPrescription" className="text-sm font-bold text-slate-900 cursor-pointer select-none">
+                   <label htmlFor="prescriptionRequired" className="text-sm font-bold text-slate-900 cursor-pointer select-none">
                      Requires Prescription
                    </label>
                    <p className="text-xs text-slate-500 font-medium mt-1">Check this if the medicine requires a valid prescription to be sold.</p>

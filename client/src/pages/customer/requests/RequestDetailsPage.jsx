@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import requestService from '../../../features/requests/requestService';
 import quotationService from '../../../features/quotations/quotationService';
 import api from '../../../api/axiosClient'; // for medicine/pharmacy search
+import prescriptionService from '../../../features/prescriptions/prescriptionService';
 import Button from '../../../components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/Card';
 import StatusBadge from '../../../components/ui/StatusBadge';
@@ -19,6 +20,7 @@ const RequestDetailsPage = () => {
   const [quotations, setQuotations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
+  const [uploadingPrescription, setUploadingPrescription] = useState(false);
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'compare'
 
   // Draft mode states
@@ -46,7 +48,7 @@ const RequestDetailsPage = () => {
       
       if (res.data.status !== 'DRAFT') {
         const qRes = await quotationService.getRequestQuotations(id);
-        setQuotations(qRes.data?.quotations || []);
+        setQuotations(Array.isArray(qRes.data) ? qRes.data : (qRes.data?.quotations || []));
       }
     } catch (error) {
       toast.error("Failed to fetch request details");
@@ -75,7 +77,7 @@ const RequestDetailsPage = () => {
     }
     try {
       const res = await api.get('/medicines', { params: { search: query } });
-      setMedicineResults(res.data.items || res.data || []);
+      setMedicineResults(res.data.data?.items || res.data.items || []);
     } catch (err) {
       console.error(err);
     }
@@ -87,7 +89,7 @@ const RequestDetailsPage = () => {
       await requestService.addItemToRequest(id, {
         medicineId: selectedMedicine._id,
         quantity,
-        prescriptionRequired: selectedMedicine.requiresPrescription || prescriptionRequired
+        prescriptionRequired: selectedMedicine.prescriptionRequired || prescriptionRequired
       });
       toast.success('Item added to draft');
       setSelectedMedicine(null);
@@ -103,12 +105,31 @@ const RequestDetailsPage = () => {
     if (selectedPharmacyIds.length === 0) {
       return toast.error('Please select at least one pharmacy.');
     }
+    if (request.prescriptionRequired && !request.prescriptionId) {
+      return toast.error('Please upload a prescription first.');
+    }
     try {
       await requestService.submitRequest(id, selectedPharmacyIds);
       toast.success('Request sent to pharmacies!');
       fetchRequest();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to submit request');
+    }
+  };
+
+  const handlePrescriptionUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    try {
+      setUploadingPrescription(true);
+      await prescriptionService.uploadPrescription(id, file);
+      toast.success('Prescription uploaded successfully!');
+      fetchRequest();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to upload prescription');
+    } finally {
+      setUploadingPrescription(false);
     }
   };
 
@@ -174,7 +195,7 @@ const RequestDetailsPage = () => {
               {request.items.map((item, idx) => (
                 <li key={idx} className="p-4 flex justify-between items-center bg-white hover:bg-slate-50 transition-colors">
                   <div className="flex items-center gap-3">
-                    <span className="font-semibold text-slate-900">{item.medicineId?.genericName || 'Medicine'}</span>
+                    <span className="font-semibold text-slate-900">{item.medicineSnapshot?.name || item.medicineId?.name || 'Medicine'}</span>
                     <span className="text-slate-600 text-sm bg-slate-100 px-2.5 py-0.5 rounded-full font-medium">Qty: {item.quantity}</span>
                   </div>
                   {item.prescriptionRequired && (
@@ -208,10 +229,10 @@ const RequestDetailsPage = () => {
                       {medicineResults.map(med => (
                         <li 
                           key={med._id} 
-                          onClick={() => { setSelectedMedicine(med); setSearchQuery(med.genericName); setMedicineResults([]); }}
+                          onClick={() => { setSelectedMedicine(med); setSearchQuery(med.name); setMedicineResults([]); }}
                           className="px-4 py-2 hover:bg-slate-50 cursor-pointer text-sm font-medium text-slate-900 transition-colors"
                         >
-                          {med.genericName} {med.requiresPrescription ? <span className="text-rose-500 text-xs ml-1">(Rx)</span> : ''}
+                          {med.name} {med.prescriptionRequired ? <span className="text-rose-500 text-xs ml-1">(Rx)</span> : ''}
                         </li>
                       ))}
                     </ul>
@@ -239,7 +260,34 @@ const RequestDetailsPage = () => {
               </div>
             </div>
           )}
+          {/* Draft Mode: Prescription Upload */}
+          {isDraft && request.prescriptionRequired && !request.prescriptionId && (
+            <div className="bg-rose-50 border border-rose-100 rounded-xl p-6 mb-8 mt-4">
+              <h4 className="font-semibold text-rose-900 mb-2">Prescription Required</h4>
+              <p className="text-rose-700 text-sm mb-4">One or more items in your request require a valid doctor's prescription. Please upload it to continue.</p>
+              
+              <div className="flex items-center gap-4">
+                <Input
+                  type="file"
+                  accept="image/*,.pdf"
+                  onChange={handlePrescriptionUpload}
+                  disabled={uploadingPrescription}
+                  className="w-full sm:w-auto bg-white"
+                />
+                {uploadingPrescription && <span className="text-rose-600 text-sm font-medium">Uploading...</span>}
+              </div>
+            </div>
+          )}
 
+          {isDraft && request.prescriptionId && (
+            <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-6 mb-8 mt-4 flex items-center justify-between">
+              <div>
+                <h4 className="font-semibold text-emerald-900 mb-1">Prescription Attached</h4>
+                <p className="text-emerald-700 text-sm">Your prescription has been securely uploaded and will be sent to pharmacies.</p>
+              </div>
+              <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Verified</span>
+            </div>
+          )}
           {/* Draft Mode: Submit to Pharmacies */}
           {isDraft && request.items.length > 0 && (
             <div className="border-t border-slate-200 pt-8 mt-4">

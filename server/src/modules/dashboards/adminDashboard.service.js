@@ -54,9 +54,9 @@ exports.getAdminDashboard = async (rangeDays = 30) => {
     { $match: { createdAt: { $gte: dateRange } } },
     { $unwind: '$items' },
     { $group: {
-        _id: { $cond: [{ $ifNull: ['$items.medicineId', false] }, '$items.medicineId', '$items.genericName'] },
+        _id: { $cond: [{ $ifNull: ['$items.medicineId', false] }, '$items.medicineId', '$items.medicineSnapshot.name'] },
         count: { $sum: '$items.quantity' },
-        name: { $first: '$items.genericName' }
+        name: { $first: '$items.medicineSnapshot.name' }
       }
     },
     { $sort: { count: -1 } },

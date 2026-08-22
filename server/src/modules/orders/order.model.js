@@ -169,13 +169,12 @@ orderSchema.index({ customerId: 1, createdAt: -1 });
 orderSchema.index({ pharmacyId: 1, orderStatus: 1, createdAt: -1 });
 
 // Generate unique order number
-orderSchema.pre('validate', function(next) {
+orderSchema.pre('validate', async function() {
   if (this.isNew && !this.orderNumber) {
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     const randomStr = crypto.randomBytes(3).toString('hex').toUpperCase();
     this.orderNumber = `ORD-${dateStr}-${randomStr}`;
   }
-  next();
 });
 
 const Order = mongoose.model('Order', orderSchema);

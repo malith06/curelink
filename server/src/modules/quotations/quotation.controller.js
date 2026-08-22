@@ -2,15 +2,20 @@ const quotationService = require('./quotation.service');
 const catchAsync = require('../../utils/asyncHandler');
 const ApiError = require('../../utils/ApiError');
 const { formatCentsToDollars } = require('./quotation.calculator');
+const Pharmacy = require('../pharmacies/pharmacy.model');
+
+const getPharmacyId = async (userId) => {
+  const pharmacy = await Pharmacy.findOne({ ownerUserId: userId });
+  if (!pharmacy) {
+    throw new ApiError(403, 'User does not belong to a pharmacy');
+  }
+  return pharmacy._id;
+};
 
 const quotationController = {
   getOrCreateDraft: catchAsync(async (req, res) => {
     const { requestId } = req.params;
-    const pharmacyId = req.user.pharmacyId; // assuming pharmacy user has pharmacyId populated
-
-    if (!pharmacyId) {
-      throw new ApiError(403, 'User does not belong to a pharmacy');
-    }
+    const pharmacyId = await getPharmacyId(req.user._id);
 
     const draft = await quotationService.getOrCreateDraft(requestId, pharmacyId);
     
@@ -36,11 +41,7 @@ const quotationController = {
 
   updateDraft: catchAsync(async (req, res) => {
     const { quotationId } = req.params;
-    const pharmacyId = req.user.pharmacyId;
-
-    if (!pharmacyId) {
-      throw new ApiError(403, 'User does not belong to a pharmacy');
-    }
+    const pharmacyId = await getPharmacyId(req.user._id);
 
     const updatedDraft = await quotationService.updateDraft(quotationId, pharmacyId, req.body);
     
@@ -66,11 +67,7 @@ const quotationController = {
 
   submitQuotation: catchAsync(async (req, res) => {
     const { quotationId } = req.params;
-    const pharmacyId = req.user.pharmacyId;
-
-    if (!pharmacyId) {
-      throw new ApiError(403, 'User does not belong to a pharmacy');
-    }
+    const pharmacyId = await getPharmacyId(req.user._id);
 
     const submittedQuotation = await quotationService.submitQuotation(quotationId, pharmacyId);
     
@@ -96,11 +93,10 @@ const quotationController = {
 
   getQuotation: catchAsync(async (req, res) => {
     const { quotationId } = req.params;
-    const pharmacyId = req.user.role === 'PHARMACY' ? req.user.pharmacyId : null;
+    let pharmacyId = null;
     
-    // If not pharmacy, maybe customer? Handled differently later, but for now we enforce pharmacyId protection
-    if (req.user.role === 'PHARMACY' && !pharmacyId) {
-      throw new ApiError(403, 'User does not belong to a pharmacy');
+    if (req.user.role === 'PHARMACY') {
+      pharmacyId = await getPharmacyId(req.user._id);
     }
 
     const quotation = await quotationService.getQuotationById(quotationId, pharmacyId);
@@ -125,11 +121,7 @@ const quotationController = {
   }),
 
   listPharmacyQuotations: catchAsync(async (req, res) => {
-    const pharmacyId = req.user.pharmacyId;
-
-    if (!pharmacyId) {
-      throw new ApiError(403, 'User does not belong to a pharmacy');
-    }
+    const pharmacyId = await getPharmacyId(req.user._id);
 
     const result = await quotationService.listPharmacyQuotations(pharmacyId, req.query);
     

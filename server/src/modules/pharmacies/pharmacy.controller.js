@@ -57,14 +57,14 @@ const updatePharmacyLocation = asyncHandler(async (req, res) => {
 const findNearbyPharmacies = asyncHandler(async (req, res) => {
   const { lng, lat, radiusKm, medicineId } = req.query;
 
-  if (!lng || !lat) {
+  if (lng === undefined || lat === undefined || lng === '' || lat === '') {
     throw new ApiError('Longitude and latitude are required', 400);
   }
 
-  const radius = radiusKm ? parseFloat(radiusKm) : 10;
+  const radius = radiusKm ? parseFloat(radiusKm) : (req.query.radius ? parseFloat(req.query.radius) : 10);
   
-  if (isNaN(radius) || radius <= 0 || radius > 100) {
-    throw new ApiError('Radius must be a positive number up to 100km', 400);
+  if (isNaN(radius) || radius <= 0) {
+    throw new ApiError('Radius must be a positive number', 400);
   }
 
   const pharmacies = await pharmacyService.findNearbyPharmacies(

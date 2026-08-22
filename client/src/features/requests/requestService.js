@@ -43,6 +43,11 @@ const getPharmacyInbox = async (params = {}) => {
   return response.data;
 };
 
+const getPharmacyRequestById = async (id) => {
+  const response = await api.get(`/pharmacies/me/requests/${id}`);
+  return response.data;
+};
+
 const submitQuotation = async (requestId, items) => {
   const response = await api.post(`/pharmacies/me/requests/${requestId}/quote`, { items });
   return response.data;
@@ -61,6 +66,7 @@ export const requestService = {
   submitRequest,
   acceptQuotation,
   getPharmacyInbox,
+  getPharmacyRequestById,
   submitQuotation,
   updateRequestStatus,
 };

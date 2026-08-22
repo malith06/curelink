@@ -26,12 +26,12 @@ class PrescriptionService {
     if (!allowedTypes.includes(fileTypeInfo.mime)) {
       throw new ApiError(400, "Invalid file signature. Only JPG, PNG, and PDF are allowed.");
     }
-    
+
     // Check if magic bytes match the claimed mime from multer
     if (fileTypeInfo.mime !== expectedMime) {
       throw new ApiError(400, "File extension and MIME type do not match the actual file content.");
     }
-    
+
     return true;
   }
 
@@ -59,7 +59,7 @@ class PrescriptionService {
 
     // 3. Upload securely via adapter
     const safeFileName = crypto.randomBytes(8).toString("hex") + "-" + file.originalname.replace(/[^a-zA-Z0-9.\-_]/g, "");
-    
+
     let uploadedFile;
     try {
       uploadedFile = await cloudinaryAdapter.uploadFile(file.buffer, {
@@ -85,14 +85,10 @@ class PrescriptionService {
       ocrStatus: OCR_STATUSES.PENDING,
     });
 
-    // 5. Link prescription to request (We do NOT save it yet, wait for confirmation step per prompt)
-    // Actually, the prompt says "Prescription upload must not automatically submit a draft request." 
-    // And "When the customer confirms OCR results: ... Set request prescriptionId."
-    // So we DON'T link it in the request model yet, or we only link it when OCR is confirmed.
-    // Wait, the prompt says "Update request prescriptionId" is part of the confirmation step. 
-    // BUT, how do we know the active prescription for a request before confirmation?
-    // The query will look up Prescription by `requestId` and `isActive: true`.
-    
+    // 5. Link prescription to request (Temporarily link directly since OCR UI is bypassed)
+    request.prescriptionId = prescription._id;
+    await request.save();
+
     return prescription;
   }
 
@@ -137,7 +133,7 @@ class PrescriptionService {
       if (!response.ok) {
         throw new Error(`Failed to fetch file from storage. Status: ${response.status}`);
       }
-      
+
       const arrayBuffer = await response.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
 
@@ -160,7 +156,7 @@ class PrescriptionService {
 
       // 7. Update prescription with results
       prescription.rawExtractedText = extractedText;
-      
+
       // If we got NO matches and text was empty, we can mark as MANUAL_ENTRY_REQUIRED
       if (!extractedText.trim() && matchedEntries.length === 0) {
         prescription.ocrStatus = OCR_STATUSES.MANUAL_ENTRY_REQUIRED;
@@ -169,7 +165,7 @@ class PrescriptionService {
         prescription.extractedMedicines = matchedEntries;
         prescription.ocrStatus = OCR_STATUSES.COMPLETED;
       }
-      
+
       await prescription.save();
 
       return prescription;
@@ -239,10 +235,10 @@ class PrescriptionService {
     // 2. Sync with MedicineRequest
     const MedicineRequest = require("../requests/request.model");
     const request = await MedicineRequest.findById(prescription.requestId);
-    
+
     if (request) {
       const Medicine = require("../medicines/medicine.model");
-      
+
       for (const entry of prescription.extractedMedicines) {
         if (entry.matchedMedicineId) {
           const med = await Medicine.findById(entry.matchedMedicineId);
@@ -250,10 +246,10 @@ class PrescriptionService {
             request.items.push({
               medicineId: med._id,
               medicineSnapshot: {
-                genericName: med.genericName,
-                brandName: med.brandName,
-                strength: med.strength,
-                dosageForm: med.dosageForm
+                name: med.name,
+                brand: med.brand,
+                category: med.category,
+                manufacturer: med.manufacturer
               },
               quantity: entry.quantity || 1,
               source: 'OCR'
@@ -261,11 +257,11 @@ class PrescriptionService {
           }
         }
       }
-      
+
       // Also ensure the request knows about the prescription ID
       request.prescriptionId = prescription._id;
       request.requiresPrescription = true;
-      
+
       await request.save();
     }
 

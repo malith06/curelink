@@ -3,7 +3,7 @@ const router = express.Router();
 const quotationController = require('./quotation.controller');
 const { protect, authorize } = require('../../middleware/auth.middleware');
 const { validate } = require('../../middleware/validate');
-const { updateDraftSchema } = require('./quotation.validation');
+const { updateDraftQuotationSchema } = require('./quotation.validation');
 
 // All routes here require authentication and pharmacy role for now
 // (Customer facing routes will be handled separately or added here later with different restrictions)
@@ -22,7 +22,7 @@ router.get('/', quotationController.listPharmacyQuotations);
 router.get('/:quotationId', quotationController.getQuotation);
 
 // Update a draft quotation
-router.patch('/:quotationId/draft', validate(updateDraftSchema), quotationController.updateDraft);
+router.patch('/:quotationId/draft', validate(updateDraftQuotationSchema), quotationController.updateDraft);
 
 // Submit a quotation
 router.post('/:quotationId/submit', quotationController.submitQuotation);

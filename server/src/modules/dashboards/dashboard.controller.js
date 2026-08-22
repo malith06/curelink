@@ -29,10 +29,14 @@ exports.getCustomerDashboard = async (req, res, next) => {
  */
 exports.getPharmacyDashboard = async (req, res, next) => {
   try {
-    const pharmacyId = req.user.pharmacyId;
-    if (!pharmacyId) {
+    const Pharmacy = require('../pharmacies/pharmacy.model');
+    const pharmacy = await Pharmacy.findOne({ ownerUserId: req.user._id }).lean();
+    
+    if (!pharmacy) {
       return next(new ApiError('Pharmacy profile not found for this user', 404));
     }
+    
+    const pharmacyId = pharmacy._id;
 
     const rangeStr = req.query.range || '30d';
     const rangeDays = parseInt(rangeStr.replace('d', ''), 10) || 30;

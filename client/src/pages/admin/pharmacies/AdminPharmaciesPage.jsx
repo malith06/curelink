@@ -32,9 +32,9 @@ const AdminPharmaciesPage = () => {
   };
 
   const filteredPharmacies = pharmacies.filter(p => {
-    const matchesSearch = p.businessName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    const matchesSearch = p.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           p.registrationNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          p.ownerId?.email?.toLowerCase().includes(searchTerm.toLowerCase());
+                          p.email?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = filter === 'ALL' || p.verificationStatus === filter;
     return matchesSearch && matchesFilter;
   });
@@ -113,11 +113,11 @@ const AdminPharmaciesPage = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 font-bold">
-                          {pharmacy.businessName?.charAt(0).toUpperCase()}
+                          {pharmacy.name?.charAt(0).toUpperCase()}
                         </div>
                         <div>
-                          <div className="text-sm font-bold text-slate-900">{pharmacy.businessName}</div>
-                          <div className="text-xs font-medium text-slate-500">{pharmacy.ownerId?.email}</div>
+                          <div className="text-sm font-bold text-slate-900">{pharmacy.name}</div>
+                          <div className="text-xs font-medium text-slate-500">{pharmacy.email}</div>
                         </div>
                       </div>
                     </td>

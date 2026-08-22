@@ -15,10 +15,10 @@ const orderItemSchema = new mongoose.Schema({
     required: true
   },
   medicineSnapshot: {
-    genericName: { type: String, required: true },
-    brandName: { type: String },
-    strength: { type: String },
-    dosageForm: { type: String }
+    name: { type: String, required: true },
+    brand: { type: String },
+    category: { type: String },
+    manufacturer: { type: String }
   },
   requestedQuantity: {
     type: Number,
@@ -42,7 +42,7 @@ const orderItemSchema = new mongoose.Schema({
   },
   availabilityResult: {
     type: String,
-    enum: ['AVAILABLE', 'UNAVAILABLE', 'SUBSTITUTION_OFFERED'],
+    enum: Object.values(require('../quotations/quotation.constants').AVAILABILITY_RESULT),
     required: true
   },
   substitutionOffered: {
@@ -54,10 +54,10 @@ const orderItemSchema = new mongoose.Schema({
     ref: 'Medicine'
   },
   substitutionSnapshot: {
-    genericName: { type: String },
-    brandName: { type: String },
-    strength: { type: String },
-    dosageForm: { type: String }
+    name: { type: String },
+    brand: { type: String },
+    category: { type: String },
+    manufacturer: { type: String }
   },
   substitutionNote: {
     type: String,

@@ -11,7 +11,7 @@ const generateCustomerSnapshot = (customer) => {
 
   return {
     customerId: customer._id,
-    fullName: customer.name,
+    fullName: customer.fullName,
     email: customer.email,
     phone: customer.phone,
     addressSummary
@@ -57,9 +57,12 @@ const mapQuotationItemsToOrderItems = (quotationItems) => {
   let subtotal = 0;
   const items = quotationItems.map(item => {
     // Determine approved quantity based on availability
-    const approvedQuantity = item.availabilityResult === 'AVAILABLE' || item.availabilityResult === 'SUBSTITUTION_OFFERED' 
-      ? item.quantity 
-      : 0;
+    let approvedQuantity = 0;
+    if (item.availabilityResult === 'FULLY_AVAILABLE' || item.substitutionOffered) {
+      approvedQuantity = item.requestedQuantity;
+    } else if (item.availabilityResult === 'PARTIALLY_AVAILABLE') {
+      approvedQuantity = item.availableQuantity;
+    }
 
     const itemSubtotal = approvedQuantity * item.unitPrice;
     subtotal += itemSubtotal;
@@ -69,7 +72,7 @@ const mapQuotationItemsToOrderItems = (quotationItems) => {
       quotationItemId: item._id,
       medicineId: item.medicineId,
       medicineSnapshot: item.medicineSnapshot,
-      requestedQuantity: item.quantity,
+      requestedQuantity: item.requestedQuantity,
       approvedQuantity,
       unitPrice: item.unitPrice,
       subtotal: itemSubtotal,

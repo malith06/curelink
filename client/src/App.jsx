@@ -53,6 +53,7 @@ import CreateRequestPage from './pages/customer/requests/CreateRequestPage';
 import RequestDetailsPage from './pages/customer/requests/RequestDetailsPage';
 import CustomerQuotationDetailsPage from './pages/customer/quotations/CustomerQuotationDetailsPage';
 import CustomerOrdersPage from './pages/customer/orders/CustomerOrdersPage';
+import CustomerOrderDetailsPage from './pages/customer/orders/CustomerOrderDetailsPage';
 import CreateOrderPage from './pages/customer/orders/CreateOrderPage';
 import PaymentSelectionPage from './pages/customer/orders/PaymentSelectionPage';
 import PaymentSuccessPage from './pages/customer/orders/PaymentSuccessPage';
@@ -121,6 +122,14 @@ function App() {
                   element={
                     <ProtectedRoute allowedRoles={['CUSTOMER']}>
                       <CustomerOrdersPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/customer/orders/:orderId" 
+                  element={
+                    <ProtectedRoute allowedRoles={['CUSTOMER']}>
+                      <CustomerOrderDetailsPage />
                     </ProtectedRoute>
                   } 
                 />

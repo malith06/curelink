@@ -2,14 +2,16 @@ import React, { useState, useEffect } from 'react';
 import PharmacyProfileForm from '../../features/pharmacy/PharmacyProfileForm';
 import pharmacyService from '../../features/pharmacy/pharmacyService';
 import { toast } from 'react-toastify';
-import { Store, ShieldAlert, Clock, CheckCircle } from 'lucide-react';
+import { Store, ShieldAlert, Clock, CheckCircle, Info, Send } from 'lucide-react';
 import { Card, CardContent } from '../../components/ui/Card';
 import Skeleton from '../../components/ui/Skeleton';
 import Badge from '../../components/ui/Badge';
+import Button from '../../components/ui/Button';
 
 const PharmacyProfilePage = () => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
   const fetchProfile = async () => {
     try {
@@ -35,6 +37,22 @@ const PharmacyProfilePage = () => {
     fetchProfile();
   };
 
+  const handleSubmitVerification = async () => {
+    if (!window.confirm("Are you sure you want to submit your profile for verification? You won't be able to edit key details while it is pending.")) {
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await pharmacyService.submitForVerification();
+      toast.success("Profile submitted for verification successfully!");
+      fetchProfile();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to submit profile for verification.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
@@ -53,6 +71,23 @@ const PharmacyProfilePage = () => {
     if (!profile) return null;
     
     switch (profile.verificationStatus) {
+      case 'DRAFT':
+        return (
+          <div className="p-5 bg-blue-50 rounded-2xl border border-blue-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+             <div className="flex items-start gap-4">
+               <Info className="w-6 h-6 text-blue-500 flex-shrink-0 mt-0.5" />
+               <div>
+                 <h3 className="font-bold text-blue-900 text-lg">Profile Draft</h3>
+                 <p className="text-sm font-medium text-blue-800 mt-1 leading-relaxed max-w-xl">
+                   Your profile is currently a draft. Please ensure your details are complete and accurate, then submit your profile for admin verification.
+                 </p>
+               </div>
+             </div>
+             <Button onClick={handleSubmitVerification} disabled={submitting} isLoading={submitting} icon={Send} className="shrink-0 bg-blue-600 hover:bg-blue-700">
+                Submit for Verification
+             </Button>
+          </div>
+        );
       case 'PENDING':
         return (
           <div className="p-5 bg-amber-50 rounded-2xl border border-amber-100 flex items-start gap-4 mb-8">
@@ -65,6 +100,23 @@ const PharmacyProfilePage = () => {
              </div>
           </div>
         );
+      case 'REJECTED':
+        return (
+          <div className="p-5 bg-red-50 rounded-2xl border border-red-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+             <div className="flex items-start gap-4">
+               <ShieldAlert className="w-6 h-6 text-red-500 flex-shrink-0 mt-0.5" />
+               <div>
+                 <h3 className="font-bold text-red-900 text-lg">Verification Rejected</h3>
+                 <p className="text-sm font-medium text-red-800 mt-1 leading-relaxed max-w-xl">
+                   Your profile verification was rejected: {profile.verificationNote || "No reason provided."} Please update your details and submit again.
+                 </p>
+               </div>
+             </div>
+             <Button onClick={handleSubmitVerification} disabled={submitting} isLoading={submitting} icon={Send} className="shrink-0 bg-red-600 hover:bg-red-700">
+                Submit Again
+             </Button>
+          </div>
+        );
       case 'SUSPENDED':
         return (
           <div className="p-5 bg-red-50 rounded-2xl border border-red-100 flex items-start gap-4 mb-8">
@@ -72,7 +124,7 @@ const PharmacyProfilePage = () => {
              <div>
                <h3 className="font-bold text-red-900 text-lg">Account Suspended</h3>
                <p className="text-sm font-medium text-red-800 mt-1 leading-relaxed">
-                 Your pharmacy account has been suspended. Please contact CureLink support immediately to resolve this issue.
+                 Your pharmacy account has been suspended: {profile.verificationNote || "No reason provided."} Please contact CureLink support immediately to resolve this issue.
                </p>
              </div>
           </div>

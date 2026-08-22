@@ -55,7 +55,7 @@ const quotationSchema = new mongoose.Schema({
   },
   pickupAvailable: {
     type: Boolean,
-    default: false
+    default: true
   },
   pharmacyNotes: {
     type: String,
@@ -98,13 +98,12 @@ quotationSchema.index({ requestId: 1, status: 1 });
 // Index for pharmacies querying their own quotations
 quotationSchema.index({ pharmacyId: 1, createdAt: -1 });
 
-quotationSchema.pre('validate', function(next) {
+quotationSchema.pre('validate', async function() {
   if (this.isNew && !this.quotationNumber) {
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     const randomStr = crypto.randomBytes(3).toString('hex').toUpperCase();
     this.quotationNumber = `QUO-${dateStr}-${randomStr}`;
   }
-  next();
 });
 
 const Quotation = mongoose.model('Quotation', quotationSchema);

@@ -112,11 +112,11 @@ const CustomerQuotationDetailsPage = () => {
                           <div className="font-semibold text-slate-900 line-clamp-1">
                             {isSubstitute && item.substitutionSnapshot ? (
                               <span className="text-amber-700 flex flex-col sm:flex-row sm:items-center gap-1.5">
-                                <span className="flex items-center"><AlertCircle className="w-4 h-4 mr-1 inline" /> {item.substitutionSnapshot.genericName}</span>
+                                <span className="flex items-center"><AlertCircle className="w-4 h-4 mr-1 inline" /> {item.substitutionSnapshot.name}</span>
                                 <span className="text-[10px] uppercase font-bold tracking-wider bg-amber-100 px-2 py-0.5 rounded-md text-amber-800 w-fit">Substitute</span>
                               </span>
                             ) : (
-                              reqItem?.medicineId?.genericName || item.medicineSnapshot?.genericName || 'Medicine'
+                              reqItem?.medicineId?.name || item.medicineSnapshot?.name || 'Medicine'
                             )}
                           </div>
                           {isSubstitute && item.substitutionNote && (

@@ -18,7 +18,7 @@ const prescription = require("./modules/prescriptions/prescription.routes");
 const quotation = require("./modules/quotations/quotation.routes");
 const { customerOrderRouter, pharmacyOrderRouter } = require("./modules/orders/order.routes");
 const dashboardRoutes = require("./modules/dashboards/dashboard.routes");
-const { webhookRouter, customerPaymentRouter, pharmacyPaymentRouter } = require("./modules/payments/payment.routes");
+const { webhookRouter, customerPaymentRouter, pharmacyPaymentRouter, adminPaymentRouter } = require("./modules/payments/payment.routes");
 const notifications = require("./modules/notifications/notification.routes");
 
 const app = express();
@@ -44,6 +44,7 @@ app.use("/api/v1/auth", auth);
 app.use("/api/v1/health", health);
 app.use("/api/v1/pharmacies", pharmacy);
 app.use("/api/v1/admin/pharmacies", adminPharmacy);
+app.use("/api/v1/admin/payments", adminPaymentRouter);
 app.use("/api/v1/medicines", medicine);
 app.use("/api/v1/availability", availability);
 app.use("/api/v1/requests", request);

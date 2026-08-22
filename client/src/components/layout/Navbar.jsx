@@ -22,6 +22,7 @@ const navConfig = {
     { name: 'Quotations', path: '/pharmacy/quotations', icon: Receipt },
     { name: 'Orders', path: '/pharmacy/orders', icon: Package },
     { name: 'Availability', path: '/pharmacy/availability', icon: Pill },
+    { name: 'Location', path: '/pharmacy/location', icon: MapPin },
     { name: 'Profile', path: '/pharmacy/profile', icon: Settings },
   ],
   ADMIN: [

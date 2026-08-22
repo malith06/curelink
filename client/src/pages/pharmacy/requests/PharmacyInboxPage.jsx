@@ -18,7 +18,7 @@ const PharmacyInboxPage = () => {
     const fetchInbox = async () => {
       try {
         const res = await requestService.getPharmacyInbox();
-        setRequests(res.data.items || []);
+        setRequests(res.data || []);
       } catch (error) {
         console.error("Failed to load pharmacy inbox");
       } finally {

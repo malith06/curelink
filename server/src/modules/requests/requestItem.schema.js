@@ -2,10 +2,10 @@ const mongoose = require('mongoose');
 const { MEDICINE_SOURCE, REQUEST_UNITS } = require('./request.constants');
 
 const medicineSnapshotSchema = new mongoose.Schema({
-  genericName: { type: String, required: true },
-  brandName: { type: String },
-  strength: { type: String },
-  dosageForm: { type: String }
+  name: { type: String, required: true },
+  brand: { type: String },
+  category: { type: String },
+  manufacturer: { type: String }
 }, { _id: false });
 
 const requestItemSchema = new mongoose.Schema({
@@ -22,7 +22,7 @@ const requestItemSchema = new mongoose.Schema({
     type: Number,
     required: true,
     min: 1,
-    max: 100,
+    max: 1000,
     validate: {
       validator: Number.isInteger,
       message: '{VALUE} is not an integer value'
@@ -38,7 +38,7 @@ const requestItemSchema = new mongoose.Schema({
     trim: true,
     maxlength: 300
   },
-  requiresPrescription: {
+  prescriptionRequired: {
     type: Boolean,
     default: false
   },

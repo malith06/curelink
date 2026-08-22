@@ -11,35 +11,35 @@ const getPharmacyById = async (id) => {
   return response.data;
 };
 
-const updatePharmacyStatus = async (id, action) => {
+const updatePharmacyStatus = async (id, action, reason = '') => {
   // action can be: 'approve', 'reject', 'suspend', 'reactivate'
-  const response = await api.patch(`/admin/pharmacies/${id}/${action}`);
+  const response = await api.patch(`/admin/pharmacies/${id}/${action}`, { reason });
   return response.data;
 };
 
 // --- MEDICINES ---
 const getMedicines = async (params = {}) => {
-  const response = await api.get('/admin/medicines', { params });
+  const response = await api.get('/medicines', { params });
   return response.data;
 };
 
 const getMedicineById = async (id) => {
-  const response = await api.get(`/admin/medicines/${id}`);
+  const response = await api.get(`/medicines/${id}`);
   return response.data;
 };
 
 const createMedicine = async (data) => {
-  const response = await api.post('/admin/medicines', data);
+  const response = await api.post('/medicines', data);
   return response.data;
 };
 
 const updateMedicine = async (id, data) => {
-  const response = await api.put(`/admin/medicines/${id}`, data);
+  const response = await api.patch(`/medicines/${id}`, data);
   return response.data;
 };
 
 const deleteMedicine = async (id) => {
-  const response = await api.delete(`/admin/medicines/${id}`);
+  const response = await api.delete(`/medicines/${id}`);
   return response.data;
 };
 

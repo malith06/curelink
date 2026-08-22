@@ -20,10 +20,10 @@ const extractedMedicineSchema = new mongoose.Schema({
     ref: "Medicine",
   },
   medicineSnapshot: {
-    genericName: String,
-    brandName: String,
-    strength: String,
-    dosageForm: String,
+    name: String,
+    brand: String,
+    category: String,
+    manufacturer: String,
   },
   candidateMatches: [{
     medicineId: {

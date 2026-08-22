@@ -17,12 +17,13 @@ const medicineRequestSchema = new mongoose.Schema({
     required: true
   },
   items: [requestItemSchema],
-  requiresPrescription: {
+  prescriptionRequired: {
     type: Boolean,
     default: false
   },
   prescriptionId: {
     type: mongoose.Schema.Types.ObjectId,
+    ref: 'Prescription',
     default: null
   },
   customerLocation: {
@@ -86,23 +87,21 @@ const medicineRequestSchema = new mongoose.Schema({
   }]
 }, { timestamps: true });
 
-medicineRequestSchema.pre('validate', function(next) {
+medicineRequestSchema.pre('validate', async function() {
   if (this.isNew && !this.requestNumber) {
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     const randomStr = crypto.randomBytes(3).toString('hex').toUpperCase();
     this.requestNumber = `REQ-${dateStr}-${randomStr}`;
   }
-  next();
 });
 
-medicineRequestSchema.pre('save', function(next) {
+medicineRequestSchema.pre('save', async function() {
   if (this.isModified('status')) {
     this.statusTimeline.push({
       status: this.status,
       changedAt: new Date()
     });
   }
-  next();
 });
 
 // Index for a customer querying their own requests efficiently

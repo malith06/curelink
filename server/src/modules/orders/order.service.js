@@ -105,13 +105,21 @@ const createOrderFromQuotation = async (customerId, quotationId, payload) => {
 };
 
 const getCustomerOrders = async (customerId, queryParams) => {
-  return await Order.find({ customerId })
+  const query = { customerId };
+  if (queryParams?.status) {
+    query.orderStatus = { $in: queryParams.status.split(',') };
+  }
+  return await Order.find(query)
     .select('-pharmacySnapshot.registrationNumber') // Hide sensitive pharmacy details
     .sort({ createdAt: -1 });
 };
 
 const getPharmacyOrders = async (pharmacyId, queryParams) => {
-  return await Order.find({ pharmacyId })
+  const query = { pharmacyId };
+  if (queryParams?.status) {
+    query.orderStatus = { $in: queryParams.status.split(',') };
+  }
+  return await Order.find(query)
     .sort({ createdAt: -1 });
 };
 

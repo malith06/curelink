@@ -4,7 +4,7 @@ const ApiError = require("../utils/ApiError");
 const { generateToken } = require("../utils/jwt");
 
 // Get token from model, create cookie and send response
-const sendTokenResponse = (user, statusCode, res) => {
+const sendTokenResponse = async (user, statusCode, res) => {
   // Create token
   const token = generateToken({ id: user._id, role: user.role });
 
@@ -18,12 +18,21 @@ const sendTokenResponse = (user, statusCode, res) => {
   if (process.env.NODE_ENV === "production") {
     options.secure = true;
   }
+  
+  const userData = user.toJSON();
+  if (userData.role === 'PHARMACY') {
+    const Pharmacy = require('../modules/pharmacies/pharmacy.model');
+    const pharmacy = await Pharmacy.findOne({ ownerUserId: user._id }).lean();
+    if (pharmacy) {
+      userData.pharmacy = pharmacy;
+    }
+  }
 
   res.status(statusCode).cookie("token", token, options).json({
     success: true,
     data: {
       token,
-      user: user.toJSON(),
+      user: userData,
     },
   });
 };
@@ -41,7 +50,7 @@ exports.registerCustomer = async (req, res, next) => {
       role: "CUSTOMER",
     });
 
-    sendTokenResponse(user, 201, res);
+    await sendTokenResponse(user, 201, res);
   } catch (error) {
     next(error);
   }
@@ -60,7 +69,7 @@ exports.registerPharmacy = async (req, res, next) => {
       role: "PHARMACY",
     });
 
-    sendTokenResponse(user, 201, res);
+    await sendTokenResponse(user, 201, res);
   } catch (error) {
     next(error);
   }
@@ -93,7 +102,7 @@ exports.login = async (req, res, next) => {
     user.lastLoginAt = Date.now();
     await user.save({ validateBeforeSave: false });
 
-    sendTokenResponse(user, 200, res);
+    await sendTokenResponse(user, 200, res);
   } catch (error) {
     next(error);
   }
@@ -101,10 +110,21 @@ exports.login = async (req, res, next) => {
 
 exports.getMe = async (req, res, next) => {
   try {
+    const userData = req.user.toJSON();
+    
+    if (userData.role === 'PHARMACY') {
+      const Pharmacy = require('../modules/pharmacies/pharmacy.model');
+      const pharmacy = await Pharmacy.findOne({ ownerUserId: req.user._id }).lean();
+      if (pharmacy) {
+        userData.pharmacy = pharmacy;
+        // Optionally inject it into req.user for subsequent middlewares/controllers if we were mutating req, but here we just return it
+      }
+    }
+
     res.status(200).json({
       success: true,
       data: {
-        user: req.user.toJSON(),
+        user: userData,
       },
     });
   } catch (error) {

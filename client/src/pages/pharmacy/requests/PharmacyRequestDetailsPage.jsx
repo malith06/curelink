@@ -40,37 +40,47 @@ const PharmacyRequestDetailsPage = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const reqRes = await requestService.getRequestById(id);
+      const reqRes = await requestService.getPharmacyRequestById(id);
       setRequest(reqRes.data);
 
       if (['SUBMITTED', 'QUOTATIONS_RECEIVED', 'QUOTATION_ACCEPTED', 'CONVERTED_TO_ORDER'].includes(reqRes.data.status)) {
         // Try to get or create draft
-        const qRes = await quotationService.getOrCreateDraft(id);
-        setQuotation(qRes.data);
-        
-        // Initialize state from quotation
-        const initialItems = {};
-        qRes.data.items.forEach(item => {
-          initialItems[item.requestItemId] = {
-            availableQuantity: item.availableQuantity,
-            unitPrice: item.unitPrice || 0,
-            substitutionOffered: item.substitutionOffered,
-            substitutionMedicineId: item.substitutionMedicineId,
-            substitutionNote: item.substitutionNote || '',
-            pharmacyItemNote: item.pharmacyItemNote || ''
-          };
-        });
-        setDraftItems(initialItems);
-        setDraftMeta({
-          deliveryFee: qRes.data.deliveryFee || 0,
-          preparationMinutes: qRes.data.preparationMinutes || 30,
-          deliveryAvailable: qRes.data.deliveryAvailable || false,
-          pickupAvailable: qRes.data.pickupAvailable ?? true,
-          pharmacyNotes: qRes.data.pharmacyNotes || ''
-        });
+        try {
+          const qRes = await quotationService.getOrCreateDraft(id);
+          setQuotation(qRes.data);
+          
+          // Initialize state from quotation
+          const initialItems = {};
+          qRes.data.items.forEach(item => {
+            initialItems[item.requestItemId] = {
+              availableQuantity: item.availableQuantity,
+              unitPrice: item.unitPrice || 0,
+              substitutionOffered: item.substitutionOffered,
+              substitutionMedicineId: item.substitutionMedicineId,
+              substitutionNote: item.substitutionNote || '',
+              pharmacyItemNote: item.pharmacyItemNote || ''
+            };
+          });
+          setDraftItems(initialItems);
+          setDraftMeta({
+            deliveryFee: qRes.data.deliveryFee || 0,
+            preparationMinutes: qRes.data.preparationMinutes || 30,
+            deliveryAvailable: qRes.data.deliveryAvailable || false,
+            pickupAvailable: qRes.data.pickupAvailable ?? true,
+            pharmacyNotes: qRes.data.pharmacyNotes || ''
+          });
+        } catch (qErr) {
+          if (qErr.response && qErr.response.status === 400) {
+            // Request is closed and no quotation exists, simply ignore draft creation
+            setQuotation(null);
+          } else {
+            throw qErr; // Rethrow to outer catch
+          }
+        }
       }
     } catch (err) {
-      toast.error('Failed to load details');
+      console.error("Failed to load details:", err);
+      toast.error(err.response?.data?.message || 'Failed to load details');
       navigate('/pharmacy/inbox');
     } finally {
       setLoading(false);
@@ -211,9 +221,14 @@ const PharmacyRequestDetailsPage = () => {
           )}
         </div>
 
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-200">
+        {!quotation ? (
+          <CardContent className="p-12 text-center text-slate-500 font-medium">
+            This request has been closed (e.g., converted to an order or cancelled) and you did not submit a quotation.
+          </CardContent>
+        ) : (
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-slate-200">
               <thead className="bg-white">
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Medicine</th>
@@ -232,7 +247,7 @@ const PharmacyRequestDetailsPage = () => {
                     <tr key={qItem._id} className="hover:bg-slate-50/50 transition-colors">
                       <td className="px-6 py-5">
                         <div className="font-bold text-slate-900 text-sm">
-                          {qItem.medicineSnapshot?.genericName || reqItem?.medicineId?.genericName || 'Medicine'}
+                          {qItem.medicineSnapshot?.name || reqItem?.medicineId?.name || 'Medicine'}
                         </div>
                         {reqItem?.prescriptionRequired && (
                           <div className="mt-1.5">
@@ -295,6 +310,7 @@ const PharmacyRequestDetailsPage = () => {
             </table>
           </div>
         </CardContent>
+        )}
       </Card>
 
       {/* Quotation Metadata */}

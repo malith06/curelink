@@ -17,7 +17,7 @@ const CustomerRequestsPage = () => {
     const fetchRequests = async () => {
       try {
         const res = await requestService.getMyRequests();
-        setRequests(res.data.items || []);
+        setRequests(res.data || []);
       } catch (error) {
         console.error("Failed to load requests");
       } finally {

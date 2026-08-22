@@ -33,9 +33,19 @@ const AdminPharmacyDetailsPage = () => {
   };
 
   const handleAction = async (action) => {
+    let reason = '';
+    if (action === 'suspend' || action === 'reject') {
+       reason = window.prompt(`Please provide a reason to ${action} this pharmacy:`);
+       if (reason === null) return; // User cancelled
+       if (reason.trim() === '') {
+          toast.error('A reason is required');
+          return;
+       }
+    }
+
     try {
       setActionLoading(true);
-      await adminService.updatePharmacyStatus(id, action);
+      await adminService.updatePharmacyStatus(id, action, reason);
       toast.success(`Pharmacy successfully ${action}ed`);
       fetchPharmacy();
     } catch (error) {
@@ -99,12 +109,12 @@ const AdminPharmacyDetailsPage = () => {
             <CardHeader className="bg-primary-50/50 border-b border-primary-100 pb-6 pt-8">
               <div className="flex items-center gap-5">
                 <div className="w-16 h-16 rounded-2xl bg-primary-100 flex items-center justify-center text-primary-600 font-bold text-3xl shadow-inner border border-primary-200">
-                  {pharmacy.businessName?.charAt(0).toUpperCase()}
+                  {pharmacy.name?.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                   <h2 className="text-2xl font-black text-slate-900 tracking-tight">{pharmacy.businessName}</h2>
+                   <h2 className="text-2xl font-black text-slate-900 tracking-tight">{pharmacy.name}</h2>
                    <p className="text-primary-700 font-medium flex items-center gap-2 mt-1">
-                      <Mail className="w-4 h-4" /> {pharmacy.ownerId?.email}
+                      <Mail className="w-4 h-4" /> {pharmacy.email}
                    </p>
                 </div>
               </div>

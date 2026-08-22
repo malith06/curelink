@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import availabilityApi from '../../features/availability/availabilityApi';
-import api from '../../api/axios'; // Direct call for medicine search
+import api from '../../api/axiosClient'; // Direct call for medicine search
 import pharmacyService from '../../features/pharmacy/pharmacyService';
 import AvailabilityStatusBadge from '../../components/availability/AvailabilityStatusBadge';
 
@@ -17,7 +17,8 @@ const PharmacyAvailabilityPage = () => {
   const [availabilities, setAvailabilities] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // Search state
+  // Search & Catalog state
+  const [allMedicines, setAllMedicines] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -32,12 +33,22 @@ const PharmacyAvailabilityPage = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [profileData, availData] = await Promise.all([
-        pharmacyService.getMyPharmacyProfile(),
-        availabilityApi.getMyAvailability({ limit: 50 })
-      ]);
+      const profileData = await pharmacyService.getMyPharmacyProfile();
       setProfile(profileData.data);
-      setAvailabilities(availData.data.items);
+
+      if (profileData.data?.verificationStatus === 'APPROVED') {
+        // Fetch current availabilities
+        const availData = await availabilityApi.getMyAvailability({ limit: 50 });
+        setAvailabilities(Array.isArray(availData.data) ? availData.data : []);
+        
+        // Fetch full medicine catalog
+        try {
+          const medsRes = await api.get('/medicines', { params: { limit: 100 } });
+          setAllMedicines(medsRes.data?.data?.items || medsRes.data?.items || []);
+        } catch (e) {
+          console.error("Failed to load catalog", e);
+        }
+      }
     } catch (err) {
       toast.error('Failed to load availability data');
     } finally {
@@ -63,8 +74,8 @@ const PharmacyAvailabilityPage = () => {
 
   const handleStartEdit = (medicine, existingRecord = null) => {
     setEditingItem({
-      medicineId: medicine._id || existingRecord?.medicineId?._id,
-      medicineName: medicine.genericName || existingRecord?.medicineId?.genericName || 'Unknown Medicine',
+      medicineId: medicine?._id || existingRecord?.medicineId?._id,
+      medicineName: medicine?.name || existingRecord?.medicineId?.name || 'Unknown Medicine',
       status: existingRecord?.status || 'AVAILABLE',
       notes: existingRecord?.notes || ''
     });
@@ -111,13 +122,16 @@ const PharmacyAvailabilityPage = () => {
         {/* Left Col: Search & Add */}
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h2 className="text-xl font-semibold mb-4 text-gray-800">Add Medicine</h2>
+            <h2 className="text-xl font-semibold mb-4 text-gray-800">Medicine Catalog</h2>
             <form onSubmit={handleSearchMedicines} className="flex gap-2 mb-4">
               <input
                 type="text"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by generic name..."
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  if (!e.target.value.trim()) setSearchResults([]);
+                }}
+                placeholder="Search by medicine name..."
                 className="flex-1 px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 outline-none"
               />
               <button 
@@ -129,13 +143,13 @@ const PharmacyAvailabilityPage = () => {
               </button>
             </form>
 
-            {searchResults.length > 0 && (
-              <ul className="divide-y border rounded max-h-60 overflow-y-auto">
-                {searchResults.map((med) => (
+            {(searchQuery.trim() ? searchResults : allMedicines).length > 0 ? (
+              <ul className="divide-y border rounded max-h-[500px] overflow-y-auto">
+                {(searchQuery.trim() ? searchResults : allMedicines).map((med) => (
                   <li key={med._id} className="p-3 flex justify-between items-center hover:bg-gray-50">
                     <div>
-                      <p className="font-medium text-gray-900">{med.genericName}</p>
-                      {med.brandName && <p className="text-xs text-gray-500">{med.brandName}</p>}
+                      <p className="font-medium text-gray-900">{med.name}</p>
+                      {med.brand && <p className="text-xs text-gray-500">{med.brand}</p>}
                     </div>
                     <button
                       onClick={() => handleStartEdit(med)}
@@ -146,6 +160,10 @@ const PharmacyAvailabilityPage = () => {
                   </li>
                 ))}
               </ul>
+            ) : (
+              <div className="p-4 text-center text-gray-500 text-sm border rounded bg-gray-50">
+                {searchQuery.trim() ? 'No medicines found matching your search.' : 'No medicines available in the catalog.'}
+              </div>
             )}
           </div>
         </div>
@@ -227,13 +245,13 @@ const PharmacyAvailabilityPage = () => {
                       return (
                         <tr key={record._id}>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {record.medicineId?.genericName || 'Unknown Medicine'}
+                            {record.medicineId?.name || 'Unknown Medicine'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <AvailabilityStatusBadge status={record.status} />
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {new Date(record.lastUpdatedAt).toLocaleDateString()}
+                            {new Date(record.lastUpdated || record.updatedAt).toLocaleDateString()}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <button

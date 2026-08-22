@@ -1,4 +1,4 @@
-import api from '../../api/axios';
+import api from '../../api/axiosClient';
 
 /**
  * Uploads a prescription file for a specific request.

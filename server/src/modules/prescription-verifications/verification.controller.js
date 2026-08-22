@@ -8,7 +8,12 @@ const ApiError = require("../../utils/ApiError");
  */
 exports.submitVerification = asyncHandler(async (req, res, next) => {
   const { prescriptionId } = req.params;
-  const pharmacyId = req.user._id; // Assuming PHARMACY role represents the pharmacy entity for MVP
+  
+  const Pharmacy = require('../pharmacies/pharmacy.model');
+  const pharmacy = await Pharmacy.findOne({ ownerUserId: req.user._id }).lean();
+  if (!pharmacy) throw new ApiError('Pharmacy profile not found', 404);
+  
+  const pharmacyId = pharmacy._id;
   const pharmacistId = req.user._id;
 
   // For real world, we would check if req.user is a pharmacist belonging to pharmacyId.
