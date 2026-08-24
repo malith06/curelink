@@ -9,10 +9,24 @@ const createPharmacyProfile = async (userId, profileData) => {
     throw new ApiError('Pharmacy profile already exists for this user', 400);
   }
 
-  const existingRegistration = await Pharmacy.findOne({ registrationNumber: profileData.registrationNumber });
-  if (existingRegistration) {
-    throw new ApiError('Registration number is already in use', 400);
+  // Auto-generate sequential registration number (e.g. REG-0001)
+  const lastPharmacy = await Pharmacy.findOne({}, { registrationNumber: 1 })
+    .sort({ createdAt: -1 })
+    .lean();
+    
+  let nextNum = 1;
+  if (lastPharmacy && lastPharmacy.registrationNumber && lastPharmacy.registrationNumber.startsWith('REG-')) {
+    const parts = lastPharmacy.registrationNumber.split('-');
+    if (parts.length > 1) {
+      const numStr = parts[1];
+      if (!isNaN(numStr)) {
+        nextNum = parseInt(numStr, 10) + 1;
+      }
+    }
   }
+  
+  const generatedRegistrationNumber = `REG-${nextNum.toString().padStart(4, '0')}`;
+  profileData.registrationNumber = generatedRegistrationNumber;
 
   const profile = await Pharmacy.create({
     ...profileData,
@@ -52,12 +66,7 @@ const updatePharmacyProfile = async (userId, updateData) => {
     }
   }
 
-  if (updateData.registrationNumber && updateData.registrationNumber !== profile.registrationNumber) {
-    const existingRegistration = await Pharmacy.findOne({ registrationNumber: updateData.registrationNumber });
-    if (existingRegistration) {
-      throw new ApiError('Registration number is already in use', 400);
-    }
-  }
+
 
   Object.assign(profile, updateData);
   await profile.save();

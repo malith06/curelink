@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Pill, Plus, Edit2, Trash2, X, AlertCircle } from 'lucide-react';
+import { Pill, Plus, Edit2, Trash2, X, AlertCircle, Download } from 'lucide-react';
 import { toast } from 'react-toastify';
 import adminService from '../../../features/admin/adminService';
 import { Card, CardContent, CardHeader } from '../../../components/ui/Card';
@@ -8,6 +8,7 @@ import EmptyState from '../../../components/ui/EmptyState';
 import Badge from '../../../components/ui/Badge';
 import Input from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
+import { generatePDFReport } from '../../../utils/reportGenerator';
 
 const AdminMedicinesPage = () => {
   const [medicines, setMedicines] = useState([]);
@@ -102,6 +103,23 @@ const AdminMedicinesPage = () => {
     }
   };
 
+  const handleDownloadReport = () => {
+    const columns = ['Generic Name', 'Brand Name', 'Category', 'Manufacturer', 'Prescription Required'];
+    const rows = medicines.map(med => [
+      med.name,
+      med.brand || '-',
+      med.category || '-',
+      med.manufacturer || '-',
+      med.prescriptionRequired ? 'Yes' : 'No'
+    ]);
+    generatePDFReport(
+      'Medicines Catalogue Report',
+      columns,
+      rows,
+      `curelink_medicines_${new Date().getTime()}.pdf`
+    );
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
@@ -109,13 +127,22 @@ const AdminMedicinesPage = () => {
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Medicine Catalogue</h1>
           <p className="mt-2 text-slate-600 font-medium">Manage the global database of medicines available on CureLink.</p>
         </div>
-        <Button 
-          onClick={() => handleOpenModal()}
-          icon={Plus}
-          size="lg"
-        >
-          Add Medicine
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button 
+            variant="outline"
+            icon={Download}
+            onClick={handleDownloadReport}
+            disabled={medicines.length === 0}
+          >
+            Download PDF
+          </Button>
+          <Button 
+            onClick={() => handleOpenModal()}
+            icon={Plus}
+          >
+            Add Medicine
+          </Button>
+        </div>
       </div>
 
       <Card className="overflow-hidden mb-8">

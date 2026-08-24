@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { CreditCard, Banknote, Loader2, DollarSign } from 'lucide-react';
+import { CreditCard, Banknote, Loader2, DollarSign, Download } from 'lucide-react';
 import { toast } from 'react-toastify';
 import adminService from '../../../features/admin/adminService';
+import Button from '../../../components/ui/Button';
+import { generatePDFReport } from '../../../utils/reportGenerator';
 
 const AdminPaymentsPage = () => {
   const [payments, setPayments] = useState([]);
@@ -46,6 +48,25 @@ const AdminPaymentsPage = () => {
     }
   };
 
+  const handleDownloadReport = () => {
+    const columns = ['Payment ID', 'Date', 'Customer', 'Pharmacy', 'Method', 'Status', 'Amount (Rs)'];
+    const rows = payments.map(payment => [
+      payment.paymentNumber,
+      new Date(payment.createdAt).toLocaleString(),
+      payment.customerId?.name || 'Unknown',
+      payment.pharmacyId?.name || 'Unknown',
+      payment.method,
+      payment.status.replace(/_/g, ' '),
+      (payment.amount / 100).toFixed(2)
+    ]);
+    generatePDFReport(
+      `Payment Transactions Report (${filterMethod})`,
+      columns,
+      rows,
+      `curelink_payments_${filterMethod.toLowerCase()}_${new Date().getTime()}.pdf`
+    );
+  };
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
@@ -57,20 +78,30 @@ const AdminPaymentsPage = () => {
           <p className="mt-2 text-slate-600">Monitor all system payments and transactions.</p>
         </div>
 
-        <div className="flex items-center gap-2 bg-white rounded-xl shadow-sm border border-slate-200 p-1">
-          {['ALL', 'CARD', 'COD'].map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilterMethod(f)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                filterMethod === f
-                  ? 'bg-indigo-600 text-white'
-                  : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              {f}
-            </button>
-          ))}
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 bg-white rounded-xl shadow-sm border border-slate-200 p-1">
+            {['ALL', 'CARD', 'COD'].map((f) => (
+              <button
+                key={f}
+                onClick={() => setFilterMethod(f)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  filterMethod === f
+                    ? 'bg-indigo-600 text-white'
+                    : 'text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+          <Button 
+            variant="outline"
+            icon={Download}
+            onClick={handleDownloadReport}
+            disabled={payments.length === 0}
+          >
+            Download PDF
+          </Button>
         </div>
       </div>
 

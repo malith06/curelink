@@ -8,7 +8,6 @@ import { Card, CardContent, CardHeader } from '../../components/ui/Card';
 const PharmacyProfileForm = ({ initialData, onSuccess }) => {
   const [formData, setFormData] = useState({
     name: '',
-    registrationNumber: '',
     phone: '',
     email: '',
     address: {
@@ -90,7 +89,6 @@ const PharmacyProfileForm = ({ initialData, onSuccess }) => {
 
       const payload = {
         name: formData.name,
-        registrationNumber: formData.registrationNumber,
         phone: formData.phone,
         email: formData.email || 'pharmacy@example.com',
         address: {
@@ -144,7 +142,7 @@ const PharmacyProfileForm = ({ initialData, onSuccess }) => {
             <p className="text-sm font-medium text-slate-500">Provide the official name and registration number of your pharmacy.</p>
          </div>
          <div className="md:col-span-2 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-6">
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-2">Pharmacy Name <span className="text-red-500">*</span></label>
                 <Input
@@ -156,19 +154,6 @@ const PharmacyProfileForm = ({ initialData, onSuccess }) => {
                   disabled={isReadOnly}
                   required
                   placeholder="e.g. City Pharmacy"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">Registration Number <span className="text-red-500">*</span></label>
-                <Input
-                  icon={Hash}
-                  type="text"
-                  name="registrationNumber"
-                  value={formData.registrationNumber}
-                  onChange={handleChange}
-                  disabled={isReadOnly}
-                  required
-                  placeholder="e.g. PH-12345"
                 />
               </div>
             </div>

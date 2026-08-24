@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Store, ArrowRight, Activity, MapPin } from 'lucide-react';
+import { Search, Store, ArrowRight, Activity, MapPin, Download } from 'lucide-react';
 import adminService from '../../../features/admin/adminService';
 import { Card } from '../../../components/ui/Card';
 import Skeleton from '../../../components/ui/Skeleton';
 import EmptyState from '../../../components/ui/EmptyState';
 import Badge from '../../../components/ui/Badge';
 import Input from '../../../components/ui/Input';
+import Button from '../../../components/ui/Button';
+import { generatePDFReport } from '../../../utils/reportGenerator';
 
 const AdminPharmaciesPage = () => {
   const [pharmacies, setPharmacies] = useState([]);
@@ -49,6 +51,24 @@ const AdminPharmaciesPage = () => {
     }
   };
 
+  const handleDownloadReport = () => {
+    const columns = ['Pharmacy Name', 'Reg. Number', 'Email', 'Phone', 'Status', 'Registered Date'];
+    const rows = filteredPharmacies.map(p => [
+      p.name,
+      p.registrationNumber || 'N/A',
+      p.email,
+      p.phone,
+      p.verificationStatus,
+      new Date(p.createdAt).toLocaleDateString()
+    ]);
+    generatePDFReport(
+      `Registered Pharmacies Report (${filter})`,
+      columns,
+      rows,
+      `curelink_pharmacies_${filter.toLowerCase()}_${new Date().getTime()}.pdf`
+    );
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
@@ -56,6 +76,14 @@ const AdminPharmaciesPage = () => {
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Manage Pharmacies</h1>
           <p className="mt-2 text-slate-600 font-medium">Review and verify pharmacy registrations across the platform.</p>
         </div>
+        <Button 
+          variant="outline" 
+          icon={Download} 
+          onClick={handleDownloadReport}
+          disabled={filteredPharmacies.length === 0}
+        >
+          Download PDF Report
+        </Button>
       </div>
 
       <Card className="overflow-hidden mb-8">
