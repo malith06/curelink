@@ -17,7 +17,7 @@ const NearbyPharmacySearchPage = () => {
   const [radius, setRadius] = useState(10); // 10km default
   const [searchQuery, setSearchQuery] = useState('');
   const [medicineResults, setMedicineResults] = useState([]);
-  const [selectedMedicineId, setSelectedMedicineId] = useState('');
+  const [selectedMedicines, setSelectedMedicines] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
 
   // Fetch nearby pharmacies when location or filters change
@@ -25,7 +25,7 @@ const NearbyPharmacySearchPage = () => {
     if (status === 'success' && latitude && longitude) {
       fetchNearbyPharmacies();
     }
-  }, [status, latitude, longitude, radius, selectedMedicineId]);
+  }, [status, latitude, longitude, radius, selectedMedicines]);
 
   const fetchNearbyPharmacies = async () => {
     try {
@@ -35,8 +35,8 @@ const NearbyPharmacySearchPage = () => {
         lng: longitude,
         radius: radius * 1000 // Convert to meters
       };
-      if (selectedMedicineId) {
-        params.medicineId = selectedMedicineId;
+      if (selectedMedicines.length > 0) {
+        params.medicineIds = selectedMedicines.map(m => m._id).join(',');
       }
       
       const response = await api.get('/pharmacies/nearby', { params });
@@ -56,7 +56,6 @@ const NearbyPharmacySearchPage = () => {
     
     if (!query.trim()) {
       setMedicineResults([]);
-      setSelectedMedicineId('');
       return;
     }
 
@@ -68,16 +67,16 @@ const NearbyPharmacySearchPage = () => {
     }
   };
 
-  const handleSelectMedicine = (medId, medName) => {
-    setSelectedMedicineId(medId);
-    setSearchQuery(medName);
+  const handleSelectMedicine = (med) => {
+    if (!selectedMedicines.find(m => m._id === med._id)) {
+      setSelectedMedicines([...selectedMedicines, med]);
+    }
+    setSearchQuery('');
     setMedicineResults([]); // hide dropdown
   };
 
-  const handleClearMedicineFilter = () => {
-    setSelectedMedicineId('');
-    setSearchQuery('');
-    setMedicineResults([]);
+  const handleRemoveMedicine = (medId) => {
+    setSelectedMedicines(selectedMedicines.filter(m => m._id !== medId));
   };
 
   return (
@@ -121,25 +120,17 @@ const NearbyPharmacySearchPage = () => {
                   value={searchQuery}
                   onChange={handleMedicineSearch}
                   placeholder="Filter by medicine availability..."
-                  className="pl-9 pr-10"
+                  className="pl-9"
                 />
-                {selectedMedicineId && (
-                  <button 
-                    onClick={handleClearMedicineFilter}
-                    className="absolute right-3 text-slate-400 hover:text-slate-600 focus:outline-none"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
               </div>
               
               {/* Medicine Autocomplete Dropdown */}
-              {medicineResults.length > 0 && !selectedMedicineId && (
+              {medicineResults.length > 0 && (
                 <ul className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-60 overflow-y-auto z-50 py-1">
                   {medicineResults.map(med => (
                     <li 
                       key={med._id}
-                      onClick={() => handleSelectMedicine(med._id, med.name)}
+                      onClick={() => handleSelectMedicine(med)}
                       className="px-4 py-2 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-b-0 transition-colors"
                     >
                       <p className="font-medium text-slate-900 text-sm">{med.name}</p>
@@ -150,6 +141,33 @@ const NearbyPharmacySearchPage = () => {
               )}
             </div>
           </Card>
+
+          {/* Selected Medicines Tags */}
+          {selectedMedicines.length > 0 && (
+            <div className="flex flex-wrap gap-2 px-1 z-0">
+              {selectedMedicines.map(med => (
+                <span key={med._id} className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary-100 text-primary-800">
+                  {med.name}
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveMedicine(med._id)}
+                    className="ml-1.5 inline-flex items-center justify-center text-primary-400 hover:text-primary-900 hover:bg-primary-200 rounded-full focus:outline-none"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+              {selectedMedicines.length > 0 && (
+                <button
+                  onClick={() => setSelectedMedicines([])}
+                  className="text-xs text-slate-500 hover:text-slate-700 underline underline-offset-2 self-center ml-2"
+                >
+                  Clear all
+                </button>
+              )}
+            </div>
+          )}
+
 
           {/* Map and List Area */}
           <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0">
@@ -165,6 +183,7 @@ const NearbyPharmacySearchPage = () => {
                     pharmacies={pharmacies}
                     selectedPharmacyId={selectedPharmacyId}
                     onSelectPharmacy={setSelectedPharmacyId}
+                    selectedMedicines={selectedMedicines}
                   />
                 </div>
               )}

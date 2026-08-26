@@ -331,7 +331,7 @@ const getPharmacyInbox = async (pharmacyId, queryParams = {}) => {
     .sort(sort)
     .skip(skip)
     .limit(limit)
-    .populate('customerId', 'name') // We only need basic customer info
+    .populate('customerId', 'fullName') // We only need basic customer info
     .lean();
 
   const total = await MedicineRequest.countDocuments(filter);
@@ -358,7 +358,7 @@ const getPharmacyRequestById = async (requestId, pharmacyId) => {
     _id: requestId,
     selectedPharmacyIds: pharmacyId
   })
-    .populate('customerId', 'name')
+    .populate('customerId', 'fullName')
     .lean();
 
   if (!request) {

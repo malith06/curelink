@@ -22,7 +22,7 @@ const paymentSchema = new mongoose.Schema(
     },
     pharmacyId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: 'Pharmacy',
       required: true
     },
     method: {

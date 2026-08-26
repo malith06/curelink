@@ -45,6 +45,7 @@ const rejectOrderSchema = z.object({
 const updateOrderStatusSchema = z.object({
   body: z.object({
     status: z.enum([
+      ORDER_STATUS.PHARMACY_ACCEPTED,
       ORDER_STATUS.PREPARING,
       ORDER_STATUS.READY_FOR_PICKUP,
       ORDER_STATUS.OUT_FOR_DELIVERY,

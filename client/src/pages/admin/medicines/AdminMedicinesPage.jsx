@@ -118,6 +118,7 @@ const AdminMedicinesPage = () => {
       rows,
       `curelink_medicines_${new Date().getTime()}.pdf`
     );
+    toast.success('Report downloaded successfully!');
   };
 
   return (
@@ -154,23 +155,23 @@ const AdminMedicinesPage = () => {
           <EmptyState
             icon={Pill}
             title="No medicines found"
-            description="Your medicine catalogue is currently empty. Add medicines to get started."
+            message="Your medicine catalogue is currently empty. Add medicines to get started."
           />
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-200">
-              <thead className="bg-slate-50">
+            <table className="w-full text-left border-collapse">
+              <thead className="bg-slate-50/80 text-slate-500 border-b border-slate-100 text-xs uppercase font-bold tracking-wider">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Generic Name</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Brand Name</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Category</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Prescription</th>
-                  <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-4 whitespace-nowrap">Generic Name</th>
+                  <th className="px-6 py-4 whitespace-nowrap">Brand Name</th>
+                  <th className="px-6 py-4 whitespace-nowrap">Category</th>
+                  <th className="px-6 py-4 whitespace-nowrap">Prescription</th>
+                  <th className="px-6 py-4 whitespace-nowrap text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-slate-100">
+              <tbody className="bg-white divide-y divide-slate-50">
                 {medicines.map((med) => (
-                  <tr key={med._id} className="hover:bg-slate-50 transition-colors group">
+                  <tr key={med._id} className="hover:bg-slate-50/80 transition-colors group">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-bold text-slate-900">{med.name}</div>
                     </td>
@@ -182,13 +183,13 @@ const AdminMedicinesPage = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {med.prescriptionRequired ? (
-                        <Badge variant="error" className="bg-red-50 text-red-700 border-red-200">Required</Badge>
+                        <Badge variant="destructive" className="bg-red-50 text-red-700 border-red-200">Required</Badge>
                       ) : (
                         <Badge variant="success" className="bg-green-50 text-green-700 border-green-200">No</Badge>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex justify-end gap-3 transition-opacity">
                          <button onClick={() => handleOpenModal(med)} className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors" title="Edit">
                            <Edit2 className="w-4 h-4" />
                          </button>

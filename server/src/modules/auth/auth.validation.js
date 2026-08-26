@@ -41,4 +41,20 @@ const loginSchema = z.object({
   password: z.string({ required_error: "Password is required" }),
 });
 
-module.exports = { registerSchema, loginSchema };
+const forgotPasswordSchema = z.object({
+  email: z
+    .string({ required_error: "Email is required" })
+    .trim()
+    .email("Please provide a valid email")
+    .toLowerCase(),
+});
+
+const resetPasswordSchema = z.object({
+  password: passwordSchema,
+  confirmPassword: z.string({ required_error: "Confirm password is required" }),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+});
+
+module.exports = { registerSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema };

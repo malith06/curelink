@@ -35,6 +35,7 @@ const createPharmacyProfileSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(150, 'Name must be at most 150 characters').trim(),
   phone: z.string().min(1, 'Phone is required').trim(),
   email: z.string().email('Invalid email address').trim().toLowerCase(),
+  photoUrl: z.string().url().optional().nullable(),
   address: addressSchema,
   openingHours: z.object({
     monday: openingHourSchema.optional(),
@@ -55,6 +56,7 @@ const updatePharmacyProfileSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(150, 'Name must be at most 150 characters').trim().optional(),
   phone: z.string().min(1, 'Phone is required').trim().optional(),
   email: z.string().email('Invalid email address').trim().toLowerCase().optional(),
+  photoUrl: z.string().url().optional().nullable(),
   address: addressSchema.optional(),
   openingHours: z.object({
     monday: openingHourSchema.optional(),

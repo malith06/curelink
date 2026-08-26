@@ -18,7 +18,7 @@ class CloudinaryStorageAdapter extends StorageAdapter {
     return new Promise((resolve, reject) => {
       const uploadOptions = {
         folder: options.folder || "prescriptions",
-        type: "private", // Keep files private, not accessible via public URL
+        type: options.type || "private", // Keep files private by default, but allow public 'upload'
       };
 
       const uploadStream = cloudinary.uploader.upload_stream(

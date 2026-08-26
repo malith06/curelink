@@ -1,7 +1,10 @@
 const Pharmacy = require('./pharmacy.model');
 const MedicineAvailability = require('../availability/availability.model');
+const User = require('../users/user.model');
 const ApiError = require('../../utils/ApiError');
 const { PHARMACY_VERIFICATION_STATUS } = require('./pharmacy.constants');
+const { createAndEmitNotification } = require('../notifications/notification.service');
+const { NOTIFICATION_EVENTS, NOTIFICATION_ENTITY_TYPES } = require('../notifications/notification.constants');
 
 const createPharmacyProfile = async (userId, profileData) => {
   const existingProfile = await Pharmacy.findOne({ ownerUserId: userId });
@@ -50,19 +53,17 @@ const updatePharmacyProfile = async (userId, updateData) => {
     throw new ApiError('Pharmacy profile not found', 404);
   }
 
-  if (profile.verificationStatus === PHARMACY_VERIFICATION_STATUS.PENDING) {
-    throw new ApiError('Cannot edit profile while verification is pending', 400);
-  }
-
   if (
     profile.verificationStatus === PHARMACY_VERIFICATION_STATUS.APPROVED ||
-    profile.verificationStatus === PHARMACY_VERIFICATION_STATUS.SUSPENDED
+    profile.verificationStatus === PHARMACY_VERIFICATION_STATUS.SUSPENDED ||
+    profile.verificationStatus === PHARMACY_VERIFICATION_STATUS.PENDING
   ) {
-    const allowedFields = ['phone', 'openingHours', 'deliveryAvailable', 'pickupAvailable'];
+    const allowedFields = ['name', 'address', 'phone', 'email', 'openingHours', 'deliveryAvailable', 'pickupAvailable', 'photoUrl', 'serviceRadiusKm', 'location'];
     const keys = Object.keys(updateData);
     const hasDisallowed = keys.some((key) => !allowedFields.includes(key));
     if (hasDisallowed) {
-      throw new ApiError('Cannot update critical fields after approval. Please contact support.', 400);
+      const disallowedKeys = keys.filter((key) => !allowedFields.includes(key));
+      throw new ApiError(`Cannot update critical fields: ${disallowedKeys.join(', ')}. Please contact support.`, 400);
     }
   }
 
@@ -89,6 +90,20 @@ const submitForVerification = async (userId) => {
   profile.verificationStatus = PHARMACY_VERIFICATION_STATUS.PENDING;
   profile.verificationNote = ''; // Clear previous rejection notes
   await profile.save();
+
+  try {
+    const admins = await User.find({ role: 'ADMIN' });
+    for (const admin of admins) {
+      await createAndEmitNotification({
+        type: NOTIFICATION_EVENTS.PHARMACY_SUBMITTED,
+        recipient: admin,
+        entity: profile
+      });
+    }
+  } catch (error) {
+    console.error('Failed to send admin notifications for pharmacy submission:', error);
+  }
+
   return profile;
 };
 
@@ -151,13 +166,13 @@ const getPharmacyById = async (pharmacyId) => {
 };
 
 const approvePharmacy = async (pharmacyId, adminId) => {
-  const profile = await Pharmacy.findById(pharmacyId);
+  const profile = await Pharmacy.findById(pharmacyId).populate('ownerUserId', 'role');
   if (!profile) {
     throw new ApiError('Pharmacy not found', 404);
   }
   
-  if (profile.verificationStatus !== PHARMACY_VERIFICATION_STATUS.PENDING) {
-    throw new ApiError('Can only approve pharmacies that are in PENDING status', 400);
+  if (profile.verificationStatus !== PHARMACY_VERIFICATION_STATUS.PENDING && profile.verificationStatus !== PHARMACY_VERIFICATION_STATUS.DRAFT) {
+    throw new ApiError('Can only approve pharmacies that are in PENDING or DRAFT status', 400);
   }
 
   profile.verificationStatus = PHARMACY_VERIFICATION_STATUS.APPROVED;
@@ -166,6 +181,17 @@ const approvePharmacy = async (pharmacyId, adminId) => {
   profile.verifiedAt = new Date();
   
   await profile.save();
+
+  try {
+    await createAndEmitNotification({
+      type: NOTIFICATION_EVENTS.PHARMACY_APPROVED,
+      recipient: profile.ownerUserId,
+      entity: profile
+    });
+  } catch (error) {
+    console.error('Failed to send notification for pharmacy approval:', error);
+  }
+
   return profile;
 };
 
@@ -174,13 +200,13 @@ const rejectPharmacy = async (pharmacyId, reason, adminId) => {
     throw new ApiError('Rejection reason is required', 400);
   }
 
-  const profile = await Pharmacy.findById(pharmacyId);
+  const profile = await Pharmacy.findById(pharmacyId).populate('ownerUserId', 'role');
   if (!profile) {
     throw new ApiError('Pharmacy not found', 404);
   }
   
-  if (profile.verificationStatus !== PHARMACY_VERIFICATION_STATUS.PENDING) {
-    throw new ApiError('Can only reject pharmacies that are in PENDING status', 400);
+  if (profile.verificationStatus !== PHARMACY_VERIFICATION_STATUS.PENDING && profile.verificationStatus !== PHARMACY_VERIFICATION_STATUS.DRAFT) {
+    throw new ApiError('Can only reject pharmacies that are in PENDING or DRAFT status', 400);
   }
 
   profile.verificationStatus = PHARMACY_VERIFICATION_STATUS.REJECTED;
@@ -189,6 +215,18 @@ const rejectPharmacy = async (pharmacyId, reason, adminId) => {
   profile.verifiedAt = new Date();
   
   await profile.save();
+
+  try {
+    await createAndEmitNotification({
+      type: NOTIFICATION_EVENTS.PHARMACY_REJECTED,
+      recipient: profile.ownerUserId,
+      entity: profile,
+      context: { reason }
+    });
+  } catch (error) {
+    console.error('Failed to send notification for pharmacy rejection:', error);
+  }
+
   return profile;
 };
 
@@ -232,7 +270,7 @@ const reactivatePharmacy = async (pharmacyId, adminId) => {
 
 // --- PUBLIC SERVICES ---
 
-const findNearbyPharmacies = async (lng, lat, radiusKm = 10, medicineId = null) => {
+const findNearbyPharmacies = async (lng, lat, radiusKm = 10, medicineIds = null) => {
   const radiusInRadians = radiusKm / 6378.1; // Earth's equatorial radius in km
 
   const query = {
@@ -245,31 +283,71 @@ const findNearbyPharmacies = async (lng, lat, radiusKm = 10, medicineId = null) 
   };
 
   // If we only need pharmacies near a location
-  if (!medicineId) {
+  if (!medicineIds || (Array.isArray(medicineIds) && medicineIds.length === 0)) {
     return await Pharmacy.find(query).select('-ownerUserId -verificationNote -verifiedBy -verifiedAt').lean();
   }
 
+  // Ensure medicineIds is an array
+  const idsToSearch = Array.isArray(medicineIds) ? medicineIds : [medicineIds];
+
   // If we need to filter by medicine availability, we find available pharmacies first
   const availabilityRecords = await MedicineAvailability.find({
-    medicineId,
+    medicineId: { $in: idsToSearch },
     status: { $in: ['AVAILABLE', 'LIMITED', 'CONFIRMATION_REQUIRED'] }
-  }).select('pharmacyId status lastUpdated');
+  }).select('pharmacyId medicineId status lastUpdated');
 
-  const availablePharmacyIds = availabilityRecords.map(record => record.pharmacyId);
+  // Count how many of the requested medicines each pharmacy has
+  const pharmacyCounts = {};
+  availabilityRecords.forEach(record => {
+    const pIdStr = record.pharmacyId.toString();
+    if (!pharmacyCounts[pIdStr]) {
+      pharmacyCounts[pIdStr] = new Set();
+    }
+    pharmacyCounts[pIdStr].add(record.medicineId.toString());
+  });
+
+  // Filter pharmacies that have ALL the requested medicines
+  const availablePharmacyIds = Object.keys(pharmacyCounts)
+    .filter(pId => pharmacyCounts[pId].size === idsToSearch.length);
   
+  if (availablePharmacyIds.length === 0) {
+    return []; // No pharmacy has ALL the requested medicines
+  }
+
   query._id = { $in: availablePharmacyIds };
 
   const nearbyPharmacies = await Pharmacy.find(query).select('-ownerUserId -verificationNote -verifiedBy -verifiedAt').lean();
 
-  // Attach availability status to each pharmacy
+  // Attach availability status to each pharmacy (we'll just use the first record or a generic one since there could be multiple)
   return nearbyPharmacies.map(pharmacy => {
-    const record = availabilityRecords.find(r => r.pharmacyId.toString() === pharmacy._id.toString());
+    // Get the records for this pharmacy
+    const records = availabilityRecords.filter(r => r.pharmacyId.toString() === pharmacy._id.toString());
+    
     return {
       ...pharmacy,
-      availabilityStatus: record.status,
-      availabilityLastUpdated: record.lastUpdated
+      availabilityStatus: idsToSearch.length > 1 ? 'AVAILABLE' : records[0]?.status,
+      availabilityLastUpdated: records[0]?.lastUpdated
     };
   });
+};
+
+const updatePharmacyPhotoUrl = async (userId, photoUrl) => {
+  const profile = await Pharmacy.findOneAndUpdate(
+    { ownerUserId: userId },
+    { $set: { photoUrl } },
+    { new: true, runValidators: true }
+  );
+  if (!profile) {
+    throw new ApiError('Pharmacy profile not found', 404);
+  }
+  return profile;
+};
+
+const getVerifiedPharmacies = async () => {
+  return Pharmacy.find({ verificationStatus: PHARMACY_VERIFICATION_STATUS.APPROVED })
+    .select('name location address photoUrl deliveryAvailable pickupAvailable')
+    .sort({ name: 1 })
+    .lean();
 };
 
 module.exports = {
@@ -285,4 +363,6 @@ module.exports = {
   suspendPharmacy,
   reactivatePharmacy,
   findNearbyPharmacies,
+  updatePharmacyPhotoUrl,
+  getVerifiedPharmacies,
 };

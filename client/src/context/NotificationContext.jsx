@@ -44,7 +44,7 @@ export const NotificationProvider = ({ children }) => {
       const res = await axiosClient.get('/notifications?limit=20');
       setNotifications(res.data.data || []);
       
-      const countRes = await axiosClient.get('/notifications/unread/count');
+      const countRes = await axiosClient.get('/notifications/unread-count');
       setUnreadCount(countRes.data.count || 0);
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
@@ -55,7 +55,7 @@ export const NotificationProvider = ({ children }) => {
 
   const markAsRead = async (id) => {
     try {
-      await axiosClient.put(`/notifications/${id}/read`);
+      await axiosClient.patch(`/notifications/${id}/read`);
       setNotifications((prev) =>
         prev.map((n) => (n._id === id ? { ...n, isRead: true } : n))
       );
@@ -67,7 +67,7 @@ export const NotificationProvider = ({ children }) => {
 
   const markAllAsRead = async () => {
     try {
-      await axiosClient.put('/notifications/read-all');
+      await axiosClient.patch('/notifications/read-all');
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
       setUnreadCount(0);
     } catch (error) {

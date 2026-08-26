@@ -24,27 +24,30 @@ exports.getAdminDashboard = async (rangeDays = 30) => {
   dateRange.setDate(dateRange.getDate() - rangeDays);
 
   // 1. Summaries
-  const totalCustomers = await User.countDocuments({ role: ROLES.CUSTOMER });
-  const totalPharmacies = await Pharmacy.countDocuments({});
-  const approvedPharmacies = await Pharmacy.countDocuments({ verificationStatus: PHARMACY_VERIFICATION_STATUS.APPROVED });
-  const pendingPharmacyApprovals = await Pharmacy.countDocuments({ verificationStatus: PHARMACY_VERIFICATION_STATUS.PENDING });
+  const totalCustomers = await User.countDocuments({ role: ROLES.CUSTOMER, createdAt: { $gte: dateRange } });
+  const totalPharmacies = await Pharmacy.countDocuments({ createdAt: { $gte: dateRange } });
+  const approvedPharmacies = await Pharmacy.countDocuments({ verificationStatus: PHARMACY_VERIFICATION_STATUS.APPROVED, createdAt: { $gte: dateRange } });
+  const pendingPharmacyApprovals = await Pharmacy.countDocuments({ 
+    verificationStatus: { $in: [PHARMACY_VERIFICATION_STATUS.PENDING, PHARMACY_VERIFICATION_STATUS.DRAFT] }, 
+    createdAt: { $gte: dateRange } 
+  });
   
-  const totalOrders = await Order.countDocuments({});
-  const activeOrders = await Order.countDocuments({ orderStatus: { $in: ACTIVE_ORDER_STATUSES } });
-  const completedOrders = await Order.countDocuments({ orderStatus: ORDER_STATUS.COMPLETED });
+  const totalOrders = await Order.countDocuments({ createdAt: { $gte: dateRange } });
+  const activeOrders = await Order.countDocuments({ orderStatus: { $in: ACTIVE_ORDER_STATUSES }, createdAt: { $gte: dateRange } });
+  const completedOrders = await Order.countDocuments({ orderStatus: ORDER_STATUS.COMPLETED, createdAt: { $gte: dateRange } });
 
   const totalPaymentsAgg = await Order.aggregate([
-    { $match: { paymentStatus: { $in: [PAYMENT_STATUS.PAID, PAYMENT_STATUS.COD_COLLECTED] } } },
+    { $match: { paymentStatus: { $in: [PAYMENT_STATUS.PAID, PAYMENT_STATUS.COD_COLLECTED] }, createdAt: { $gte: dateRange } } },
     { $group: { _id: null, totalValue: { $sum: '$total' } } }
   ]);
   const totalPayments = totalPaymentsAgg.length > 0 ? parseFloat((totalPaymentsAgg[0].totalValue / 100).toFixed(2)) : 0;
 
-  const failedPayments = await PaymentEvent.countDocuments({ status: 'FAILED', createdAt: { $gte: dateRange } }); // status enum inside payment gateway webhook
+  const failedPayments = await Order.countDocuments({ paymentStatus: PAYMENT_STATUS.FAILED, createdAt: { $gte: dateRange } });
 
   const ocrFailures = await Prescription.countDocuments({ ocrStatus: 'FAILED', createdAt: { $gte: dateRange } }); // OCR_STATUSES.FAILED
 
   // 2. Pending Pharmacies
-  const pendingPharmacies = await Pharmacy.find({ verificationStatus: PHARMACY_VERIFICATION_STATUS.PENDING })
+  const pendingPharmacies = await Pharmacy.find({ verificationStatus: { $in: [PHARMACY_VERIFICATION_STATUS.PENDING, PHARMACY_VERIFICATION_STATUS.DRAFT] } })
     .sort({ createdAt: 1 })
     .limit(RECENT_ITEMS_LIMIT)
     .select('name licenseNumber contactEmail phone createdAt');

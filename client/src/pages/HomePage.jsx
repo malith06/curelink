@@ -1,39 +1,196 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Button from '../components/ui/Button';
-import { Search, FileText, CheckCircle2, Shield, CreditCard, Clock, MapPin, Activity } from 'lucide-react';
+
+import { Search, FileText, CheckCircle2, Shield, CreditCard, Clock, MapPin, Activity, Store, Star, ChevronLeft, ChevronRight } from 'lucide-react';
+import pharmacyService from '../features/pharmacy/pharmacyService';
 
 const HomePage = () => {
+  const [pharmacies, setPharmacies] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  const slides = [
+    {
+      image: "/assets/images/hero-1.jpg",
+      title: (
+        <>
+          Smart medicine access, <br className="hidden md:block"/>
+          connected to <span className="text-blue-400">trusted pharmacies.</span>
+        </>
+      ),
+      subtitle: "Find medicine availability, submit prescription requests, receive private pharmacy quotations and manage your secure order through one unified platform."
+    },
+    {
+      image: "/assets/images/hero-2.jpg",
+      title: "Cashless Bill Payments Made Easy!",
+      subtitle: "Experience seamless and secure payments directly through CureLink. Safe, fast, and convenient healthcare at your fingertips."
+    }
+  ];
+
+  const nextSlide = () => setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
+  const prevSlide = () => setCurrentSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      nextSlide();
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const fetchPharmacies = async () => {
+      try {
+        const res = await pharmacyService.getVerifiedPharmacies();
+        setPharmacies(res.data);
+      } catch (err) {
+        console.error('Failed to fetch pharmacies', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPharmacies();
+  }, []);
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Hero Section */}
-      <section className="relative px-4 pt-20 pb-24 mx-auto max-w-7xl sm:px-6 lg:px-8">
-        <div className="text-center max-w-3xl mx-auto">
-          <Badge variant="primary" className="mb-6 mx-auto w-fit">
-            <Activity className="w-4 h-4 mr-2" />
-            Healthcare Technology Final Year Project
-          </Badge>
-          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl md:text-6xl mb-6">
-            Smart medicine access, <br className="hidden md:block"/>
-            connected to <span className="text-primary-600">trusted pharmacies.</span>
-          </h1>
-          <p className="text-lg text-slate-600 mb-10 max-w-2xl mx-auto">
-            Find medicine availability, submit prescription requests, receive private pharmacy quotations and manage your secure order through one unified platform.
-          </p>
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <Link to="/pharmacies/nearby">
-              <Button size="lg" className="w-full sm:w-auto">
-                <Search className="mr-2 h-5 w-5" />
-                Find Medicines
-              </Button>
-            </Link>
-            <Link to="/register/customer">
-              <Button variant="outline" size="lg" className="w-full sm:w-auto">
-                <FileText className="mr-2 h-5 w-5" />
-                Upload Prescription
-              </Button>
+      {/* Hero Section Carousel */}
+      <section className="relative h-[600px] w-full overflow-hidden flex items-center">
+        {/* Slides */}
+        {slides.map((slide, index) => (
+          <div
+            key={index}
+            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+              currentSlide === index ? "opacity-100" : "opacity-0 pointer-events-none"
+            }`}
+          >
+            <div className="absolute inset-0 bg-slate-900/60 z-10"></div>
+            <img 
+              src={slide.image} 
+              alt="Healthcare background" 
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          </div>
+        ))}
+
+        {/* Content Overlay */}
+        <div className="relative z-20 px-4 mx-auto max-w-7xl sm:px-6 lg:px-8 w-full text-white">
+          <div className="max-w-3xl">
+            <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl mb-6 leading-tight drop-shadow-md">
+              {slides[currentSlide].title}
+            </h1>
+            
+            <p className="text-lg md:text-xl text-slate-100 mb-10 max-w-2xl drop-shadow">
+              {slides[currentSlide].subtitle}
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Link to="/pharmacies/nearby">
+                <Button size="lg" className="w-full sm:w-auto bg-[#0B1354] hover:bg-[#111A7A] text-white border-0">
+                  <Search className="mr-2 h-5 w-5" />
+                  Find Medicines
+                </Button>
+              </Link>
+              <Link to="/register/customer">
+                <Button size="lg" className="w-full sm:w-auto bg-white/10 hover:bg-white/20 backdrop-blur-md text-white border border-white/30">
+                  <FileText className="mr-2 h-5 w-5" />
+                  Upload Prescription
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Slider Controls */}
+        <button 
+          onClick={prevSlide}
+          className="absolute left-4 top-1/2 -translate-y-1/2 z-30 w-12 h-12 flex items-center justify-center rounded-full bg-[#0B1354]/70 hover:bg-[#0B1354] text-white transition-colors border border-white/20 hidden md:flex"
+        >
+          <ChevronLeft className="w-6 h-6" />
+        </button>
+        <button 
+          onClick={nextSlide}
+          className="absolute right-4 top-1/2 -translate-y-1/2 z-30 w-12 h-12 flex items-center justify-center rounded-full bg-[#0B1354]/70 hover:bg-[#0B1354] text-white transition-colors border border-white/20 hidden md:flex"
+        >
+          <ChevronRight className="w-6 h-6" />
+        </button>
+
+        {/* Indicators */}
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex gap-2">
+          {slides.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setCurrentSlide(idx)}
+              className={`w-2.5 h-2.5 rounded-full transition-all ${
+                currentSlide === idx ? "bg-white w-8" : "bg-white/50 hover:bg-white/80"
+              }`}
+            />
+          ))}
+        </div>
+      </section>
+
+      {/* Verified Pharmacies Grid */}
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-2xl font-bold text-slate-900">Featured Pharmacies</h2>
+            <Link to="/pharmacies/nearby" className="text-primary-600 font-medium hover:text-primary-700 flex items-center">
+              View all <Search className="w-4 h-4 ml-1" />
             </Link>
           </div>
+
+          {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="animate-pulse flex flex-col gap-3">
+                  <div className="bg-slate-200 rounded-2xl aspect-square w-full"></div>
+                  <div className="h-4 bg-slate-200 rounded w-3/4"></div>
+                  <div className="h-3 bg-slate-200 rounded w-1/2"></div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {pharmacies.map(pharmacy => (
+                <div key={pharmacy._id} className="group cursor-pointer flex flex-col gap-3">
+                  <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-slate-100 border border-slate-200">
+                    {pharmacy.photoUrl ? (
+                      <img 
+                        src={pharmacy.photoUrl} 
+                        alt={pharmacy.name} 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-slate-400 group-hover:scale-105 transition-transform duration-300">
+                        <Store className="w-16 h-16 opacity-50" />
+                      </div>
+                    )}
+                    {/* Badge Overlay */}
+                    <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                      <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
+                      <span className="text-xs font-bold text-slate-700">New</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-col">
+                    <div className="flex justify-between items-start">
+                      <h3 className="font-semibold text-slate-900 line-clamp-1">{pharmacy.name}</h3>
+                    </div>
+                    <p className="text-sm text-slate-500">{pharmacy.address?.city}{pharmacy.address?.district ? `, ${pharmacy.address.district}` : ''}</p>
+                    <p className="text-sm font-medium text-slate-700 mt-1">
+                      {pharmacy.deliveryAvailable ? 'Delivery Available' : 'Pickup Only'}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {pharmacies.length === 0 && !loading && (
+            <div className="text-center py-12 bg-slate-50 rounded-2xl border border-slate-200 border-dashed">
+              <Store className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+              <h3 className="text-lg font-medium text-slate-900">No pharmacies found</h3>
+              <p className="text-slate-500">Be the first pharmacy to register and appear here!</p>
+            </div>
+          )}
         </div>
       </section>
 

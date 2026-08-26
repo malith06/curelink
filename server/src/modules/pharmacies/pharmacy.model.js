@@ -79,6 +79,10 @@ const pharmacySchema = new mongoose.Schema(
       max: 100,
       default: 10,
     },
+    photoUrl: {
+      type: String,
+      default: null,
+    },
     location: {
       type: {
         type: String,

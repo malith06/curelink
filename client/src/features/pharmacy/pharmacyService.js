@@ -5,6 +5,18 @@ const getMyPharmacyProfile = async () => {
   return response.data;
 };
 
+const getVerifiedPharmacies = async () => {
+  const response = await api.get('/pharmacies');
+  return response.data;
+};
+
+const uploadPharmacyPhoto = async (formData) => {
+  const response = await api.post('/pharmacies/me/photo', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data;
+};
+
 const createPharmacyProfile = async (profileData) => {
   const response = await api.post('/pharmacies/me/profile', profileData);
   return response.data;
@@ -31,6 +43,8 @@ const pharmacyService = {
   updatePharmacyProfile,
   submitForVerification,
   updateLocation,
+  getVerifiedPharmacies,
+  uploadPharmacyPhoto,
 };
 
 export default pharmacyService;

@@ -13,6 +13,10 @@ const NotificationsPage = () => {
   // For now we'll just show the ones we fetched in context or fetch more if context was empty.
 
   const getNotificationLink = (notification) => {
+    if (notification.actionUrl) {
+      return notification.actionUrl;
+    }
+
     const entityId = notification.entityId;
     if (!entityId) return '#';
 
@@ -20,7 +24,7 @@ const NotificationsPage = () => {
       case 'REQUEST_RECEIVED':
         return `/pharmacy/requests/${entityId}`;
       case 'QUOTATION_RECEIVED':
-        return `/customer/requests/${notification.entity?.requestId || entityId}`;
+        return `/customer/requests/${notification.metadata?.requestId || notification.relatedRequestId || entityId}`;
       case 'QUOTATION_ACCEPTED':
         return `/pharmacy/quotations`;
       case 'ORDER_ACCEPTED':
@@ -28,6 +32,7 @@ const NotificationsPage = () => {
       case 'ORDER_READY':
       case 'ORDER_OUT_FOR_DELIVERY':
       case 'ORDER_DELIVERED':
+      case 'ORDER_COMPLETED':
       case 'ORDER_CANCELLED':
       case 'ORDER_REJECTED':
       case 'PAYMENT_SUCCESSFUL':
@@ -35,6 +40,8 @@ const NotificationsPage = () => {
         return notification.recipientRole === 'PHARMACY' 
           ? `/pharmacy/orders/${entityId}` 
           : `/customer/orders`;
+      case 'PHARMACY_SUBMITTED':
+        return `/admin/pharmacies/${entityId}`;
       default:
         return '#';
     }

@@ -17,7 +17,11 @@ const getMedicines = async (filters, options = {}) => {
   const query = {};
   
   if (filters.search) {
-    query.$text = { $search: filters.search };
+    query.$or = [
+      { name: { $regex: filters.search, $options: 'i' } },
+      { brand: { $regex: filters.search, $options: 'i' } },
+      { category: { $regex: filters.search, $options: 'i' } }
+    ];
   }
   if (filters.category) {
     query.category = filters.category;
@@ -30,11 +34,7 @@ const getMedicines = async (filters, options = {}) => {
   }
 
   const sort = {};
-  if (filters.search) {
-    sort.score = { $meta: 'textScore' };
-  } else {
-    sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
-  }
+  sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
 
   const items = await Medicine.find(query)
     .skip(skip)

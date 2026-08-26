@@ -10,6 +10,7 @@ import { useAuth } from '../../context/AuthContext';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import { Card, CardHeader, CardContent, CardTitle, CardDescription, CardFooter } from '../../components/ui/Card';
+import ForgotPasswordModal from './ForgotPasswordModal';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -20,6 +21,7 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
 
   const {
     register,
@@ -94,9 +96,13 @@ const LoginPage = () => {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="block text-sm font-medium text-slate-700">Password</label>
-                  <a href="#" className="text-sm font-medium text-primary-600 hover:text-primary-700">
+                  <button 
+                    type="button" 
+                    onClick={() => setIsForgotModalOpen(true)}
+                    className="text-sm font-medium text-primary-600 hover:text-primary-700"
+                  >
                     Forgot password?
-                  </a>
+                  </button>
                 </div>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -149,6 +155,7 @@ const LoginPage = () => {
           </CardContent>
         </Card>
       </div>
+      <ForgotPasswordModal isOpen={isForgotModalOpen} onClose={() => setIsForgotModalOpen(false)} />
     </div>
   );
 };

@@ -58,7 +58,7 @@ const createOrderFromQuotation = async (customerId, quotationId, payload) => {
       const deliveryAddressSnapshot = generateDeliveryAddressSnapshot(payload.deliveryAddress);
       
       const { items, subtotal } = mapQuotationItemsToOrderItems(quotation.items);
-      const deliveryFee = payload.fulfilmentMethod === FULFILMENT_METHOD.DELIVERY ? 50000 : 0; // Flat 500 LKR for delivery as placeholder
+      const deliveryFee = payload.fulfilmentMethod === FULFILMENT_METHOD.DELIVERY ? (quotation.deliveryFee || 0) : 0;
       const total = subtotal + deliveryFee;
 
       // 6. Build Order
@@ -220,6 +220,14 @@ const updateOrderStatus = async (orderId, pharmacyId, newStatus, note) => {
     }
   }
 
+  // If COD, mark payment as collected when delivered or completed
+  if (newStatus === ORDER_STATUS.COMPLETED || newStatus === ORDER_STATUS.DELIVERED) {
+    const { PAYMENT_STATUS } = require('./order.constants');
+    if (order.paymentStatus === PAYMENT_STATUS.COD_PENDING) {
+      order.paymentStatus = PAYMENT_STATUS.COD_COLLECTED;
+    }
+  }
+
   appendStatusHistory(order, newStatus, pharmacyId, 'PHARMACY', CHANGE_SOURCE.PHARMACY, note);
   await order.save();
 
@@ -232,6 +240,7 @@ const updateOrderStatus = async (orderId, pharmacyId, newStatus, note) => {
     case ORDER_STATUS.READY_FOR_PICKUP: notificationType = NOTIFICATION_EVENTS.ORDER_READY; break;
     case ORDER_STATUS.OUT_FOR_DELIVERY: notificationType = NOTIFICATION_EVENTS.ORDER_OUT_FOR_DELIVERY; break;
     case ORDER_STATUS.DELIVERED: notificationType = NOTIFICATION_EVENTS.ORDER_DELIVERED; break;
+    case ORDER_STATUS.COMPLETED: notificationType = NOTIFICATION_EVENTS.ORDER_COMPLETED; break;
   }
 
   if (notificationType) {

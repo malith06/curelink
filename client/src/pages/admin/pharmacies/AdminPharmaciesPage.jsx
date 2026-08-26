@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, Store, ArrowRight, Activity, MapPin, Download } from 'lucide-react';
 import adminService from '../../../features/admin/adminService';
+import { toast } from 'react-toastify';
 import { Card } from '../../../components/ui/Card';
 import Skeleton from '../../../components/ui/Skeleton';
 import EmptyState from '../../../components/ui/EmptyState';
@@ -37,16 +38,26 @@ const AdminPharmaciesPage = () => {
     const matchesSearch = p.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           p.registrationNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           p.email?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filter === 'ALL' || p.verificationStatus === filter;
+    
+    let matchesFilter = false;
+    if (filter === 'ALL') {
+      matchesFilter = true;
+    } else if (filter === 'PENDING') {
+      matchesFilter = p.verificationStatus === 'PENDING' || p.verificationStatus === 'DRAFT';
+    } else {
+      matchesFilter = p.verificationStatus === filter;
+    }
+    
     return matchesSearch && matchesFilter;
   });
 
   const getStatusVariant = (status) => {
     switch(status) {
       case 'APPROVED': return 'success';
-      case 'PENDING': return 'warning';
-      case 'REJECTED': return 'error';
-      case 'SUSPENDED': return 'error';
+      case 'PENDING': 
+      case 'DRAFT': return 'warning';
+      case 'REJECTED': return 'destructive';
+      case 'SUSPENDED': return 'destructive';
       default: return 'default';
     }
   };
@@ -67,6 +78,7 @@ const AdminPharmaciesPage = () => {
       rows,
       `curelink_pharmacies_${filter.toLowerCase()}_${new Date().getTime()}.pdf`
     );
+    toast.success('Report downloaded successfully!');
   };
 
   return (
@@ -121,23 +133,23 @@ const AdminPharmaciesPage = () => {
           <EmptyState
             icon={Store}
             title="No pharmacies found"
-            description="There are no pharmacies matching your search or filter criteria."
+            message="There are no pharmacies matching your search or filter criteria."
           />
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-200">
-              <thead className="bg-slate-50">
+            <table className="w-full text-left border-collapse">
+              <thead className="bg-slate-50/80 text-slate-500 border-b border-slate-100 text-xs uppercase font-bold tracking-wider">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Business Info</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Reg Number</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Location</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-4 whitespace-nowrap">Business Info</th>
+                  <th className="px-6 py-4 whitespace-nowrap">Reg Number</th>
+                  <th className="px-6 py-4 whitespace-nowrap">Location</th>
+                  <th className="px-6 py-4 whitespace-nowrap">Status</th>
+                  <th className="px-6 py-4 whitespace-nowrap text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-slate-100">
+              <tbody className="bg-white divide-y divide-slate-50">
                 {filteredPharmacies.map((pharmacy) => (
-                  <tr key={pharmacy._id} className="hover:bg-slate-50 transition-colors group cursor-pointer" onClick={() => navigate(`/admin/pharmacies/${pharmacy._id}`)}>
+                  <tr key={pharmacy._id} className="hover:bg-slate-50/80 transition-colors group cursor-pointer" onClick={() => navigate(`/admin/pharmacies/${pharmacy._id}`)}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 font-bold">
@@ -161,7 +173,9 @@ const AdminPharmaciesPage = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                       <Badge variant={getStatusVariant(pharmacy.verificationStatus)}>{pharmacy.verificationStatus}</Badge>
+                       <Badge variant={getStatusVariant(pharmacy.verificationStatus)}>
+                         {pharmacy.verificationStatus === 'DRAFT' ? 'PENDING' : pharmacy.verificationStatus}
+                       </Badge>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="text-primary-600 hover:text-primary-800 font-bold flex items-center justify-end transition-colors">

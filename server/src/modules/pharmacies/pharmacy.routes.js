@@ -4,10 +4,12 @@ const { validate } = require('../../middleware/validate');
 const pharmacyController = require('./pharmacy.controller');
 const { createPharmacyProfileSchema, updatePharmacyProfileSchema } = require('./pharmacy.validation');
 const { provideQuotationSchema, updateRequestStatusSchema } = require('../requests/request.validation');
+const imageUpload = require('../../middleware/imageUpload');
 
 const router = express.Router();
 
 // Public routes
+router.get('/', pharmacyController.getVerifiedPharmacies);
 router.get('/nearby', pharmacyController.findNearbyPharmacies);
 
 // Protected routes
@@ -32,6 +34,14 @@ router.patch(
   authorize('PHARMACY'),
   validate(updatePharmacyProfileSchema),
   pharmacyController.updatePharmacyProfile
+);
+
+router.post(
+  '/me/photo',
+  protect,
+  authorize('PHARMACY'),
+  imageUpload,
+  pharmacyController.uploadPharmacyPhoto
 );
 
 router.post(

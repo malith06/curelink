@@ -2,6 +2,7 @@ const pharmacyService = require('./pharmacy.service');
 const requestService = require('../requests/request.service');
 const asyncHandler = require('../../utils/asyncHandler');
 const ApiError = require('../../utils/ApiError');
+const cloudinaryAdapter = require('../storage/cloudinary.adapter');
 
 const createPharmacyProfile = asyncHandler(async (req, res) => {
   const profile = await pharmacyService.createPharmacyProfile(req.user._id, req.body);
@@ -55,7 +56,7 @@ const updatePharmacyLocation = asyncHandler(async (req, res) => {
 });
 
 const findNearbyPharmacies = asyncHandler(async (req, res) => {
-  const { lng, lat, radiusKm, medicineId } = req.query;
+  const { lng, lat, radiusKm, medicineId, medicineIds } = req.query;
 
   if (lng === undefined || lat === undefined || lng === '' || lat === '') {
     throw new ApiError('Longitude and latitude are required', 400);
@@ -67,11 +68,19 @@ const findNearbyPharmacies = asyncHandler(async (req, res) => {
     throw new ApiError('Radius must be a positive number', 400);
   }
 
+  // Support both single medicineId (legacy) or medicineIds (new comma-separated list)
+  let idsToSearch = null;
+  if (medicineIds) {
+    idsToSearch = medicineIds.split(',').map(id => id.trim()).filter(Boolean);
+  } else if (medicineId) {
+    idsToSearch = [medicineId.trim()];
+  }
+
   const pharmacies = await pharmacyService.findNearbyPharmacies(
     parseFloat(lng),
     parseFloat(lat),
     radius,
-    medicineId
+    idsToSearch
   );
 
   res.status(200).json({
@@ -152,6 +161,41 @@ const updateRequestStatus = asyncHandler(async (req, res) => {
   });
 });
 
+const uploadPharmacyPhoto = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    throw new ApiError('No image file provided', 400);
+  }
+
+  // Upload to Cloudinary with public access
+  const uploadResult = await cloudinaryAdapter.uploadFile(req.file.buffer, {
+    folder: 'pharmacies',
+    type: 'upload', // Makes it publicly accessible
+  });
+
+  let photoUrl = uploadResult.secureUrl;
+  try {
+    const profile = await pharmacyService.updatePharmacyPhotoUrl(req.user._id, photoUrl);
+    photoUrl = profile.photoUrl;
+  } catch (err) {
+    // If profile doesn't exist yet (first time setup), it's fine. We just return the URL to be used in profile creation.
+  }
+
+  res.status(200).json({
+    success: true,
+    data: {
+      photoUrl,
+    },
+  });
+});
+
+const getVerifiedPharmacies = asyncHandler(async (req, res) => {
+  const pharmacies = await pharmacyService.getVerifiedPharmacies();
+  res.status(200).json({
+    success: true,
+    data: pharmacies,
+  });
+});
+
 module.exports = {
   createPharmacyProfile,
   getMyPharmacyProfile,
@@ -162,5 +206,7 @@ module.exports = {
   getPharmacyInboxRequests,
   getPharmacyRequestDetails,
   provideQuotation,
-  updateRequestStatus
+  updateRequestStatus,
+  uploadPharmacyPhoto,
+  getVerifiedPharmacies,
 };

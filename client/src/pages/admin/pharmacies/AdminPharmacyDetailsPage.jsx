@@ -79,7 +79,8 @@ const AdminPharmacyDetailsPage = () => {
       case 'APPROVED': return 'success';
       case 'REJECTED': return 'error';
       case 'SUSPENDED': return 'error';
-      case 'PENDING': return 'warning';
+      case 'PENDING': 
+      case 'DRAFT': return 'warning';
       default: return 'default';
     }
   };
@@ -99,7 +100,7 @@ const AdminPharmacyDetailsPage = () => {
           </div>
         </div>
         <Badge variant={getStatusVariant(pharmacy.verificationStatus)} className="text-sm px-4 py-1.5 shadow-sm">
-           {pharmacy.verificationStatus}
+           {pharmacy.verificationStatus === 'DRAFT' ? 'PENDING' : pharmacy.verificationStatus}
         </Badge>
       </div>
 
@@ -190,10 +191,10 @@ const AdminPharmacyDetailsPage = () => {
               <p className="text-sm text-slate-500 font-medium mt-1">Manage pharmacy access</p>
             </CardHeader>
             <CardContent className="p-6 space-y-4">
-               {pharmacy.verificationStatus === 'PENDING' && (
+               {(pharmacy.verificationStatus === 'PENDING' || pharmacy.verificationStatus === 'DRAFT') && (
                  <>
                    <Button 
-                     onClick={() => handleAction('approve')} disabled={actionLoading} isLoading={actionLoading && pharmacy.verificationStatus === 'PENDING'}
+                     onClick={() => handleAction('approve')} disabled={actionLoading} isLoading={actionLoading}
                      variant="success" fullWidth size="lg" icon={CheckCircle}
                    >
                      Approve Pharmacy
@@ -232,12 +233,14 @@ const AdminPharmacyDetailsPage = () => {
                           Pharmacy is {pharmacy.verificationStatus.toLowerCase()}
                        </p>
                     </div>
-                    <Button 
-                      onClick={() => handleAction('reactivate')} disabled={actionLoading} isLoading={actionLoading}
-                      variant="primary" fullWidth size="lg" icon={CheckCircle}
-                    >
-                      Reactivate Pharmacy
-                    </Button>
+                    {pharmacy.verificationStatus === 'SUSPENDED' && (
+                      <Button 
+                        onClick={() => handleAction('reactivate')} disabled={actionLoading} isLoading={actionLoading}
+                        variant="primary" fullWidth size="lg" icon={CheckCircle}
+                      >
+                        Reactivate Pharmacy
+                      </Button>
+                    )}
                  </div>
                )}
             </CardContent>

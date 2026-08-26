@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { CreditCard, Banknote, Loader2, DollarSign, Download } from 'lucide-react';
+import { CreditCard, Banknote, DollarSign, Download } from 'lucide-react';
 import { toast } from 'react-toastify';
 import adminService from '../../../features/admin/adminService';
 import Button from '../../../components/ui/Button';
 import { generatePDFReport } from '../../../utils/reportGenerator';
+import { Card, CardContent } from '../../../components/ui/Card';
+import Badge from '../../../components/ui/Badge';
+import Skeleton from '../../../components/ui/Skeleton';
+import EmptyState from '../../../components/ui/EmptyState';
 
 const AdminPaymentsPage = () => {
   const [payments, setPayments] = useState([]);
@@ -32,19 +36,19 @@ const AdminPaymentsPage = () => {
     }
   };
 
-  const getStatusBadge = (status) => {
+  const getStatusVariant = (status) => {
     switch (status) {
       case 'PAID':
       case 'COD_COLLECTED':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'success';
       case 'PROCESSING':
       case 'COD_PENDING':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        return 'warning';
       case 'FAILED':
       case 'CANCELLED':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'destructive';
       default:
-        return 'bg-slate-100 text-slate-800 border-slate-200';
+        return 'default';
     }
   };
 
@@ -53,11 +57,11 @@ const AdminPaymentsPage = () => {
     const rows = payments.map(payment => [
       payment.paymentNumber,
       new Date(payment.createdAt).toLocaleString(),
-      payment.customerId?.name || 'Unknown',
+      payment.customerId?.fullName || 'Unknown',
       payment.pharmacyId?.name || 'Unknown',
       payment.method,
-      payment.status.replace(/_/g, ' '),
-      (payment.amount / 100).toFixed(2)
+      (payment.status || 'UNKNOWN').replace(/_/g, ' '),
+      payment.amount ? (payment.amount / 100).toFixed(2) : '0.00'
     ]);
     generatePDFReport(
       `Payment Transactions Report (${filterMethod})`,
@@ -65,10 +69,11 @@ const AdminPaymentsPage = () => {
       rows,
       `curelink_payments_${filterMethod.toLowerCase()}_${new Date().getTime()}.pdf`
     );
+    toast.success('Report downloaded successfully!');
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl animate-in fade-in duration-500">
+    <div className="max-w-7xl mx-auto px-4 py-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
@@ -84,9 +89,9 @@ const AdminPaymentsPage = () => {
               <button
                 key={f}
                 onClick={() => setFilterMethod(f)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors ${
                   filterMethod === f
-                    ? 'bg-indigo-600 text-white'
+                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
                     : 'text-slate-600 hover:bg-slate-100'
                 }`}
               >
@@ -105,69 +110,69 @@ const AdminPaymentsPage = () => {
         </div>
       </div>
 
-      {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
-        </div>
-      ) : payments.length === 0 ? (
-        <div className="bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl p-12 text-center">
-          <DollarSign className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-slate-900 mb-2">No Payments Found</h3>
-          <p className="text-slate-500">There are no payment records matching this filter.</p>
-        </div>
-      ) : (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      <Card className="overflow-hidden mb-8">
+        {loading ? (
+          <div className="p-6 space-y-4">
+            {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-16 w-full" />)}
+          </div>
+        ) : payments.length === 0 ? (
+          <EmptyState
+            icon={DollarSign}
+            title="No Payments Found"
+            message="There are no payment records matching this filter."
+          />
+        ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-200">
-              <thead className="bg-slate-50">
+            <table className="w-full text-left border-collapse">
+              <thead className="bg-slate-50/80 text-slate-500 border-b border-slate-100 text-xs uppercase font-bold tracking-wider">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Payment ID / Date</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Customer</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Pharmacy</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Method</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Amount</th>
+                  <th className="px-6 py-4 whitespace-nowrap">Payment ID / Date</th>
+                  <th className="px-6 py-4 whitespace-nowrap">Customer</th>
+                  <th className="px-6 py-4 whitespace-nowrap">Pharmacy</th>
+                  <th className="px-6 py-4 whitespace-nowrap">Method</th>
+                  <th className="px-6 py-4 whitespace-nowrap">Status</th>
+                  <th className="px-6 py-4 whitespace-nowrap text-right">Amount</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-slate-200">
+              <tbody className="bg-white divide-y divide-slate-50">
                 {payments.map(payment => (
-                  <tr key={payment._id} className="hover:bg-slate-50 transition-colors">
+                  <tr key={payment._id} className="hover:bg-slate-50/80 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-semibold text-slate-900">
+                      <div className="text-sm font-bold text-slate-900">
                         {payment.paymentNumber}
                       </div>
-                      <div className="text-xs text-slate-500 mt-1">
+                      <div className="text-xs font-medium text-slate-500 mt-1">
                         {new Date(payment.createdAt).toLocaleString()}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-slate-900">{payment.customerId?.name || 'Unknown'}</div>
-                      <div className="text-xs text-slate-500">{payment.customerId?.phone || 'No phone'}</div>
+                      <div className="text-sm font-bold text-slate-900">{payment.customerId?.fullName || 'Unknown'}</div>
+                      <div className="text-xs font-medium text-slate-500 mt-1">{payment.customerId?.phone || 'No phone'}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-slate-900">{payment.pharmacyId?.name || 'Unknown'}</div>
+                      <div className="text-sm font-bold text-slate-900">{payment.pharmacyId?.name || 'Unknown'}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         {payment.method === 'CARD' ? <CreditCard className="w-4 h-4 text-indigo-500" /> : <Banknote className="w-4 h-4 text-green-500" />}
-                        <span className="text-sm font-medium text-slate-900">{payment.method}</span>
+                        <span className="text-sm font-bold text-slate-900">{payment.method}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 inline-flex text-xs font-semibold rounded-full border ${getStatusBadge(payment.status)}`}>
-                        {payment.status.replace(/_/g, ' ')}
-                      </span>
+                      <Badge variant={getStatusVariant(payment.status)}>
+                        {(payment.status || 'UNKNOWN').replace(/_/g, ' ')}
+                      </Badge>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-900">
-                      Rs. {(payment.amount / 100).toFixed(2)}
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-black text-slate-900">
+                      Rs. {payment.amount ? (payment.amount / 100).toFixed(2) : '0.00'}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        </div>
-      )}
+        )}
+      </Card>
     </div>
   );
 };

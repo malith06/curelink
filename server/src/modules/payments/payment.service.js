@@ -199,6 +199,16 @@ exports.handleWebhookEvent = async (rawBody, signature, provider = PAYMENT_PROVI
                 entity: payment
               });
             }
+            
+            const User = require('../users/user.model');
+            const admins = await User.find({ role: 'ADMIN' }).session(session);
+            for (const admin of admins) {
+              notificationsToEmit.push({
+                type: NOTIFICATION_EVENTS.PAYMENT_SUCCESSFUL,
+                recipient: admin,
+                entity: payment
+              });
+            }
           }
 
           if (order && order.paymentStatus !== PAYMENT_STATUS.PAID) {
@@ -234,6 +244,16 @@ exports.handleWebhookEvent = async (rawBody, signature, provider = PAYMENT_PROVI
               recipient: { _id: payment.customerId, role: 'CUSTOMER' },
               entity: payment
             });
+            
+            const User = require('../users/user.model');
+            const admins = await User.find({ role: 'ADMIN' }).session(session);
+            for (const admin of admins) {
+              notificationsToEmit.push({
+                type: NOTIFICATION_EVENTS.PAYMENT_FAILED,
+                recipient: admin,
+                entity: payment
+              });
+            }
           }
           break;
 
@@ -427,8 +447,8 @@ exports.getAllPayments = async (query = {}) => {
 
   const payments = await Payment.find(filter)
     .sort({ createdAt: -1 })
-    .populate('customerId', 'name phone')
-    .populate('pharmacyId', 'name')
+    .populate('customerId', 'fullName phone')
+    .populate('pharmacyId', 'name email')
     .limit(100); // hard limit for now
 
   return payments;

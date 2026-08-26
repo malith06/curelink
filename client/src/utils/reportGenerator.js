@@ -1,5 +1,5 @@
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 /**
  * Generates a PDF report using jsPDF and jspdf-autotable.
@@ -36,7 +36,7 @@ export const generatePDFReport = (title, columns, rows, filename = 'report.pdf')
   doc.line(14, 42, 196, 42);
 
   // Table
-  doc.autoTable({
+  autoTable(doc, {
     startY: 48,
     head: [columns],
     body: rows,

@@ -22,6 +22,16 @@ const addItemToRequest = async (requestId, itemData) => {
   return response.data;
 };
 
+const updateRequestItem = async (requestId, medicineId, updateData) => {
+  const response = await api.patch(`/requests/${requestId}/items/${medicineId}`, updateData);
+  return response.data;
+};
+
+const removeRequestItem = async (requestId, medicineId) => {
+  const response = await api.delete(`/requests/${requestId}/items/${medicineId}`);
+  return response.data;
+};
+
 const submitRequest = async (requestId, selectedPharmacyIds) => {
   const response = await api.post(`/requests/${requestId}/submit`, { 
     selectedPharmacyIds,
@@ -63,6 +73,8 @@ export const requestService = {
   getRequestById,
   createDraftRequest,
   addItemToRequest,
+  updateRequestItem,
+  removeRequestItem,
   submitRequest,
   acceptQuotation,
   getPharmacyInbox,
