@@ -67,27 +67,32 @@ const PharmacyQuotationsPage = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">My Quotations</h1>
-          <p className="mt-2 text-slate-600 font-medium">Track and manage all quotations you've drafted or sent.</p>
+        <div className="flex items-center gap-4">
+           <div className="w-14 h-14 bg-[#0B1354]/10 rounded-2xl flex items-center justify-center">
+              <FileText className="w-7 h-7 text-[#0B1354]" />
+           </div>
+           <div>
+             <h1 className="text-3xl font-bold text-[#0B1354] tracking-tight">My Quotations</h1>
+             <p className="mt-1 text-slate-500 font-medium">Track and manage all quotations you've drafted or sent.</p>
+           </div>
         </div>
       </div>
 
-      <Card className="overflow-hidden mb-8">
+      <div className="mb-8">
         {/* Filters and Search */}
-        <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex flex-col md:flex-row justify-between items-center gap-5">
-          <div className="flex flex-wrap gap-2">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-5 mb-6 pb-2 custom-scrollbar overflow-x-auto">
+          <div className="flex gap-2 min-w-max">
             {['ALL', 'DRAFT', 'SUBMITTED', 'ACCEPTED', 'DECLINED'].map(status => (
               <button
                 key={status}
                 onClick={() => setFilter(status)}
-                className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
                   filter === status 
-                    ? 'bg-primary-600 text-white shadow-md shadow-primary-600/20' 
-                    : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                    ? 'bg-primary-600 text-white shadow-sm' 
+                    : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
                 }`}
               >
-                {status}
+                {status === 'ALL' ? 'All Quotations' : status.charAt(0) + status.slice(1).toLowerCase()}
               </button>
             ))}
           </div>
@@ -102,64 +107,66 @@ const PharmacyQuotationsPage = () => {
         </div>
 
         {/* Quotations List */}
-        <div className="overflow-x-auto">
-          {filteredQuotations.length === 0 ? (
-            <EmptyState 
-              icon={FileText}
-              title="No quotations found"
-              description="You haven't created any quotations matching these filters."
-            />
-          ) : (
-            <table className="min-w-full divide-y divide-slate-200">
-              <thead className="bg-slate-50">
-                <tr>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Request ID / Date</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Items</th>
-                  <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Total (Rs)</th>
-                  <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Action</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-slate-100">
-                {filteredQuotations.map((quotation) => (
-                  <tr key={quotation._id} className="hover:bg-slate-50 transition-colors group cursor-pointer" onClick={() => {
-                    const reqId = quotation.requestId?._id ? String(quotation.requestId._id) : String(quotation.requestId || '');
-                    navigate(`/pharmacy/requests/${reqId}`);
-                  }}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="font-mono text-sm font-bold text-slate-900 bg-slate-100 px-2.5 py-1 rounded-md inline-block mb-1 border border-slate-200">
-                        #{(() => {
-                           const reqId = quotation.requestId?._id ? String(quotation.requestId._id) : String(quotation.requestId || '');
-                           return reqId.substring(Math.max(0, reqId.length - 6)).toUpperCase();
-                        })()}
+        {filteredQuotations.length === 0 ? (
+          <EmptyState 
+            icon={FileText}
+            title="No quotations found"
+            description="You haven't created any quotations matching these filters."
+          />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredQuotations.map((quotation) => {
+              const reqId = quotation.requestId?._id ? String(quotation.requestId._id) : String(quotation.requestId || '');
+              
+              return (
+                <Card 
+                  key={quotation._id} 
+                  className="flex flex-col hover:border-primary-300 hover:shadow-md transition-all cursor-pointer group"
+                  onClick={() => navigate(`/pharmacy/requests/${reqId}`)}
+                >
+                  <div className="p-5 flex-1">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="font-bold text-slate-900 text-lg group-hover:text-primary-700 transition-colors uppercase">
+                          #{reqId.substring(Math.max(0, reqId.length - 6))}
+                        </h3>
+                        <div className="flex items-center text-xs text-slate-500 mt-1 gap-1">
+                          <Clock className="w-3.5 h-3.5" />
+                          {new Date(quotation.createdAt).toLocaleDateString()}
+                        </div>
                       </div>
-                      <div className="text-xs font-medium text-slate-500 flex items-center">
-                        <Clock className="w-3 h-3 mr-1" />
-                        {new Date(quotation.createdAt).toLocaleDateString()}
+                      <Badge variant={getStatusVariant(quotation.status)}>{quotation.status.replace(/_/g, ' ')}</Badge>
+                    </div>
+                    
+                    <div className="space-y-3 mt-6">
+                      <div className="flex items-center justify-between text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                        <div className="flex items-center gap-3">
+                          <div className="bg-white p-1.5 rounded-md shadow-sm border border-slate-100 flex items-center justify-center">
+                            <span className="font-bold text-slate-900 px-1">{quotation.items?.length || 0}</span>
+                          </div>
+                          <span className="text-sm font-semibold text-slate-700">Items Quoted</span>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-xs text-slate-500 font-medium">Total</div>
+                          <div className="font-bold text-primary-700">Rs. {quotation.total ? quotation.total.toFixed(2) : '0.00'}</div>
+                        </div>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                       <Badge variant={getStatusVariant(quotation.status)}>{quotation.status.replace(/_/g, ' ')}</Badge>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-700 text-center font-bold">
-                      {quotation.items?.length || 0}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-primary-600 text-right font-black">
-                      {quotation.total ? quotation.total.toFixed(2) : '0.00'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="text-primary-600 hover:text-primary-800 flex items-center justify-end font-bold transition-colors">
-                        {quotation.status === 'DRAFT' ? 'Edit Draft' : 'View Details'}
-                        <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </Card>
+                    </div>
+                  </div>
+                  
+                  <div className="px-5 py-3 border-t border-slate-100 bg-slate-50 rounded-b-xl flex justify-between items-center group-hover:bg-primary-50 transition-colors">
+                    <span className="text-sm font-medium text-slate-500">Click to view</span>
+                    <div className="flex items-center text-sm font-bold text-primary-600 group-hover:text-primary-700">
+                      {quotation.status === 'DRAFT' ? 'Edit Draft' : 'View Details'} 
+                      <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

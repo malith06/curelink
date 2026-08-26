@@ -206,7 +206,10 @@ const PharmacyRequestDetailsPage = () => {
         <div className="p-6 md:p-8 bg-slate-50 border-b border-slate-100 flex flex-col md:flex-row justify-between md:items-center gap-4">
           <div className="space-y-1">
             <div className="flex items-center space-x-3">
-              <h2 className="text-xl font-bold text-slate-900">Request #{request._id.substring(request._id.length - 6).toUpperCase()}</h2>
+              <h2 className="text-xl font-bold text-slate-900">{request.customerId?.fullName || 'Customer'}'s Request</h2>
+              <span className="text-slate-500 font-bold bg-white border border-slate-200 px-2 py-0.5 rounded text-sm shadow-sm">
+                #{request._id.substring(request._id.length - 6).toUpperCase()}
+              </span>
               <Badge variant="default">{request.status.replace(/_/g, ' ')}</Badge>
             </div>
             <p className="text-slate-500 font-medium flex items-center">

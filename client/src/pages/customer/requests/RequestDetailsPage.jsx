@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Send, Search, LayoutGrid, List } from 'lucide-react';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
+import { ArrowLeft, Send, Search, LayoutGrid, List, Plus, Minus, Trash2 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import requestService from '../../../features/requests/requestService';
 import quotationService from '../../../features/quotations/quotationService';
@@ -16,6 +16,7 @@ import Skeleton from '../../../components/ui/Skeleton';
 const RequestDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [request, setRequest] = useState(null);
   const [quotations, setQuotations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -36,9 +37,12 @@ const RequestDetailsPage = () => {
 
   useEffect(() => {
     fetchRequest();
-    // Load nearby pharmacies just in case they want to submit
-    fetchNearbyPharmacies();
-  }, [id]);
+    
+    // Check for preselected pharmacy
+    if (location.state?.preselectedPharmacyId) {
+      setSelectedPharmacyIds([location.state.preselectedPharmacyId]);
+    }
+  }, [id, location.state]);
 
   const fetchRequest = async () => {
     try {
@@ -49,6 +53,10 @@ const RequestDetailsPage = () => {
       if (res.data.status !== 'DRAFT') {
         const qRes = await quotationService.getRequestQuotations(id);
         setQuotations(Array.isArray(qRes.data) ? qRes.data : (qRes.data?.quotations || []));
+      } else {
+        // If draft, load nearby pharmacies that have the requested items
+        const medicineIds = res.data.items?.map(i => i.medicineId?._id || i.medicineId).join(',');
+        fetchNearbyPharmacies(medicineIds);
       }
     } catch (error) {
       toast.error("Failed to fetch request details");
@@ -58,10 +66,14 @@ const RequestDetailsPage = () => {
     }
   };
 
-  const fetchNearbyPharmacies = async () => {
+  const fetchNearbyPharmacies = async (medicineIds) => {
     try {
       // In a real app we'd use geolocation. For now we just fetch all approved pharmacies.
-      const res = await api.get('/pharmacies/nearby', { params: { lat: 0, lng: 0, radius: 50000000 }}); 
+      const params = { lat: 0, lng: 0, radius: 50000000 };
+      if (medicineIds) {
+        params.medicineIds = medicineIds;
+      }
+      const res = await api.get('/pharmacies/nearby', { params }); 
       setPharmacies(res.data.data || res.data || []);
     } catch (err) {
       console.log('Could not load pharmacies');
@@ -98,6 +110,35 @@ const RequestDetailsPage = () => {
       fetchRequest();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to add item');
+    }
+  };
+
+  const handleUpdateQuantity = async (medicineId, newQuantity) => {
+    if (newQuantity < 1) return;
+    try {
+      await requestService.updateRequestItem(id, medicineId, { quantity: newQuantity });
+      // Update local state for immediate feedback
+      setRequest(prev => ({
+        ...prev,
+        items: prev.items.map(item => 
+          (item.medicineId?._id === medicineId || item.medicineId === medicineId)
+            ? { ...item, quantity: newQuantity }
+            : item
+        )
+      }));
+    } catch (err) {
+      toast.error('Failed to update quantity');
+      fetchRequest(); // Revert on failure
+    }
+  };
+
+  const handleRemoveItem = async (medicineId) => {
+    try {
+      await requestService.removeRequestItem(id, medicineId);
+      toast.success('Item removed');
+      fetchRequest();
+    } catch (err) {
+      toast.error('Failed to remove item');
     }
   };
 
@@ -187,22 +228,59 @@ const RequestDetailsPage = () => {
         </div>
 
         <CardContent className="p-6">
-          <h3 className="text-lg font-semibold text-slate-900 mb-4">Requested Items</h3>
+          <div className="flex items-center gap-2 mb-4">
+            {isDraft && <span className="bg-primary-100 text-primary-700 w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold">1</span>}
+            <h3 className="text-lg font-semibold text-slate-900">Requested Items</h3>
+          </div>
           
           {/* Item List */}
           {request.items && request.items.length > 0 ? (
             <ul className="divide-y divide-slate-100 border border-slate-200 rounded-xl mb-8 overflow-hidden">
-              {request.items.map((item, idx) => (
-                <li key={idx} className="p-4 flex justify-between items-center bg-white hover:bg-slate-50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <span className="font-semibold text-slate-900">{item.medicineSnapshot?.name || item.medicineId?.name || 'Medicine'}</span>
-                    <span className="text-slate-600 text-sm bg-slate-100 px-2.5 py-0.5 rounded-full font-medium">Qty: {item.quantity}</span>
-                  </div>
-                  {item.prescriptionRequired && (
-                    <span className="text-xs bg-rose-50 text-rose-700 px-2 py-1 rounded-md border border-rose-100 font-medium">Rx Required</span>
-                  )}
-                </li>
-              ))}
+              {request.items.map((item, idx) => {
+                const medId = item.medicineId?._id || item.medicineId;
+                return (
+                  <li key={idx} className="p-4 flex flex-col sm:flex-row sm:justify-between sm:items-center bg-white hover:bg-slate-50 transition-colors gap-4">
+                    <div className="flex items-center gap-3">
+                      <span className="font-semibold text-slate-900">{item.medicineSnapshot?.name || item.medicineId?.name || 'Medicine'}</span>
+                      {item.prescriptionRequired && (
+                        <span className="text-xs bg-rose-50 text-rose-700 px-2 py-1 rounded-md border border-rose-100 font-medium whitespace-nowrap">Rx Required</span>
+                      )}
+                    </div>
+                    
+                    {isDraft ? (
+                      <div className="flex items-center gap-4 self-end sm:self-auto">
+                        <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden bg-slate-50">
+                          <button 
+                            onClick={() => handleUpdateQuantity(medId, item.quantity - 1)}
+                            disabled={item.quantity <= 1}
+                            className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 disabled:opacity-50 transition-colors"
+                          >
+                            <Minus className="w-4 h-4" />
+                          </button>
+                          <span className="w-10 text-center font-medium text-slate-900 text-sm">{item.quantity}</span>
+                          <button 
+                            onClick={() => handleUpdateQuantity(medId, item.quantity + 1)}
+                            className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <button 
+                          onClick={() => handleRemoveItem(medId)}
+                          className="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors"
+                          title="Remove item"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="text-slate-600 text-sm bg-slate-100 px-3 py-1 rounded-full font-medium self-end sm:self-auto">
+                        Qty: {item.quantity}
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           ) : (
             <div className="text-center p-8 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50 mb-8">
@@ -260,38 +338,56 @@ const RequestDetailsPage = () => {
               </div>
             </div>
           )}
-          {/* Draft Mode: Prescription Upload */}
-          {isDraft && request.prescriptionRequired && !request.prescriptionId && (
-            <div className="bg-rose-50 border border-rose-100 rounded-xl p-6 mb-8 mt-4">
-              <h4 className="font-semibold text-rose-900 mb-2">Prescription Required</h4>
-              <p className="text-rose-700 text-sm mb-4">One or more items in your request require a valid doctor's prescription. Please upload it to continue.</p>
-              
-              <div className="flex items-center gap-4">
-                <Input
-                  type="file"
-                  accept="image/*,.pdf"
-                  onChange={handlePrescriptionUpload}
-                  disabled={uploadingPrescription}
-                  className="w-full sm:w-auto bg-white"
-                />
-                {uploadingPrescription && <span className="text-rose-600 text-sm font-medium">Uploading...</span>}
-              </div>
-            </div>
-          )}
 
-          {isDraft && request.prescriptionId && (
-            <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-6 mb-8 mt-4 flex items-center justify-between">
-              <div>
-                <h4 className="font-semibold text-emerald-900 mb-1">Prescription Attached</h4>
-                <p className="text-emerald-700 text-sm">Your prescription has been securely uploaded and will be sent to pharmacies.</p>
-              </div>
-              <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Verified</span>
+
+          {/* Prescription Section */}
+          <div className="mt-8 border-t border-slate-100 pt-8">
+            <div className="flex items-center gap-2 mb-4">
+              {isDraft && <span className="bg-primary-100 text-primary-700 w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold">2</span>}
+              <h3 className="text-lg font-semibold text-slate-900">Prescription</h3>
             </div>
-          )}
+            
+            {request.prescriptionRequired && !request.prescriptionId && (
+              <div className="bg-rose-50 border border-rose-100 rounded-xl p-6 mb-8 mt-4">
+                <h4 className="font-semibold text-rose-900 mb-2">Prescription Required</h4>
+                <p className="text-rose-700 text-sm mb-4">One or more items in your request require a valid doctor's prescription. Please upload it to continue.</p>
+                
+                <div className="flex items-center gap-4">
+                  <Input
+                    type="file"
+                    accept="image/*,.pdf"
+                    onChange={handlePrescriptionUpload}
+                    disabled={uploadingPrescription}
+                    className="w-full sm:w-auto bg-white"
+                  />
+                  {uploadingPrescription && <span className="text-rose-600 text-sm font-medium">Uploading...</span>}
+                </div>
+              </div>
+            )}
+
+            {request.prescriptionId && (
+              <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-6 mb-8 mt-4 flex items-center justify-between">
+                <div>
+                  <h4 className="font-semibold text-emerald-900 mb-1">Prescription Attached</h4>
+                  <p className="text-emerald-700 text-sm">Your prescription has been securely uploaded and will be sent to pharmacies.</p>
+                </div>
+                <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Verified</span>
+              </div>
+            )}
+          </div>
+
           {/* Draft Mode: Submit to Pharmacies */}
-          {isDraft && request.items.length > 0 && (
-            <div className="border-t border-slate-200 pt-8 mt-4">
-              <h4 className="font-semibold text-slate-900 mb-2 text-lg">Select Pharmacies</h4>
+          {isDraft ? (
+            <div className="mt-8 border-t border-slate-100 pt-8">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <span className="bg-primary-100 text-primary-700 w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold">3</span>
+                  <h3 className="text-lg font-semibold text-slate-900">Select Pharmacies</h3>
+                </div>
+                <span className="text-sm font-medium text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
+                  {selectedPharmacyIds.length} Selected
+                </span>
+              </div>
               <p className="text-slate-600 text-sm mb-6">Choose up to 5 nearby pharmacies to send this request to for quotations.</p>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
@@ -311,7 +407,7 @@ const RequestDetailsPage = () => {
                       }}
                     />
                     <div className="ml-3">
-                      <span className="block text-sm font-bold text-slate-900">{pharmacy.businessName}</span>
+                      <span className="block text-sm font-bold text-slate-900">{pharmacy.name || pharmacy.businessName || 'Unknown Pharmacy'}</span>
                       <span className="block text-xs font-medium text-slate-500 mt-0.5">{pharmacy.address?.city || 'Unknown location'}</span>
                     </div>
                   </label>
@@ -330,10 +426,8 @@ const RequestDetailsPage = () => {
                 </Button>
               </div>
             </div>
-          )}
-
-          {/* Non-Draft Mode: Quotations */}
-          {!isDraft && (
+          ) : (
+            /* Non-Draft Mode: Quotations */
             <div className="border-t border-slate-200 pt-8 mt-4">
               <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
                 <div>
@@ -371,7 +465,7 @@ const RequestDetailsPage = () => {
                           <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Feature</th>
                           {quotations.map(q => (
                             <th key={q._id} className="px-6 py-4 text-center text-sm font-bold text-slate-900 border-l border-slate-200">
-                              {q.pharmacyId?.businessName}
+                              {q.pharmacyId?.name || q.pharmacyId?.businessName || 'Unknown Pharmacy'}
                               <div className="text-xs font-medium text-slate-500 mt-1">{q.pharmacyId?.address?.city}</div>
                             </th>
                           ))}
@@ -472,7 +566,7 @@ const RequestDetailsPage = () => {
                         <div className="flex justify-between items-start mb-4 border-b border-slate-100 pb-4">
                           <div>
                             <h4 className="font-bold text-slate-900 text-lg leading-tight">
-                              {quotation.pharmacyId?.businessName || 'Pharmacy'}
+                              {quotation.pharmacyId?.name || quotation.pharmacyId?.businessName || 'Pharmacy'}
                             </h4>
                             <p className="text-xs font-medium text-slate-500 mt-1">
                               {quotation.pharmacyId?.address?.city || 'Location Unknown'} • {quotation.preparationMinutes}m prep

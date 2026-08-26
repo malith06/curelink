@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { Sparkles } from 'lucide-react';
 import requestService from '../../../features/requests/requestService';
@@ -8,15 +8,36 @@ import Button from '../../../components/ui/Button';
 
 const CreateRequestPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [loading, setLoading] = useState(false);
 
   const handleStartRequest = async () => {
     try {
       setLoading(true);
-      // Start a draft request and navigate to its details page to add items
+      // Start a draft request
       const res = await requestService.createDraftRequest();
+      const draftId = res.data._id;
+      
+      // If there are preselected medicines from the nearby pharmacies search, add them automatically
+      if (location.state?.preselectedMedicines?.length > 0) {
+        for (const med of location.state.preselectedMedicines) {
+          try {
+            await requestService.addItemToRequest(draftId, {
+              medicineId: med._id,
+              quantity: 1,
+              prescriptionRequired: med.prescriptionRequired || false
+            });
+          } catch (err) {
+            console.error('Failed to pre-add medicine', med.name, err);
+          }
+        }
+      }
+
       toast.success('Draft request created!');
-      navigate(`/customer/requests/${res.data._id}`);
+      // Navigate to its details page to continue, passing the preselected pharmacy
+      navigate(`/customer/requests/${draftId}`, { 
+        state: { preselectedPharmacyId: location.state?.preselectedPharmacyId } 
+      });
     } catch (error) {
       toast.error('Failed to create request');
     } finally {

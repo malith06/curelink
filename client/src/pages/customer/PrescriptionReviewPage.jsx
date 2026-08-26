@@ -91,7 +91,7 @@ const PrescriptionReviewPage = () => {
   return (
     <div className="mx-auto px-4 py-12 max-w-4xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Review Detected Medicines</h1>
+        <h1 className="text-3xl font-bold text-[#0B1354] tracking-tight">Review Detected Medicines</h1>
         <p className="mt-2 text-slate-600">Please verify the AI-detected medicines and adjust quantities if necessary.</p>
       </div>
       
@@ -102,7 +102,7 @@ const PrescriptionReviewPage = () => {
         </div>
       )}
 
-      <Card className="mb-8">
+      <Card className="mb-8 border-t-4 border-t-[#0B1354] shadow-sm rounded-2xl">
         <CardHeader>
           <CardTitle>Extracted Items</CardTitle>
           <CardDescription>

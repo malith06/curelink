@@ -145,11 +145,11 @@ const PharmacyProfilePage = () => {
     <div className="max-w-5xl mx-auto px-4 py-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div className="flex items-center gap-4">
-           <div className="w-14 h-14 bg-primary-100 rounded-2xl flex items-center justify-center">
-              <Store className="w-7 h-7 text-primary-600" />
+           <div className="w-14 h-14 bg-[#0B1354]/10 rounded-2xl flex items-center justify-center">
+              <Store className="w-7 h-7 text-[#0B1354]" />
            </div>
            <div>
-             <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Pharmacy Profile</h1>
+             <h1 className="text-3xl font-bold text-[#0B1354] tracking-tight">Pharmacy Profile</h1>
              <p className="mt-1 text-slate-500 font-medium">
                Manage your pharmacy details, registration numbers, and operational settings.
              </p>
@@ -159,7 +159,7 @@ const PharmacyProfilePage = () => {
           <Badge variant={
             profile.verificationStatus === 'APPROVED' ? 'success' : 
             profile.verificationStatus === 'PENDING' ? 'warning' : 'error'
-          } className="px-4 py-1.5 shadow-sm">
+          } className="px-4 py-1.5 shadow-sm font-semibold">
             {profile.verificationStatus}
           </Badge>
         )}
@@ -167,7 +167,7 @@ const PharmacyProfilePage = () => {
 
       {getStatusAlert()}
 
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-sm border-t-4 border-t-[#0B1354] border-l border-r border-b border-gray-100 overflow-hidden mb-8">
         <PharmacyProfileForm initialData={profile} onSuccess={handleSuccess} />
       </div>
     </div>

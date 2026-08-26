@@ -71,6 +71,28 @@ const PharmacyOrderDetailsPage = () => {
     }
   };
 
+  const handleRejectOrder = async () => {
+    const reason = window.prompt("Please provide a reason for rejecting this order (required):");
+    if (reason === null) return;
+    
+    if (reason.trim().length < 5) {
+      toast.error("Rejection reason must be at least 5 characters");
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      await orderService.rejectOrder(id, reason);
+      toast.success('Order rejected successfully');
+      fetchOrderDetails();
+    } catch (error) {
+      console.error('Failed to reject order', error);
+      toast.error(error.response?.data?.message || 'Failed to reject order');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="max-w-5xl mx-auto px-4 py-8 space-y-8">
@@ -286,10 +308,10 @@ const PharmacyOrderDetailsPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Customer Details</p>
-                  <p className="font-bold text-slate-900 text-lg">{order.customerSnapshot?.name}</p>
+                  <p className="font-bold text-slate-900 text-lg">{order.customerSnapshot?.fullName || 'Customer'}</p>
                   <p className="font-medium text-slate-700 mt-2 flex items-center">
                     <User className="w-4 h-4 mr-2 text-slate-400" />
-                    {order.customerSnapshot?.phone}
+                    {order.customerSnapshot?.phone || 'No phone'}
                   </p>
                 </div>
                 
@@ -341,7 +363,7 @@ const PharmacyOrderDetailsPage = () => {
               {(order.orderStatus === ORDER_STATUS.PAYMENT_CONFIRMED || order.orderStatus === ORDER_STATUS.PHARMACY_ACCEPTED) && (
                 <div className="pt-6 border-t border-slate-100">
                   <Button
-                    onClick={() => handleUpdateStatus(ORDER_STATUS.CANCELLED)} 
+                    onClick={handleRejectOrder} 
                     disabled={actionLoading}
                     variant="outline"
                     fullWidth

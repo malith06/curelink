@@ -45,7 +45,7 @@ const PrescriptionUploadPage = () => {
   return (
     <div className="mx-auto px-4 py-12 max-w-2xl">
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Upload Prescription</h1>
+        <h1 className="text-3xl font-bold text-[#0B1354] tracking-tight">Upload Prescription</h1>
         <p className="mt-2 text-slate-600">
           Upload a clear image or PDF for request #{requestId}. Our AI will extract the medicine details.
         </p>
@@ -53,11 +53,11 @@ const PrescriptionUploadPage = () => {
       
       {error && <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-xl border border-red-100 text-sm font-medium">{error}</div>}
       
-      <Card>
+      <Card className="border-t-4 border-t-[#0B1354] shadow-sm rounded-2xl">
         <CardContent className="p-8">
           <form onSubmit={handleUpload} className="space-y-6">
             
-            <div className="border-2 border-dashed border-slate-300 rounded-2xl p-12 text-center hover:bg-slate-50 transition-colors relative">
+            <div className="border-2 border-dashed border-slate-300 rounded-2xl p-12 text-center hover:bg-slate-50 hover:border-[#0B1354]/50 transition-colors relative group">
               <input 
                 type="file" 
                 accept=".jpg,.jpeg,.png,.pdf" 
@@ -70,12 +70,12 @@ const PrescriptionUploadPage = () => {
                     <div className="p-3 bg-emerald-100 text-emerald-600 rounded-full">
                       <CheckCircle className="w-8 h-8" />
                     </div>
-                    <p className="text-sm font-medium text-slate-900">{file.name}</p>
+                    <p className="text-sm font-medium text-[#0B1354]">{file.name}</p>
                     <p className="text-xs text-slate-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
                   </>
                 ) : (
                   <>
-                    <div className="p-3 bg-primary-50 text-primary-600 rounded-full">
+                    <div className="p-3 bg-[#0B1354]/10 text-[#0B1354] rounded-full group-hover:scale-110 transition-transform">
                       <UploadCloud className="w-8 h-8" />
                     </div>
                     <p className="text-sm font-medium text-slate-900">Click or drag file to upload</p>

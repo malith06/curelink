@@ -3,6 +3,22 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recha
 
 const COLORS = ['#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#64748b'];
 
+const getColorForLabel = (label, index) => {
+  if (!label) return COLORS[index % COLORS.length];
+  const lbl = String(label).toUpperCase();
+  
+  // Specific user requests:
+  if (lbl === 'COMPLETED') return '#10b981'; // Green (kola)
+  if (lbl.includes('REJECTED') || lbl.includes('CANCELLED') || lbl.includes('FAILED')) return '#ef4444'; // Red (rathu)
+  if (lbl.includes('PENDING_PAYMENT') || lbl.includes('COD_PENDING') || lbl.includes('PENDING')) return '#f59e0b'; // Orange (thabili)
+  if (lbl.includes('DELIVERED')) return '#3b82f6'; // Blue (nil)
+  
+  // Defaults for others
+  if (lbl.includes('PAID') || lbl.includes('COD_COLLECTED') || lbl === 'APPROVED' || lbl === 'SUCCESS') return '#10b981'; // Green
+  
+  return COLORS[index % COLORS.length];
+};
+
 const StatusChart = ({ data, nameKey = 'label', dataKey = 'value' }) => {
   if (!data || data.length === 0) {
     return (
@@ -27,7 +43,7 @@ const StatusChart = ({ data, nameKey = 'label', dataKey = 'value' }) => {
             nameKey={nameKey}
           >
             {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              <Cell key={`cell-${index}`} fill={getColorForLabel(entry[nameKey], index)} />
             ))}
           </Pie>
           <Tooltip

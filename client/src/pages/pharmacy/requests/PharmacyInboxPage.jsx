@@ -29,7 +29,7 @@ const PharmacyInboxPage = () => {
   }, []);
 
   const filteredRequests = requests.filter(req => 
-    req.customerId?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    req.customerId?.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     req._id.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -48,9 +48,14 @@ const PharmacyInboxPage = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Request Inbox</h1>
-          <p className="mt-2 text-slate-600 font-medium">Review and provide quotations for customer medicine requests.</p>
+        <div className="flex items-center gap-4">
+           <div className="w-14 h-14 bg-[#0B1354]/10 rounded-2xl flex items-center justify-center">
+              <Inbox className="w-7 h-7 text-[#0B1354]" />
+           </div>
+           <div>
+             <h1 className="text-3xl font-bold text-[#0B1354] tracking-tight">Request Inbox</h1>
+             <p className="mt-1 text-slate-500 font-medium">Review and provide quotations for customer medicine requests.</p>
+           </div>
         </div>
         <div className="w-full md:w-72">
           <Input 
@@ -75,49 +80,49 @@ const PharmacyInboxPage = () => {
           description={`No requests matching "${searchTerm}".`}
         />
       ) : (
-        <Card className="overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-200">
-              <thead className="bg-slate-50">
-                <tr>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Customer / Date</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Request Info</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Action</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-slate-100">
-                {filteredRequests.map(req => (
-                  <tr key={req._id} className="hover:bg-slate-50 transition-colors group cursor-pointer" onClick={() => navigate(`/pharmacy/requests/${req._id}`)}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-bold text-slate-900">{req.customerId?.name || 'Customer'}</div>
-                      <div className="text-xs font-medium text-slate-500 mt-1 flex items-center">
-                        <Clock className="w-3 h-3 mr-1" />
-                        {new Date(req.createdAt).toLocaleDateString()}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-slate-900 mb-1">
-                        #{req._id.substring(req._id.length - 6).toUpperCase()}
-                      </div>
-                      <div className="text-xs font-medium text-slate-500">
-                        {req.items?.length || 0} items requested
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <Badge variant="warning">Action Required</Badge>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="text-primary-600 hover:text-primary-800 font-bold flex items-center justify-end transition-colors">
-                        Review & Quote <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredRequests.map(req => (
+            <Card 
+              key={req._id} 
+              className="flex flex-col hover:border-primary-300 hover:shadow-md transition-all cursor-pointer group"
+              onClick={() => navigate(`/pharmacy/requests/${req._id}`)}
+            >
+              <div className="p-5 flex-1">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 className="font-bold text-slate-900 text-lg group-hover:text-primary-700 transition-colors">
+                      {req.customerId?.fullName || 'Customer'}
+                    </h3>
+                    <div className="flex items-center text-xs text-slate-500 mt-1 gap-1">
+                      <Clock className="w-3.5 h-3.5" />
+                      {new Date(req.createdAt).toLocaleDateString()}
+                    </div>
+                  </div>
+                  <Badge variant="warning">Action Required</Badge>
+                </div>
+                
+                <div className="space-y-3 mt-6">
+                  <div className="flex items-center gap-3 text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                    <div className="bg-white p-1.5 rounded-md shadow-sm border border-slate-100">
+                      <span className="font-bold text-slate-900">#{req._id.substring(req._id.length - 6).toUpperCase()}</span>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-slate-900">{req.items?.length || 0}</span>
+                      <span className="text-sm ml-1">Medicines Requested</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="px-5 py-3 border-t border-slate-100 bg-slate-50 rounded-b-xl flex justify-between items-center group-hover:bg-primary-50 transition-colors">
+                <span className="text-sm font-medium text-slate-500">Click to review</span>
+                <div className="flex items-center text-sm font-bold text-primary-600 group-hover:text-primary-700">
+                  Review & Quote <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
       )}
     </div>
   );

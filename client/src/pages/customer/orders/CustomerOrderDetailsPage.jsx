@@ -76,6 +76,7 @@ const CustomerOrderDetailsPage = () => {
       case PAYMENT_STATUS.PENDING: return 'warning';
       case PAYMENT_STATUS.PAID: return 'success';
       case PAYMENT_STATUS.COD_PENDING: return 'info';
+      case PAYMENT_STATUS.COD_COLLECTED: return 'success';
       case PAYMENT_STATUS.FAILED: return 'danger';
       case PAYMENT_STATUS.REFUNDED: return 'slate';
       default: return 'slate';

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, MapPin, Plus, Box, Bell, ShoppingBag, FileSignature } from 'lucide-react';
+import { FileText, MapPin, Plus, Box, Bell, ShoppingBag, FileSignature, Home } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import dashboardService from '../../features/dashboards/dashboardService';
 import StatCard from '../../components/dashboard/StatCard';
@@ -44,9 +44,16 @@ const CustomerDashboardPage = () => {
 
   return (
     <div className="mx-auto px-4 py-8 max-w-7xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Dashboard</h1>
-        <p className="mt-1 text-slate-600">Welcome back, {user?.name || 'Customer'}</p>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div className="flex items-center gap-4">
+           <div className="w-14 h-14 bg-[#0B1354]/10 rounded-2xl flex items-center justify-center">
+              <Home className="w-7 h-7 text-[#0B1354]" />
+           </div>
+           <div>
+             <h1 className="text-3xl font-bold text-[#0B1354] tracking-tight">Dashboard</h1>
+             <p className="mt-1 text-slate-500 font-medium">Welcome back, {user?.name || 'Customer'}</p>
+           </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
@@ -54,7 +61,7 @@ const CustomerDashboardPage = () => {
           title="Active Requests" 
           value={data?.summary?.activeRequests || 0} 
           icon={FileText} 
-          colorClass="text-blue-600 bg-blue-100" 
+          colorClass="text-[#0B1354] bg-[#0B1354]/10" 
           linkText="View Requests"
           linkUrl="/customer/requests"
         />
@@ -62,7 +69,7 @@ const CustomerDashboardPage = () => {
           title="Quotations Received" 
           value={data?.summary?.quotationsReceived || 0} 
           icon={FileSignature} 
-          colorClass="text-indigo-600 bg-indigo-100" 
+          colorClass="text-[#0B1354] bg-[#0B1354]/10" 
         />
         <StatCard 
           title="Active Orders" 
@@ -92,7 +99,7 @@ const CustomerDashboardPage = () => {
               </Link>
             }
           >
-            <Card>
+            <Card className="border-t-4 border-t-[#0B1354] rounded-2xl shadow-sm">
               {data?.activeOrders?.length > 0 ? (
                 <ul className="divide-y divide-slate-100">
                   {data.activeOrders.map(order => (

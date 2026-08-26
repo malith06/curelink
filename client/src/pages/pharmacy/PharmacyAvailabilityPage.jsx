@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import availabilityApi from '../../features/availability/availabilityApi';
-import api from '../../api/axiosClient'; // Direct call for medicine search
+import api from '../../api/axiosClient'; 
 import pharmacyService from '../../features/pharmacy/pharmacyService';
 import AvailabilityStatusBadge from '../../components/availability/AvailabilityStatusBadge';
+import { Search, Edit2, Plus, PackageX, Package, Check, X } from 'lucide-react';
 
 const STATUS_OPTIONS = [
   { value: 'AVAILABLE', label: 'Available', color: 'bg-green-100 text-green-800' },
@@ -17,13 +18,11 @@ const PharmacyAvailabilityPage = () => {
   const [availabilities, setAvailabilities] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // Search & Catalog state
   const [allMedicines, setAllMedicines] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   
-  // Edit state
   const [editingItem, setEditingItem] = useState(null);
 
   useEffect(() => {
@@ -37,11 +36,9 @@ const PharmacyAvailabilityPage = () => {
       setProfile(profileData.data);
 
       if (profileData.data?.verificationStatus === 'APPROVED') {
-        // Fetch current availabilities
         const availData = await availabilityApi.getMyAvailability({ limit: 50 });
         setAvailabilities(Array.isArray(availData.data) ? availData.data : []);
         
-        // Fetch full medicine catalog
         try {
           const medsRes = await api.get('/medicines', { params: { limit: 100 } });
           setAllMedicines(medsRes.data?.data?.items || medsRes.data?.items || []);
@@ -56,20 +53,33 @@ const PharmacyAvailabilityPage = () => {
     }
   };
 
-  const handleSearchMedicines = async (e) => {
-    e.preventDefault();
-    if (!searchQuery.trim()) return;
-    
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      if (searchQuery.trim()) {
+        fetchSearchResults(searchQuery);
+      } else {
+        setSearchResults([]);
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery]);
+
+  const fetchSearchResults = async (query) => {
     try {
       setIsSearching(true);
-      // Assuming public medicine search is available at GET /medicines?search=...
-      const res = await api.get('/medicines', { params: { search: searchQuery } });
+      const res = await api.get('/medicines', { params: { search: query, limit: 20 } });
       setSearchResults(res.data.data?.items || res.data.items || []);
     } catch (err) {
-      toast.error('Failed to search medicines');
+      console.error('Failed to search medicines', err);
     } finally {
       setIsSearching(false);
     }
+  };
+
+  const handleSearchMedicines = (e) => {
+    e.preventDefault();
+    // Handled by debounce useEffect
   };
 
   const handleStartEdit = (medicine, existingRecord = null) => {
@@ -92,173 +102,228 @@ const PharmacyAvailabilityPage = () => {
       setEditingItem(null);
       setSearchQuery('');
       setSearchResults([]);
-      fetchData(); // Refresh list
+      fetchData(); 
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to update availability');
     }
   };
 
   if (loading) {
-    return <div className="p-8 text-center text-gray-500">Loading...</div>;
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#0B1354]"></div>
+      </div>
+    );
   }
 
   if (profile?.verificationStatus !== 'APPROVED') {
     return (
       <div className="container mx-auto px-4 py-8 max-w-4xl text-center">
-        <div className="bg-yellow-50 text-yellow-800 p-6 rounded-lg border border-yellow-200">
-          <h2 className="text-xl font-bold mb-2">Approval Required</h2>
-          <p>Your pharmacy must be approved before you can publish medicine availability.</p>
+        <div className="bg-yellow-50 text-yellow-800 p-8 rounded-2xl shadow-sm border border-yellow-200 flex flex-col items-center">
+          <PackageX className="w-16 h-16 mb-4 opacity-80" />
+          <h2 className="text-2xl font-bold mb-2">Approval Required</h2>
+          <p className="text-yellow-700">Your pharmacy must be approved before you can manage and publish medicine availability.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-5xl">
-      <h1 className="text-3xl font-bold text-gray-900 mb-6">Medicine Availability Management</h1>
+    <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <div className="flex items-center gap-3 mb-8">
+        <div className="bg-[#0B1354]/10 p-3 rounded-xl text-[#0B1354]">
+          <Package className="w-6 h-6" />
+        </div>
+        <h1 className="text-3xl font-bold text-[#0B1354]">Inventory Management</h1>
+      </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
         {/* Left Col: Search & Add */}
-        <div className="lg:col-span-1 space-y-6">
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h2 className="text-xl font-semibold mb-4 text-gray-800">Medicine Catalog</h2>
-            <form onSubmit={handleSearchMedicines} className="flex gap-2 mb-4">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  if (!e.target.value.trim()) setSearchResults([]);
-                }}
-                placeholder="Search by medicine name..."
-                className="flex-1 px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 outline-none"
-              />
+        <div className="lg:col-span-4 space-y-6">
+          <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col h-[600px]">
+            <h2 className="text-lg font-semibold mb-4 text-gray-800 flex items-center gap-2">
+              Medicine Catalog
+            </h2>
+            <form onSubmit={handleSearchMedicines} className="mb-4 flex flex-col gap-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    if (!e.target.value.trim()) setSearchResults([]);
+                  }}
+                  placeholder="Search medicines..."
+                  className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0B1354]/20 focus:border-[#0B1354] outline-none transition-all"
+                />
+              </div>
               <button 
                 type="submit"
                 disabled={isSearching}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                className="w-full py-3 bg-[#0B1354] text-white font-medium rounded-xl hover:bg-[#0a1040] disabled:opacity-50 transition-colors flex justify-center items-center gap-2"
               >
-                Search
+                {isSearching ? 'Searching...' : 'Find Medicine'}
               </button>
             </form>
 
-            {(searchQuery.trim() ? searchResults : allMedicines).length > 0 ? (
-              <ul className="divide-y border rounded max-h-[500px] overflow-y-auto">
-                {(searchQuery.trim() ? searchResults : allMedicines).map((med) => (
-                  <li key={med._id} className="p-3 flex justify-between items-center hover:bg-gray-50">
-                    <div>
-                      <p className="font-medium text-gray-900">{med.name}</p>
-                      {med.brand && <p className="text-xs text-gray-500">{med.brand}</p>}
-                    </div>
-                    <button
-                      onClick={() => handleStartEdit(med)}
-                      className="text-sm px-3 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200"
-                    >
-                      Update
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="p-4 text-center text-gray-500 text-sm border rounded bg-gray-50">
-                {searchQuery.trim() ? 'No medicines found matching your search.' : 'No medicines available in the catalog.'}
-              </div>
-            )}
+            <div className="flex-1 overflow-y-auto pr-1 -mr-1 custom-scrollbar">
+              {(searchQuery.trim() ? searchResults : allMedicines).length > 0 ? (
+                <ul className="space-y-2">
+                  {(searchQuery.trim() ? searchResults : allMedicines).map((med) => (
+                    <li key={med._id} className="p-3 flex justify-between items-center rounded-xl hover:bg-gray-50 border border-transparent hover:border-gray-100 transition-all group">
+                      <div className="flex-1 min-w-0 pr-3">
+                        <p className="font-medium text-gray-900 truncate">{med.name}</p>
+                        {med.brand && <p className="text-xs text-gray-500 truncate">{med.brand}</p>}
+                      </div>
+                      <button
+                        onClick={() => handleStartEdit(med)}
+                        title="Update Availability"
+                        className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-600 rounded-full group-hover:bg-blue-600 group-hover:text-white transition-colors"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-center text-gray-400 px-4">
+                  <Search className="w-8 h-8 mb-2 opacity-50" />
+                  <p className="text-sm">
+                    {searchQuery.trim() ? 'No medicines found matching your search.' : 'No medicines available in the catalog.'}
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Right Col: Current List & Edit Form */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-8 space-y-6">
           
           {editingItem && (
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-blue-200">
-              <h2 className="text-xl font-semibold mb-4 text-blue-900">
-                Updating: {editingItem.medicineName}
-              </h2>
-              <div className="space-y-4">
+            <div className="bg-white p-6 rounded-2xl shadow-sm border-t-4 border-t-[#0B1354] border-l border-r border-b border-gray-100">
+              <div className="flex justify-between items-start mb-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                  <select
-                    value={editingItem.status}
-                    onChange={(e) => setEditingItem({ ...editingItem, status: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 outline-none"
-                  >
-                    {STATUS_OPTIONS.map(opt => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
+                  <p className="text-sm font-medium text-blue-600 mb-1">Update Status For</p>
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    {editingItem.medicineName}
+                  </h2>
                 </div>
+                <button onClick={() => setEditingItem(null)} className="text-gray-400 hover:text-gray-600 p-1">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="space-y-5">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Private Notes (Optional)</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Availability Status</label>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {STATUS_OPTIONS.map(opt => (
+                      <label 
+                        key={opt.value} 
+                        className={`cursor-pointer border rounded-xl p-3 flex flex-col items-center text-center transition-all ${
+                          editingItem.status === opt.value 
+                            ? 'border-[#0B1354] bg-blue-50 ring-1 ring-[#0B1354]' 
+                            : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        <input 
+                          type="radio" 
+                          name="status" 
+                          value={opt.value} 
+                          checked={editingItem.status === opt.value}
+                          onChange={(e) => setEditingItem({ ...editingItem, status: e.target.value })}
+                          className="sr-only"
+                        />
+                        <span className={`text-xs font-semibold ${
+                          editingItem.status === opt.value ? 'text-[#0B1354]' : 'text-gray-600'
+                        }`}>
+                          {opt.label}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Internal Notes (Optional)</label>
                   <textarea
                     value={editingItem.notes}
                     onChange={(e) => setEditingItem({ ...editingItem, notes: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 outline-none h-24"
-                    placeholder="E.g., Out of stock until Friday"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0B1354]/20 focus:border-[#0B1354] outline-none h-24 transition-all resize-none"
+                    placeholder="E.g., Out of stock until Friday. Awaiting new shipment."
                     maxLength={300}
                   />
-                  <p className="text-xs text-gray-500 mt-1">This note is for internal use and will not be displayed to customers publicly. Price information should not be included here.</p>
+                  <p className="text-xs text-gray-500 mt-2">Private note for pharmacy staff. Customers will not see this.</p>
                 </div>
+                
                 <div className="flex justify-end gap-3 pt-2">
                   <button
                     onClick={() => setEditingItem(null)}
-                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-50"
+                    className="px-5 py-2.5 font-medium text-gray-600 rounded-xl hover:bg-gray-100 transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleSaveAvailability}
-                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                    className="px-6 py-2.5 bg-[#0B1354] text-white font-medium rounded-xl hover:bg-[#0a1040] shadow-sm transition-all flex items-center gap-2"
                   >
-                    Save Availability
+                    <Check className="w-4 h-4" />
+                    Confirm Update
                   </button>
                 </div>
               </div>
             </div>
           )}
 
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
-              <h2 className="text-lg font-semibold text-gray-800">Your Current Inventory Status</h2>
-              <span className="text-sm text-gray-500">{availabilities.length} records</span>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col min-h-[400px]">
+            <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+              <h2 className="text-lg font-semibold text-gray-800">Current Inventory Log</h2>
+              <span className="px-3 py-1 bg-blue-50 text-blue-700 text-sm font-medium rounded-full">
+                {availabilities.length} Records
+              </span>
             </div>
             
             {availabilities.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
-                You haven't published availability for any medicines yet.
+              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-gray-500">
+                <PackageX className="w-12 h-12 mb-3 text-gray-300" />
+                <p className="font-medium text-gray-700">No Inventory Published</p>
+                <p className="text-sm mt-1">Search the catalog on the left to add your first medicine.</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Medicine</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Updated</th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+              <div className="overflow-x-auto flex-1">
+                <table className="min-w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-gray-100">
+                      <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-white">Medicine</th>
+                      <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-white">Status</th>
+                      <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-white">Last Updated</th>
+                      <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-white text-right">Action</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="divide-y divide-gray-50 bg-white">
                     {availabilities.map((record) => {
-                      const statusOpt = STATUS_OPTIONS.find(s => s.value === record.status);
                       return (
-                        <tr key={record._id}>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {record.medicineId?.name || 'Unknown Medicine'}
+                        <tr key={record._id} className="hover:bg-blue-50/30 transition-colors group">
+                          <td className="px-6 py-4">
+                            <p className="text-sm font-semibold text-gray-900">{record.medicineId?.name || 'Unknown Medicine'}</p>
+                            {record.medicineId?.brand && <p className="text-xs text-gray-500">{record.medicineId.brand}</p>}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-6 py-4">
                             <AvailabilityStatusBadge status={record.status} />
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {new Date(record.lastUpdated || record.updatedAt).toLocaleDateString()}
+                          <td className="px-6 py-4 text-sm text-gray-500 font-medium">
+                            {new Date(record.lastUpdated || record.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <td className="px-6 py-4 text-right">
                             <button
                               onClick={() => handleStartEdit(null, record)}
-                              className="text-blue-600 hover:text-blue-900"
+                              className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-50 text-gray-500 hover:bg-blue-100 hover:text-blue-700 transition-colors"
+                              title="Edit Availability"
                             >
-                              Edit
+                              <Edit2 className="w-4 h-4" />
                             </button>
                           </td>
                         </tr>

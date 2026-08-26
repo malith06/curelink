@@ -6,7 +6,7 @@ import StatCard from '../../components/dashboard/StatCard';
 import DashboardSection from '../../components/dashboard/DashboardSection';
 import StatusChart from '../../components/dashboard/StatusChart';
 import TrendChart from '../../components/dashboard/TrendChart';
-import { Inbox, FileSignature, ShoppingBag, CheckCircle, DollarSign, Clock } from 'lucide-react';
+import { Inbox, FileSignature, ShoppingBag, CheckCircle, DollarSign, Clock, Store } from 'lucide-react';
 import { Card, CardContent } from '../../components/ui/Card';
 import StatusBadge from '../../components/ui/StatusBadge';
 import Skeleton from '../../components/ui/Skeleton';
@@ -56,17 +56,22 @@ const PharmacyDashboardPage = () => {
   return (
     <div className="mx-auto px-4 py-8 max-w-7xl">
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Pharmacy Dashboard</h1>
-          <p className="mt-1 text-slate-600">Overview for {user?.pharmacy?.name || 'your pharmacy'}</p>
+        <div className="flex items-center gap-3">
+          <div className="bg-[#0B1354]/10 p-3 rounded-xl text-[#0B1354]">
+            <Store className="w-6 h-6" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-[#0B1354] tracking-tight">Pharmacy Dashboard</h1>
+            <p className="mt-1 text-slate-500 font-medium">Overview for {user?.pharmacy?.name || 'your pharmacy'}</p>
+          </div>
         </div>
-        <div className="flex items-center bg-white border border-slate-200 rounded-lg p-1 shadow-sm">
+        <div className="flex items-center bg-white border border-slate-200 rounded-xl p-1 shadow-sm">
           <label htmlFor="range" className="text-sm font-medium text-slate-500 mx-3">Time Range:</label>
           <select
             id="range"
             value={range}
             onChange={handleRangeChange}
-            className="border-0 bg-transparent text-sm font-medium text-slate-900 focus:ring-0 cursor-pointer py-1.5 pl-2 pr-8"
+            className="border-0 bg-transparent text-sm font-medium text-slate-900 focus:ring-0 cursor-pointer py-1.5 pl-2 pr-8 outline-none"
           >
             <option value="7d">Last 7 Days</option>
             <option value="30d">Last 30 Days</option>
@@ -75,19 +80,19 @@ const PharmacyDashboardPage = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-5 mb-10">
         <StatCard 
           title="Incoming Requests" 
           value={data?.summary?.incomingRequests || 0} 
           icon={Inbox} 
-          colorClass="text-blue-600 bg-blue-100" 
+          colorClass="text-[#0B1354] bg-[#0B1354]/10" 
           linkUrl="/pharmacy/inbox"
         />
         <StatCard 
           title="Active Quotes" 
           value={data?.summary?.submittedQuotations || 0} 
           icon={FileSignature} 
-          colorClass="text-indigo-600 bg-indigo-100" 
+          colorClass="text-[#0B1354] bg-[#0B1354]/10" 
         />
         <StatCard 
           title="Active Orders" 
@@ -106,13 +111,13 @@ const PharmacyDashboardPage = () => {
           title="Gross Value (LKR)" 
           value={(data?.summary?.grossFulfilledOrderValue || 0).toLocaleString()} 
           icon={DollarSign} 
-          colorClass="text-green-600 bg-green-100" 
+          colorClass="text-emerald-600 bg-emerald-100" 
         />
         <StatCard 
           title="Avg Response (Min)" 
           value={data?.summary?.averageResponseMinutes || '-'} 
           icon={Clock} 
-          colorClass="text-purple-600 bg-purple-100" 
+          colorClass="text-[#0B1354] bg-[#0B1354]/10" 
         />
       </div>
 

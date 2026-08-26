@@ -9,6 +9,15 @@ const statusConfig = {
   SUSPENDED: { label: 'Suspended', variant: 'destructive' },
   
   // Request / Order Status
+  DRAFT: { label: 'Draft', variant: 'secondary' },
+  SUBMITTED: { label: 'Awaiting Quotes', variant: 'warning' },
+  QUOTATIONS_RECEIVED: { label: 'Quotations Received', variant: 'primary' },
+  QUOTATION_ACCEPTED: { label: 'Accepted', variant: 'success' },
+  CONVERTED_TO_ORDER: { label: 'Ordered', variant: 'success' },
+  EXPIRED: { label: 'Expired', variant: 'secondary' },
+  
+  // Order Statuses
+  PENDING_PAYMENT: { label: 'Pending Payment', variant: 'warning' },
   NEW: { label: 'New', variant: 'default' },
   QUOTED: { label: 'Quoted', variant: 'primary' },
   ACCEPTED: { label: 'Accepted', variant: 'success' },

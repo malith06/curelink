@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import NotificationBell from '../common/NotificationBell';
@@ -22,13 +22,13 @@ const navConfig = {
     { name: 'Quotations', path: '/pharmacy/quotations', icon: Receipt },
     { name: 'Orders', path: '/pharmacy/orders', icon: Package },
     { name: 'Availability', path: '/pharmacy/availability', icon: Pill },
-    { name: 'Location', path: '/pharmacy/location', icon: MapPin },
     { name: 'Profile', path: '/pharmacy/profile', icon: Settings },
   ],
   ADMIN: [
     { name: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
     { name: 'Pharmacies', path: '/admin/pharmacies', icon: MapPin },
     { name: 'Medicines', path: '/admin/medicines', icon: Pill },
+    { name: 'Orders', path: '/admin/orders', icon: Package },
     { name: 'Payments', path: '/admin/payments', icon: Receipt },
   ]
 };
@@ -44,6 +44,18 @@ function Navbar() {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  const isHome = location.pathname === '/';
+  const isTransparent = isHome && !isScrolled;
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const navItems = isAuthenticated && role ? navConfig[role] : publicNav;
 
@@ -55,7 +67,7 @@ function Navbar() {
   };
 
   const NavLink = ({ item, mobile }) => {
-    const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + '/');
+    const isActive = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path + '/'));
     const Icon = item.icon;
     
     return (
@@ -68,27 +80,51 @@ function Navbar() {
             ? "px-4 py-3 rounded-lg text-base w-full"
             : "px-3 py-2 rounded-md text-sm",
           isActive
-            ? "bg-primary-50 text-primary-700"
-            : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+            ? (isTransparent && !mobile ? "text-white font-bold" : "bg-primary-50 text-primary-700")
+            : (isTransparent && !mobile ? "text-white/90 hover:text-white" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900")
         )}
       >
-        {Icon && <Icon className={cn("mr-2 h-4 w-4", isActive ? "text-primary-600" : "text-slate-400")} />}
+        {Icon && <Icon className={cn("mr-2 h-4 w-4", isActive ? (isTransparent && !mobile ? "text-white" : "text-primary-600") : (isTransparent && !mobile ? "text-white/80" : "text-slate-400"))} />}
         {item.name}
       </Link>
     );
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-slate-200 bg-white/80 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+    <header 
+      className={cn(
+        "z-50 w-full transition-all duration-300",
+        isHome ? "fixed top-0" : "sticky top-0",
+        isTransparent
+          ? "bg-transparent py-4"
+          : "bg-white/90 backdrop-blur-md shadow-sm border-b border-slate-200 py-0"
+      )}
+    >
+      <div className={cn("mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8", isTransparent ? "h-12" : "h-16")}>
         
         {/* Logo */}
         <div className="flex items-center">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-600 text-white">
-              <Pill className="h-5 w-5" />
+          <Link to="/" className="flex items-center gap-3">
+            <div className={cn("relative flex h-10 w-10 items-center justify-center rounded-xl shadow-sm transition-colors", isTransparent ? "bg-white/20 backdrop-blur-md" : "bg-[#0B1354]")}>
+              <svg className={cn("absolute h-6 w-6 transition-colors", isTransparent ? "text-white" : "text-white")} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className={cn("h-3.5 w-3.5 rounded-full flex items-center justify-center transition-colors", isTransparent ? "bg-white" : "bg-primary-500")}>
+                  <svg className={cn("h-2.5 w-2.5", isTransparent ? "text-primary-600" : "text-white")} viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2v20M2 12h20" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" />
+                  </svg>
+                </div>
+              </div>
             </div>
-            <span className="text-xl font-bold tracking-tight text-slate-900">Cure<span className="text-primary-600">Link</span></span>
+            <div className="flex flex-col justify-center">
+              <span className={cn("text-2xl font-extrabold tracking-tight leading-none transition-colors", isTransparent ? "text-white" : "text-[#0B1354]")}>
+                Cure<span className={isTransparent ? "text-white/90" : "text-primary-600"}>Link</span>
+              </span>
+              <span className={cn("text-[0.65rem] font-bold tracking-[0.2em] uppercase leading-none mt-1 transition-colors", isTransparent ? "text-white/70" : "text-slate-500")}>
+                Pharmacy Network
+              </span>
+            </div>
           </Link>
         </div>
 
@@ -109,13 +145,13 @@ function Navbar() {
               <div className="relative hidden sm:block">
                 <button 
                   onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                  className={cn("flex h-9 w-9 items-center justify-center rounded-full border transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2", isTransparent ? "border-white/30 bg-white/10 hover:bg-white/20" : "border-slate-200 bg-slate-50 hover:bg-slate-100")}
                 >
-                  <User className="h-4 w-4 text-slate-600" />
+                  <User className={cn("h-4 w-4", isTransparent ? "text-white" : "text-slate-600")} />
                 </button>
                 
                 {isProfileMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 rounded-xl border border-slate-200 bg-white p-1 shadow-lg outline-none">
+                  <div className="absolute right-0 mt-2 w-48 rounded-xl border border-slate-200 bg-white p-1 shadow-lg outline-none origin-top-right animate-in fade-in zoom-in-95 duration-200">
                     <div className="px-3 py-2 border-b border-slate-100 mb-1">
                       <p className="text-sm font-medium text-slate-900 truncate">{user?.name || 'User'}</p>
                       <p className="text-xs text-slate-500 truncate capitalize">{role?.toLowerCase()}</p>
@@ -134,10 +170,10 @@ function Navbar() {
           ) : (
             <div className="hidden sm:flex items-center space-x-2">
               <Link to="/login">
-                <Button variant="ghost">Log in</Button>
+                <Button variant="ghost" className={isTransparent ? "text-white hover:bg-white/20 hover:text-white" : ""}>Log in</Button>
               </Link>
               <Link to="/register/customer">
-                <Button variant="primary">Sign up</Button>
+                <Button variant={isTransparent ? "outline" : "primary"} className={isTransparent ? "text-white border-white hover:bg-white hover:text-primary-700" : ""}>Sign up</Button>
               </Link>
             </div>
           )}
@@ -145,7 +181,7 @@ function Navbar() {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500"
+            className={cn("md:hidden inline-flex h-9 w-9 items-center justify-center rounded-md focus:outline-none", isTransparent ? "text-white hover:bg-white/20" : "text-slate-500 hover:bg-slate-100 hover:text-slate-900")}
           >
             {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>

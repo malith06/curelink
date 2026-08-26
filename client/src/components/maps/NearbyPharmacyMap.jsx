@@ -118,7 +118,7 @@ const NearbyPharmacyMap = ({
           onCloseClick={() => onSelectPharmacy(null)}
         >
           <div className="p-2 max-w-xs">
-            <h3 className="font-semibold text-gray-900 mb-1">{selectedPharmacy.businessName}</h3>
+            <h3 className="font-semibold text-gray-900 mb-1">{selectedPharmacy.name || selectedPharmacy.businessName || 'Unknown Pharmacy'}</h3>
             <p className="text-sm text-gray-600 mb-2">
               {typeof selectedPharmacy.address === 'object' && selectedPharmacy.address !== null
                 ? [selectedPharmacy.address.line1, selectedPharmacy.address.city, selectedPharmacy.address.district].filter(Boolean).join(', ')

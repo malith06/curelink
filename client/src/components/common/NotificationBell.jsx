@@ -56,6 +56,8 @@ const NotificationBell = () => {
         return notification.recipientRole === 'PHARMACY' 
           ? `/pharmacy/orders/${entityId}` 
           : `/customer/orders`;
+      case 'PHARMACY_SUBMITTED':
+        return `/admin/pharmacies/${entityId}`;
       default:
         return '#';
     }

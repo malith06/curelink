@@ -1,10 +1,12 @@
 import React, { useRef, useEffect } from 'react';
 import AvailabilityStatusBadge from '../availability/AvailabilityStatusBadge';
+import { Link } from 'react-router-dom';
 
 const NearbyPharmacyList = ({
   pharmacies,
   selectedPharmacyId,
-  onSelectPharmacy
+  onSelectPharmacy,
+  selectedMedicines = []
 }) => {
   const listRef = useRef(null);
 
@@ -49,7 +51,7 @@ const NearbyPharmacyList = ({
             >
               <div className="flex justify-between items-start mb-2">
                 <h4 className={`font-bold text-lg ${isSelected ? 'text-blue-900' : 'text-gray-900'}`}>
-                  {pharmacy.businessName}
+                  {pharmacy.name || pharmacy.businessName || 'Unknown Pharmacy'}
                 </h4>
                 {pharmacy.distance !== undefined && (
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
@@ -77,6 +79,19 @@ const NearbyPharmacyList = ({
                     <span className="text-xs font-medium text-gray-500">Stock Status:</span>
                     <AvailabilityStatusBadge status={pharmacy.availabilityStatus} />
                   </div>
+                </div>
+              )}
+
+              {/* Action Button when Selected */}
+              {isSelected && (
+                <div className="mt-4">
+                  <Link 
+                    to={`/customer/requests/new`}
+                    state={{ preselectedPharmacyId: pharmacy._id, preselectedMedicines: selectedMedicines || [] }}
+                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors"
+                  >
+                    Send Request
+                  </Link>
                 </div>
               )}
             </div>

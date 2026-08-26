@@ -77,10 +77,10 @@ const CustomerQuotationDetailsPage = () => {
         </Link>
       </div>
       
-      <Card className="mb-8 overflow-hidden">
+      <Card className="mb-8 overflow-hidden border-t-4 border-t-[#0B1354] rounded-2xl shadow-sm">
         <div className="flex flex-col sm:flex-row justify-between sm:items-center p-6 border-b border-slate-100 bg-slate-50 gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{quotation.pharmacyId?.businessName}</h1>
+            <h1 className="text-2xl font-bold text-[#0B1354] tracking-tight">{quotation.pharmacyId?.name || quotation.pharmacyId?.businessName || 'Unknown Pharmacy'}</h1>
             <p className="text-slate-500 text-sm mt-1">
               Quotation for Request #{request._id.substring(request._id.length - 6).toUpperCase()}
             </p>
@@ -90,7 +90,7 @@ const CustomerQuotationDetailsPage = () => {
 
         <CardContent className="p-6">
           <div className="mb-8">
-            <h3 className="text-lg font-semibold text-slate-900 mb-4">Item Breakdown</h3>
+            <h3 className="text-lg font-semibold text-[#0B1354] mb-4">Item Breakdown</h3>
             <div className="overflow-x-auto rounded-xl border border-slate-200">
               <table className="min-w-full divide-y divide-slate-200">
                 <thead className="bg-slate-50">
