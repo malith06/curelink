@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Check, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Check, AlertCircle, FileText } from 'lucide-react';
 import { toast } from 'react-toastify';
 import requestService from '../../../features/requests/requestService';
 import quotationService from '../../../features/quotations/quotationService';
@@ -70,23 +70,38 @@ const CustomerQuotationDetailsPage = () => {
   if (!request || !quotation) return null;
 
   return (
-    <div className="mx-auto px-4 py-8 max-w-4xl">
-      <div className="mb-6">
-        <Link to={`/customer/requests/${requestId}`} className="text-primary-600 hover:text-primary-800 flex items-center text-sm font-medium w-fit group transition-colors">
-          <ArrowLeft className="w-4 h-4 mr-1 transition-transform group-hover:-translate-x-1" /> Back to Request
-        </Link>
-      </div>
-      
-      <Card className="mb-8 overflow-hidden border-t-4 border-t-[#0B1354] rounded-2xl shadow-sm">
-        <div className="flex flex-col sm:flex-row justify-between sm:items-center p-6 border-b border-slate-100 bg-slate-50 gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-[#0B1354] tracking-tight">{quotation.pharmacyId?.name || quotation.pharmacyId?.businessName || 'Unknown Pharmacy'}</h1>
-            <p className="text-slate-500 text-sm mt-1">
-              Quotation for Request #{request._id.substring(request._id.length - 6).toUpperCase()}
-            </p>
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 bg-slate-50 min-h-screen pb-20">
+      {/* Modern Header Section */}
+      <div className="bg-[#0B1354] pb-24 pt-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden rounded-b-[3rem] mb-[-4rem]">
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }}></div>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500 rounded-full mix-blend-screen filter blur-[80px] opacity-30 animate-pulse"></div>
+        
+        <div className="max-w-4xl mx-auto relative z-10 flex flex-col gap-6">
+          <Link to={`/customer/requests/${requestId}`} className="text-blue-200 hover:text-white flex items-center text-sm font-medium w-fit group transition-colors">
+            <ArrowLeft className="w-4 h-4 mr-1 transition-transform group-hover:-translate-x-1" /> Back to Request
+          </Link>
+          
+          <div className="flex flex-col sm:flex-row justify-between sm:items-end gap-4">
+            <div className="flex items-center gap-4">
+               <div className="w-14 h-14 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20 shadow-lg">
+                  <FileText className="w-7 h-7 text-white" />
+               </div>
+               <div>
+                 <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">
+                   {quotation.pharmacyId?.name || quotation.pharmacyId?.businessName || 'Pharmacy Quotation'}
+                 </h1>
+                 <p className="mt-1 text-blue-100 font-medium">Quotation for Request #{request._id.substring(request._id.length - 6).toUpperCase()}</p>
+               </div>
+            </div>
+            <div className="hidden sm:block"><StatusBadge status={quotation.status} /></div>
           </div>
-          <StatusBadge status={quotation.status} />
+          <div className="sm:hidden"><StatusBadge status={quotation.status} /></div>
         </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 relative z-20">
+        <div className="space-y-8">
+          <Card className="border-0 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-3xl overflow-hidden">
 
         <CardContent className="p-6">
           <div className="mb-8">
@@ -229,6 +244,8 @@ const CustomerQuotationDetailsPage = () => {
           </div>
         </CardContent>
       </Card>
+      </div>
+    </div>
     </div>
   );
 };

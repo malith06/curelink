@@ -18,14 +18,23 @@ const PaymentSuccessPage = () => {
   const [retries, setRetries] = useState(0);
 
   useEffect(() => {
-    // For card payments, we might need to poll until webhook sets PAYMENT_CONFIRMED
-    const fetchOrder = async () => {
+    const processPaymentAndFetchOrder = async () => {
       try {
+        // If it's a card payment, explicitly verify the session first
+        // This is crucial for local development without webhooks, or if webhook is delayed
+        if (!isCOD) {
+          try {
+            await orderService.verifyCardPayment(orderId);
+          } catch (verifyError) {
+            console.error('Manual verification failed, continuing to fetch order:', verifyError);
+          }
+        }
+
         const res = await orderService.getOrderById(orderId);
         const orderData = res.data?.order || res.data;
         
         if (!isCOD && orderData.orderStatus === ORDER_STATUS.PENDING_PAYMENT && retries < 5) {
-          // Webhook might be slow. Retry in 2 seconds.
+          // Status might still be updating. Retry in 2 seconds.
           setTimeout(() => setRetries(r => r + 1), 2000);
           return;
         }
@@ -38,7 +47,7 @@ const PaymentSuccessPage = () => {
       }
     };
 
-    fetchOrder();
+    processPaymentAndFetchOrder();
   }, [orderId, isCOD, retries]);
 
   if (loading) {

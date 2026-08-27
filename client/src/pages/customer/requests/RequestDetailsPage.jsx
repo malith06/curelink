@@ -21,7 +21,6 @@ const RequestDetailsPage = () => {
   const [quotations, setQuotations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
-  const [uploadingPrescription, setUploadingPrescription] = useState(false);
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'compare'
 
   // Draft mode states
@@ -158,21 +157,6 @@ const RequestDetailsPage = () => {
     }
   };
 
-  const handlePrescriptionUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    try {
-      setUploadingPrescription(true);
-      await prescriptionService.uploadPrescription(id, file);
-      toast.success('Prescription uploaded successfully!');
-      fetchRequest();
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to upload prescription');
-    } finally {
-      setUploadingPrescription(false);
-    }
-  };
 
   const handleAcceptQuotation = async (quotationId) => {
     if (!window.confirm("Are you sure you want to accept this quotation and proceed to checkout?")) {
@@ -211,23 +195,39 @@ const RequestDetailsPage = () => {
   const isDraft = request.status === 'DRAFT';
 
   return (
-    <div className="mx-auto px-4 py-8 max-w-5xl">
-      <div className="mb-6">
-        <Link to="/customer/requests" className="text-primary-600 hover:text-primary-800 flex items-center text-sm font-medium w-fit group transition-colors">
-          <ArrowLeft className="w-4 h-4 mr-1 transition-transform group-hover:-translate-x-1" /> Back to Requests
-        </Link>
-      </div>
-      
-      <Card className="mb-8 overflow-hidden">
-        <div className="flex flex-col sm:flex-row justify-between sm:items-center p-6 border-b border-slate-100 bg-slate-50 gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Request #{request._id.substring(request._id.length - 6).toUpperCase()}</h1>
-            <p className="text-slate-500 text-sm mt-1">{new Date(request.createdAt).toLocaleString()}</p>
+    <div className="animate-in fade-in duration-500 bg-slate-50 min-h-screen pb-20">
+      {/* Modern Header Section */}
+      <div className="bg-[#0B1354] pb-24 pt-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden rounded-b-[3rem] mb-[-4rem]">
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }}></div>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500 rounded-full mix-blend-screen filter blur-[80px] opacity-30 animate-pulse"></div>
+        
+        <div className="max-w-7xl mx-auto relative z-10 flex flex-col gap-6">
+          <Link to="/customer/requests" className="text-blue-200 hover:text-white flex items-center text-sm font-medium w-fit group transition-colors">
+            <ArrowLeft className="w-4 h-4 mr-1 transition-transform group-hover:-translate-x-1" /> Back to Requests
+          </Link>
+          
+          <div className="flex flex-col sm:flex-row justify-between sm:items-end gap-4">
+            <div className="flex items-center gap-4">
+               <div className="w-14 h-14 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20 shadow-lg">
+                  <List className="w-7 h-7 text-white" />
+               </div>
+               <div>
+                 <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight flex items-center gap-3">
+                   Request #{request._id.substring(request._id.length - 6).toUpperCase()}
+                   <div className="hidden sm:block"><StatusBadge status={request.status} /></div>
+                 </h1>
+                 <p className="mt-1 text-blue-100 font-medium">Created on {new Date(request.createdAt).toLocaleString()}</p>
+               </div>
+            </div>
+            <div className="sm:hidden"><StatusBadge status={request.status} /></div>
           </div>
-          <StatusBadge status={request.status} />
         </div>
+      </div>
 
-        <CardContent className="p-6">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 relative z-20">
+        <div className="space-y-8">
+          <Card className="border-0 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-3xl overflow-hidden">
+            <CardContent className="p-6">
           <div className="flex items-center gap-2 mb-4">
             {isDraft && <span className="bg-primary-100 text-primary-700 w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold">1</span>}
             <h3 className="text-lg font-semibold text-slate-900">Requested Items</h3>
@@ -347,31 +347,47 @@ const RequestDetailsPage = () => {
               <h3 className="text-lg font-semibold text-slate-900">Prescription</h3>
             </div>
             
-            {request.prescriptionRequired && !request.prescriptionId && (
-              <div className="bg-rose-50 border border-rose-100 rounded-xl p-6 mb-8 mt-4">
-                <h4 className="font-semibold text-rose-900 mb-2">Prescription Required</h4>
-                <p className="text-rose-700 text-sm mb-4">One or more items in your request require a valid doctor's prescription. Please upload it to continue.</p>
+            {isDraft && !request.prescriptionId && (
+              <div className={`${request.prescriptionRequired ? 'bg-rose-50 border-rose-100' : 'bg-primary-50 border-primary-100'} border rounded-xl p-6 mb-8 mt-4`}>
+                <h4 className={`font-semibold ${request.prescriptionRequired ? 'text-rose-900' : 'text-primary-900'} mb-2`}>
+                  {request.prescriptionRequired ? 'Prescription Required' : 'Upload Prescription (Optional)'}
+                </h4>
+                <p className={`${request.prescriptionRequired ? 'text-rose-700' : 'text-primary-700'} text-sm mb-4`}>
+                  {request.prescriptionRequired 
+                    ? "One or more items in your request require a valid doctor's prescription. Please upload it to continue."
+                    : "You can upload your prescription image or PDF, and our AI will automatically extract the medicines for you."}
+                </p>
                 
-                <div className="flex items-center gap-4">
-                  <Input
-                    type="file"
-                    accept="image/*,.pdf"
-                    onChange={handlePrescriptionUpload}
-                    disabled={uploadingPrescription}
-                    className="w-full sm:w-auto bg-white"
-                  />
-                  {uploadingPrescription && <span className="text-rose-600 text-sm font-medium">Uploading...</span>}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                  <Button 
+                    onClick={() => navigate(`/customer/requests/${id}/prescription/upload`)}
+                    className={request.prescriptionRequired ? 'bg-rose-600 hover:bg-rose-700 text-white' : ''}
+                  >
+                    Upload Prescription & Auto-Extract
+                  </Button>
                 </div>
               </div>
             )}
 
             {request.prescriptionId && (
-              <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-6 mb-8 mt-4 flex items-center justify-between">
+              <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-6 mb-8 mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h4 className="font-semibold text-emerald-900 mb-1">Prescription Attached</h4>
+                  <h4 className="font-semibold text-emerald-900 mb-1 flex items-center gap-2">
+                    Prescription Attached
+                    <span className="bg-emerald-200 text-emerald-800 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">Verified</span>
+                  </h4>
                   <p className="text-emerald-700 text-sm">Your prescription has been securely uploaded and will be sent to pharmacies.</p>
                 </div>
-                <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Verified</span>
+                {isDraft && (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => navigate(`/customer/requests/${id}/prescription/upload`)}
+                    className="border-emerald-200 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800 shrink-0"
+                    size="sm"
+                  >
+                    Replace Prescription
+                  </Button>
+                )}
               </div>
             )}
           </div>
@@ -650,9 +666,10 @@ const RequestDetailsPage = () => {
               )}
             </div>
           )}
-
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+        </div>
+      </div>
     </div>
   );
 };

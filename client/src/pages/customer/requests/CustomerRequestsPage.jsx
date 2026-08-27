@@ -50,21 +50,29 @@ const CustomerRequestsPage = () => {
   }
 
   return (
-    <div className="mx-auto px-4 py-12 max-w-5xl">
-      <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-8 gap-4">
-        <div className="flex items-center gap-4">
-           <div className="w-14 h-14 bg-[#0B1354]/10 rounded-2xl flex items-center justify-center">
-              <FileText className="w-7 h-7 text-[#0B1354]" />
-           </div>
-           <div>
-             <h1 className="text-3xl font-bold text-[#0B1354] tracking-tight">My Medicine Requests</h1>
-             <p className="mt-1 text-slate-500 font-medium">Track your prescriptions and quotations from nearby pharmacies.</p>
-           </div>
+    <div className="animate-in fade-in duration-500 bg-slate-50 min-h-screen">
+      {/* Modern Header Section */}
+      <div className="bg-[#0B1354] pb-24 pt-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden rounded-b-[3rem] mb-[-4rem]">
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }}></div>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500 rounded-full mix-blend-screen filter blur-[80px] opacity-30 animate-pulse"></div>
+        
+        <div className="max-w-7xl mx-auto relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="flex items-center gap-4">
+             <div className="w-14 h-14 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20 shadow-lg">
+                <FileText className="w-7 h-7 text-white" />
+             </div>
+             <div>
+               <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">My Medicine Requests</h1>
+               <p className="mt-1 text-blue-100 font-medium">Track your prescriptions and quotations.</p>
+             </div>
+          </div>
+          <Button onClick={() => navigate('/customer/requests/new')} icon={Plus} className="bg-white text-[#0B1354] hover:bg-slate-100 shadow-lg">
+            New Request
+          </Button>
         </div>
-        <Button onClick={() => navigate('/customer/requests/new')} icon={Plus}>
-          New Request
-        </Button>
       </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 relative z-20">
 
       {/* Status Tabs */}
       {!loading && requests.length > 0 && (
@@ -103,10 +111,10 @@ const CustomerRequestsPage = () => {
           {filteredRequests.map(req => (
             <Card 
               key={req._id} 
-              className="flex flex-col hover:border-primary-300 hover:shadow-md transition-all cursor-pointer group"
+              className="flex flex-col border-0 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-3xl hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer group overflow-hidden"
               onClick={() => navigate(`/customer/requests/${req._id}`)}
             >
-              <div className="p-5 flex-1">
+              <div className="p-6 flex-1">
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <h3 className="font-bold text-slate-900 text-lg group-hover:text-primary-700 transition-colors">
@@ -143,14 +151,15 @@ const CustomerRequestsPage = () => {
                 </div>
               </div>
               
-              <div className="px-5 py-3 border-t border-slate-100 bg-slate-50 rounded-b-xl flex justify-between items-center group-hover:bg-primary-50 transition-colors">
-                <span className="text-sm font-medium text-primary-600 group-hover:text-primary-700">View Details</span>
-                <ChevronRight className="w-4 h-4 text-primary-500 group-hover:translate-x-1 transition-transform" />
+              <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-between items-center group-hover:bg-primary-50 transition-colors">
+                <span className="text-sm font-bold text-primary-600 group-hover:text-primary-700">View Details</span>
+                <ChevronRight className="w-5 h-5 text-primary-500 group-hover:translate-x-1 transition-transform" />
               </div>
             </Card>
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 };

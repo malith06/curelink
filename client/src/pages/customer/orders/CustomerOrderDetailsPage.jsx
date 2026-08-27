@@ -84,41 +84,47 @@ const CustomerOrderDetailsPage = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <Link 
-        to="/customer/orders" 
-        className="inline-flex items-center text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors group"
-      >
-        <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-        Back to Orders
-      </Link>
-
-      <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
-            Order #{order.orderNumber || order._id.substring(order._id.length - 6).toUpperCase()}
-          </h1>
-          <p className="text-slate-500 mt-2 font-medium">
-            Placed on {new Date(order.createdAt).toLocaleString()}
-          </p>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-3">
-          {isPendingPayment && (
-            <Button 
-              onClick={() => navigate(`/customer/orders/${order._id}/payment`)}
-              className="w-full sm:w-auto shadow-sm"
-            >
-              Pay Now
-            </Button>
-          )}
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 bg-slate-50 min-h-screen pb-20">
+      {/* Modern Header Section */}
+      <div className="bg-[#0B1354] pb-24 pt-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden rounded-b-[3rem] mb-[-4rem]">
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }}></div>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500 rounded-full mix-blend-screen filter blur-[80px] opacity-30 animate-pulse"></div>
+        
+        <div className="max-w-7xl mx-auto relative z-10 flex flex-col gap-6">
+          <Link to="/customer/orders" className="text-blue-200 hover:text-white flex items-center text-sm font-medium w-fit group transition-colors">
+            <ArrowLeft className="w-4 h-4 mr-1 transition-transform group-hover:-translate-x-1" /> Back to Orders
+          </Link>
+          
+          <div className="flex flex-col sm:flex-row justify-between sm:items-end gap-4">
+            <div className="flex items-center gap-4">
+               <div className="w-14 h-14 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20 shadow-lg">
+                  <Package className="w-7 h-7 text-white" />
+               </div>
+               <div>
+                 <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">
+                   Order #{order.orderNumber || order._id.substring(order._id.length - 6).toUpperCase()}
+                 </h1>
+                 <p className="mt-1 text-blue-100 font-medium">Placed on {new Date(order.createdAt).toLocaleString()}</p>
+               </div>
+            </div>
+            {isPendingPayment && (
+              <Button 
+                onClick={() => navigate(`/customer/orders/${order._id}/payment`)}
+                className="w-full sm:w-auto shadow-lg bg-white text-[#0B1354] hover:bg-slate-100"
+              >
+                Pay Now
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 relative z-20">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-8">
           {/* Status Banner */}
-          <Card className="overflow-hidden border-none shadow-sm ring-1 ring-slate-200">
-            <div className={`p-6 ${
+          <Card className="overflow-hidden border-0 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-3xl">
+            <div className={`p-6 md:p-8 ${
               order.orderStatus === ORDER_STATUS.COMPLETED ? 'bg-emerald-50 text-emerald-900' :
               order.orderStatus === ORDER_STATUS.CANCELLED ? 'bg-red-50 text-red-900' :
               order.orderStatus === ORDER_STATUS.PENDING_PAYMENT ? 'bg-amber-50 text-amber-900' :
@@ -127,13 +133,13 @@ const CustomerOrderDetailsPage = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-semibold opacity-80 uppercase tracking-wider mb-1">Order Status</p>
-                  <div className="text-2xl font-black flex items-center gap-2">
+                  <div className="text-2xl md:text-3xl font-black flex items-center gap-2">
                     {order.orderStatus.replace(/_/g, ' ')}
                   </div>
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-semibold opacity-80 uppercase tracking-wider mb-1">Payment Status</p>
-                  <Badge variant={getPaymentStatusVariant(order.paymentStatus)} size="md">
+                  <Badge variant={getPaymentStatusVariant(order.paymentStatus)} size="md" className="shadow-sm">
                     {order.paymentStatus.replace(/_/g, ' ')}
                   </Badge>
                 </div>
@@ -283,6 +289,7 @@ const CustomerOrderDetailsPage = () => {
           </Card>
         </div>
       </div>
+    </div>
     </div>
   );
 };

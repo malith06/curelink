@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import prescriptionService from '../../../features/prescriptions/prescriptionService';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../../components/ui/Card';
-import Button from '../../../components/ui/Button';
-import Input from '../../../components/ui/Input';
-import Badge from '../../../components/ui/Badge';
-import Skeleton from '../../../components/ui/Skeleton';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import prescriptionService from '../../features/prescriptions/prescriptionService';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card';
+import Button from '../../components/ui/Button';
+import Input from '../../components/ui/Input';
+import Badge from '../../components/ui/Badge';
+import Skeleton from '../../components/ui/Skeleton';
 import { Plus, Check, ArrowLeft, AlertCircle } from 'lucide-react';
 
 const PrescriptionReviewPage = () => {
@@ -89,11 +89,26 @@ const PrescriptionReviewPage = () => {
   );
 
   return (
-    <div className="mx-auto px-4 py-12 max-w-4xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-[#0B1354] tracking-tight">Review Detected Medicines</h1>
-        <p className="mt-2 text-slate-600">Please verify the AI-detected medicines and adjust quantities if necessary.</p>
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 bg-slate-50 min-h-screen pb-20">
+      {/* Modern Header Section */}
+      <div className="bg-[#0B1354] pb-24 pt-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden rounded-b-[3rem] mb-[-4rem]">
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }}></div>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500 rounded-full mix-blend-screen filter blur-[80px] opacity-30 animate-pulse"></div>
+        
+        <div className="max-w-4xl mx-auto relative z-10">
+          <Link to={`/customer/requests/${requestId}`} className="text-blue-200 hover:text-white flex items-center text-sm font-medium w-fit group transition-colors mb-6">
+            <ArrowLeft className="w-4 h-4 mr-1 transition-transform group-hover:-translate-x-1" /> Cancel
+          </Link>
+          <div className="text-center">
+            <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">Review Detected Medicines</h1>
+            <p className="mt-3 text-blue-100 font-medium max-w-lg mx-auto">
+              Please verify the AI-detected medicines and adjust quantities if necessary.
+            </p>
+          </div>
+        </div>
       </div>
+
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 relative z-20">
       
       {error && (
         <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-xl border border-red-100 flex items-center">
@@ -102,14 +117,14 @@ const PrescriptionReviewPage = () => {
         </div>
       )}
 
-      <Card className="mb-8 border-t-4 border-t-[#0B1354] shadow-sm rounded-2xl">
-        <CardHeader>
+      <Card className="mb-8 border-0 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-3xl overflow-hidden">
+        <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
           <CardTitle>Extracted Items</CardTitle>
           <CardDescription>
             Our AI has identified the following items from your prescription.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-6">
           {entries.length === 0 ? (
             <div className="text-center py-8 bg-slate-50 rounded-xl border border-slate-100">
               <p className="text-slate-500 italic mb-4">No medicines detected automatically.</p>
@@ -167,22 +182,17 @@ const PrescriptionReviewPage = () => {
         </CardContent>
       </Card>
 
-      <div className="flex flex-col sm:flex-row justify-end gap-4">
-        <Button 
-          variant="outline"
-          onClick={() => navigate(`/customer/requests/${requestId}`)}
-          icon={ArrowLeft}
-        >
-          Cancel
-        </Button>
+      <div className="flex justify-end gap-4">
         <Button 
           onClick={handleConfirm}
           disabled={submitting}
           isLoading={submitting}
           icon={Check}
+          size="lg"
         >
           Confirm and Submit
         </Button>
+      </div>
       </div>
     </div>
   );
