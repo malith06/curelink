@@ -12,6 +12,7 @@ const getColorForLabel = (label, index) => {
   if (lbl.includes('REJECTED') || lbl.includes('CANCELLED') || lbl.includes('FAILED')) return '#ef4444'; // Red (rathu)
   if (lbl.includes('PENDING_PAYMENT') || lbl.includes('COD_PENDING') || lbl.includes('PENDING')) return '#f59e0b'; // Orange (thabili)
   if (lbl.includes('DELIVERED')) return '#3b82f6'; // Blue (nil)
+  if (lbl.includes('PROCESSING') || lbl.includes('PREPARING')) return '#0ea5e9'; // Light Blue
   
   // Defaults for others
   if (lbl.includes('PAID') || lbl.includes('COD_COLLECTED') || lbl === 'APPROVED' || lbl === 'SUCCESS') return '#10b981'; // Green

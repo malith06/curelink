@@ -5,9 +5,12 @@ import { Bell, CheckCircle2, ChevronRight } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import EmptyState from '../components/ui/EmptyState';
 import Skeleton from '../components/ui/Skeleton';
+import { useAuth } from '../context/AuthContext';
 
 const NotificationsPage = () => {
   const { notifications, loading, markAsRead, markAllAsRead, unreadCount } = useNotifications();
+  const { user } = useAuth();
+  const role = user?.role;
 
   // If we needed pagination, we'd handle it here. 
   // For now we'll just show the ones we fetched in context or fetch more if context was empty.
@@ -22,11 +25,15 @@ const NotificationsPage = () => {
 
     switch (notification.type) {
       case 'REQUEST_RECEIVED':
-        return `/pharmacy/requests/${entityId}`;
+        return role === 'PHARMACY'
+          ? `/pharmacy/requests/${entityId}`
+          : `#`;
       case 'QUOTATION_RECEIVED':
         return `/customer/requests/${notification.metadata?.requestId || notification.relatedRequestId || entityId}`;
       case 'QUOTATION_ACCEPTED':
         return `/pharmacy/quotations`;
+      case 'PHARMACY_SUBMITTED':
+        return `/admin/pharmacies/${entityId}`;
       case 'ORDER_ACCEPTED':
       case 'ORDER_PREPARING':
       case 'ORDER_READY':
@@ -34,14 +41,17 @@ const NotificationsPage = () => {
       case 'ORDER_DELIVERED':
       case 'ORDER_COMPLETED':
       case 'ORDER_CANCELLED':
-      case 'ORDER_REJECTED':
+      case 'ORDER_REJECTED': {
+        if (role === 'ADMIN') return `/admin/orders`;
+        if (notification.recipientRole === 'PHARMACY') return `/pharmacy/orders/${entityId}`;
+        return `/customer/orders`;
+      }
       case 'PAYMENT_SUCCESSFUL':
-      case 'PAYMENT_FAILED':
-        return notification.recipientRole === 'PHARMACY' 
-          ? `/pharmacy/orders/${entityId}` 
-          : `/customer/orders`;
-      case 'PHARMACY_SUBMITTED':
-        return `/admin/pharmacies/${entityId}`;
+      case 'PAYMENT_FAILED': {
+        if (role === 'ADMIN') return `/admin/payments`;
+        if (notification.recipientRole === 'PHARMACY') return `/pharmacy/orders/${entityId}`;
+        return `/customer/orders`;
+      }
       default:
         return '#';
     }

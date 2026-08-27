@@ -3,14 +3,108 @@ import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-map
 
 const mapContainerStyle = {
   width: '100%',
-  height: '500px',
-  borderRadius: '0.5rem',
+  height: '100%',
+  borderRadius: '1.5rem', // 3xl
 };
 
 const defaultCenter = {
   lat: 7.8731, // Default to Sri Lanka center if no location
   lng: 80.7718
 };
+
+// Clean, modern map style with muted colors
+const mapStyles = [
+  {
+    featureType: 'all',
+    elementType: 'geometry.fill',
+    stylers: [{ weight: '2.00' }]
+  },
+  {
+    featureType: 'all',
+    elementType: 'geometry.stroke',
+    stylers: [{ color: '#9c9c9c' }]
+  },
+  {
+    featureType: 'all',
+    elementType: 'labels.text',
+    stylers: [{ visibility: 'on' }]
+  },
+  {
+    featureType: 'landscape',
+    elementType: 'all',
+    stylers: [{ color: '#f2f2f2' }]
+  },
+  {
+    featureType: 'landscape',
+    elementType: 'geometry.fill',
+    stylers: [{ color: '#ffffff' }]
+  },
+  {
+    featureType: 'landscape.man_made',
+    elementType: 'geometry.fill',
+    stylers: [{ color: '#ffffff' }]
+  },
+  {
+    featureType: 'poi',
+    elementType: 'all',
+    stylers: [{ visibility: 'off' }]
+  },
+  {
+    featureType: 'road',
+    elementType: 'all',
+    stylers: [{ saturation: -100 }, { lightness: 45 }]
+  },
+  {
+    featureType: 'road',
+    elementType: 'geometry.fill',
+    stylers: [{ color: '#eeeeee' }]
+  },
+  {
+    featureType: 'road',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#7b7b7b' }]
+  },
+  {
+    featureType: 'road',
+    elementType: 'labels.text.stroke',
+    stylers: [{ color: '#ffffff' }]
+  },
+  {
+    featureType: 'road.highway',
+    elementType: 'all',
+    stylers: [{ visibility: 'simplified' }]
+  },
+  {
+    featureType: 'road.arterial',
+    elementType: 'labels.icon',
+    stylers: [{ visibility: 'off' }]
+  },
+  {
+    featureType: 'transit',
+    elementType: 'all',
+    stylers: [{ visibility: 'off' }]
+  },
+  {
+    featureType: 'water',
+    elementType: 'all',
+    stylers: [{ color: '#46bcec' }, { visibility: 'on' }]
+  },
+  {
+    featureType: 'water',
+    elementType: 'geometry.fill',
+    stylers: [{ color: '#c8d7d4' }]
+  },
+  {
+    featureType: 'water',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#070707' }]
+  },
+  {
+    featureType: 'water',
+    elementType: 'labels.text.stroke',
+    stylers: [{ color: '#ffffff' }]
+  }
+];
 
 const NearbyPharmacyMap = ({ 
   userLocation, 
@@ -42,8 +136,9 @@ const NearbyPharmacyMap = ({
 
   if (!isLoaded) {
     return (
-      <div className="flex items-center justify-center w-full h-[500px] bg-gray-100 rounded-lg animate-pulse">
-        <span className="text-gray-500 font-medium">Loading Map...</span>
+      <div className="flex flex-col items-center justify-center w-full h-full bg-slate-50/50 rounded-3xl animate-pulse">
+        <div className="w-12 h-12 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin mb-4"></div>
+        <span className="text-slate-500 font-medium tracking-wide">Loading Map...</span>
       </div>
     );
   }
@@ -62,6 +157,9 @@ const NearbyPharmacyMap = ({
         mapTypeControl: false,
         streetViewControl: false,
         fullscreenControl: true,
+        styles: mapStyles,
+        disableDefaultUI: true,
+        zoomControl: true,
       }}
     >
       {/* User Location Marker */}
@@ -117,17 +215,19 @@ const NearbyPharmacyMap = ({
           }}
           onCloseClick={() => onSelectPharmacy(null)}
         >
-          <div className="p-2 max-w-xs">
-            <h3 className="font-semibold text-gray-900 mb-1">{selectedPharmacy.name || selectedPharmacy.businessName || 'Unknown Pharmacy'}</h3>
-            <p className="text-sm text-gray-600 mb-2">
+          <div className="p-3 max-w-[240px]">
+            <h3 className="font-bold text-[#0B1354] mb-1.5 text-base leading-tight">
+              {selectedPharmacy.name || selectedPharmacy.businessName || 'Unknown Pharmacy'}
+            </h3>
+            <p className="text-sm text-slate-600 mb-2 leading-relaxed">
               {typeof selectedPharmacy.address === 'object' && selectedPharmacy.address !== null
                 ? [selectedPharmacy.address.line1, selectedPharmacy.address.city, selectedPharmacy.address.district].filter(Boolean).join(', ')
                 : selectedPharmacy.address || 'Address not available'}
             </p>
             {selectedPharmacy.distance !== undefined && (
-              <p className="text-xs font-medium text-blue-600 mb-2">
+              <div className="inline-flex items-center px-2 py-1 rounded-md bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200">
                 {(selectedPharmacy.distance / 1000).toFixed(1)} km away
-              </p>
+              </div>
             )}
           </div>
         </InfoWindow>

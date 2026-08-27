@@ -10,7 +10,7 @@ const statusConfig = {
   
   // Request / Order Status
   DRAFT: { label: 'Draft', variant: 'secondary' },
-  SUBMITTED: { label: 'Awaiting Quotes', variant: 'warning' },
+  SUBMITTED: { label: 'Submitted', variant: 'warning' },
   QUOTATIONS_RECEIVED: { label: 'Quotations Received', variant: 'primary' },
   QUOTATION_ACCEPTED: { label: 'Accepted', variant: 'success' },
   CONVERTED_TO_ORDER: { label: 'Ordered', variant: 'success' },
@@ -18,6 +18,9 @@ const statusConfig = {
   
   // Order Statuses
   PENDING_PAYMENT: { label: 'Pending Payment', variant: 'warning' },
+  PAYMENT_CONFIRMED: { label: 'Payment Confirmed', variant: 'info' },
+  PHARMACY_ACCEPTED: { label: 'Accepted', variant: 'info' },
+  PREPARING: { label: 'Preparing', variant: 'warning' },
   NEW: { label: 'New', variant: 'default' },
   QUOTED: { label: 'Quoted', variant: 'primary' },
   ACCEPTED: { label: 'Accepted', variant: 'success' },
@@ -27,6 +30,7 @@ const statusConfig = {
   DELIVERED: { label: 'Delivered', variant: 'success' },
   COMPLETED: { label: 'Completed', variant: 'success' },
   CANCELLED: { label: 'Cancelled', variant: 'destructive' },
+  REJECTED: { label: 'Rejected', variant: 'destructive' },
 
   // Availability
   AVAILABLE: { label: 'Available', variant: 'success' },

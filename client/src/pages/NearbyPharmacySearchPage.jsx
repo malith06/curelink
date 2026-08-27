@@ -80,8 +80,26 @@ const NearbyPharmacySearchPage = () => {
   };
 
   return (
-    <div className="mx-auto px-4 py-8 max-w-7xl h-[calc(100vh-80px)] flex flex-col">
-      <h1 className="text-3xl font-bold text-slate-900 mb-6 flex-shrink-0 tracking-tight">Nearby Pharmacies</h1>
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 bg-slate-50 min-h-screen pb-20">
+      {/* Modern Header Section */}
+      <div className="bg-[#0B1354] pb-24 pt-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden rounded-b-[3rem] mb-[-4rem]">
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }}></div>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500 rounded-full mix-blend-screen filter blur-[80px] opacity-30 animate-pulse"></div>
+        
+        <div className="max-w-7xl mx-auto relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="flex items-center gap-4">
+             <div className="w-14 h-14 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20 shadow-lg">
+                <Search className="w-7 h-7 text-white" />
+             </div>
+             <div>
+               <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">Nearby Pharmacies</h1>
+               <p className="mt-1 text-blue-100 font-medium">Find and filter pharmacies near your location.</p>
+             </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 relative z-20">
       
       {status !== 'success' ? (
         <div className="flex-1 flex items-center justify-center">
@@ -92,10 +110,10 @@ const NearbyPharmacySearchPage = () => {
           />
         </div>
       ) : (
-        <div className="flex flex-col h-full space-y-6">
+        <div className="flex flex-col space-y-6">
           
           {/* Controls Area */}
-          <Card className="flex-shrink-0 flex flex-col md:flex-row gap-4 justify-between items-center z-10 relative p-4">
+          <Card className="flex flex-col md:flex-row gap-4 justify-between items-center z-10 relative p-6 border-0 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-3xl">
             <div className="flex items-center gap-4 w-full md:w-auto">
               <label className="text-sm font-medium text-slate-700 whitespace-nowrap">Search Radius:</label>
               <select 
@@ -170,15 +188,16 @@ const NearbyPharmacySearchPage = () => {
 
 
           {/* Map and List Area */}
-          <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0">
+          <div className="flex flex-col lg:flex-row gap-8 min-h-[600px]">
             {/* List View */}
-            <div className="w-full lg:w-1/3 h-[40vh] lg:h-full bg-white rounded-2xl shadow-sm border border-slate-200 p-2 overflow-hidden flex flex-col">
+            <div className="w-full lg:w-1/3 h-[50vh] lg:h-auto bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border-0 p-4 flex flex-col">
+              <h2 className="text-xl font-bold text-slate-900 mb-4 px-2">Results</h2>
               {isSearching ? (
                 <div className="flex justify-center items-center flex-1">
                   <Loader2 className="animate-spin text-primary-600 w-8 h-8" />
                 </div>
               ) : (
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
                   <NearbyPharmacyList 
                     pharmacies={pharmacies}
                     selectedPharmacyId={selectedPharmacyId}
@@ -190,7 +209,7 @@ const NearbyPharmacySearchPage = () => {
             </div>
             
             {/* Map View */}
-            <div className="w-full lg:w-2/3 h-[50vh] lg:h-full rounded-2xl overflow-hidden border border-slate-200 shadow-sm relative">
+            <div className="w-full lg:w-2/3 h-[60vh] lg:h-auto rounded-3xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white border-0 relative">
               <NearbyPharmacyMap 
                 userLocation={{ lat: latitude, lng: longitude }}
                 pharmacies={pharmacies}
@@ -201,6 +220,7 @@ const NearbyPharmacySearchPage = () => {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 };

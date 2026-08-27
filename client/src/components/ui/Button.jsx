@@ -20,6 +20,8 @@ const Button = React.forwardRef(({
     outline: "border border-slate-300 bg-transparent hover:bg-slate-50 text-slate-900",
     ghost: "bg-transparent hover:bg-slate-100 text-slate-700",
     danger: "bg-red-600 text-white hover:bg-red-700 shadow-sm",
+    success: "bg-green-600 text-white hover:bg-green-700 shadow-sm",
+    warning: "bg-amber-500 text-white hover:bg-amber-600 shadow-sm",
   };
 
   const sizes = {
