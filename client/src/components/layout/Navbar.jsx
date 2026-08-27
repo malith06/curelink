@@ -93,38 +93,26 @@ function Navbar() {
   return (
     <header 
       className={cn(
-        "z-50 w-full transition-all duration-300",
+        "z-50 w-full transition-all duration-300 flex justify-center",
         isHome ? "fixed top-0" : "sticky top-0",
-        isTransparent
-          ? "bg-transparent py-4"
-          : "bg-white/90 backdrop-blur-md shadow-sm border-b border-slate-200 py-0"
+        isTransparent ? "pt-6 pb-2" : "pt-4 pb-2"
       )}
     >
-      <div className={cn("mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8", isTransparent ? "h-12" : "h-16")}>
+      <div className={cn(
+        "flex w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8 transition-all duration-300",
+        isTransparent 
+          ? "h-14 bg-transparent" 
+          : "h-16 bg-white/80 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-slate-200/50 rounded-2xl mx-4 lg:mx-8"
+      )}>
         
         {/* Logo */}
         <div className="flex items-center">
-          <Link to="/" className="flex items-center gap-3">
-            <div className={cn("relative flex h-10 w-10 items-center justify-center rounded-xl shadow-sm transition-colors", isTransparent ? "bg-white/20 backdrop-blur-md" : "bg-[#0B1354]")}>
-              <svg className={cn("absolute h-6 w-6 transition-colors", isTransparent ? "text-white" : "text-white")} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className={cn("h-3.5 w-3.5 rounded-full flex items-center justify-center transition-colors", isTransparent ? "bg-white" : "bg-primary-500")}>
-                  <svg className={cn("h-2.5 w-2.5", isTransparent ? "text-primary-600" : "text-white")} viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2v20M2 12h20" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-            <div className="flex flex-col justify-center">
-              <span className={cn("text-2xl font-extrabold tracking-tight leading-none transition-colors", isTransparent ? "text-white" : "text-[#0B1354]")}>
-                Cure<span className={isTransparent ? "text-white/90" : "text-primary-600"}>Link</span>
-              </span>
-              <span className={cn("text-[0.65rem] font-bold tracking-[0.2em] uppercase leading-none mt-1 transition-colors", isTransparent ? "text-white/70" : "text-slate-500")}>
-                Pharmacy Network
-              </span>
-            </div>
+          <Link to="/" className="flex items-center gap-2">
+            <img 
+              src="/assets/images/curelink_full_logo.png" 
+              alt="CureLink Logo" 
+              className={cn("h-16 md:h-20 w-auto object-contain transition-all -my-4", isTransparent ? "brightness-0 invert drop-shadow-md" : "")} 
+            />
           </Link>
         </div>
 

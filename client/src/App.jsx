@@ -60,6 +60,8 @@ import CreateOrderPage from './pages/customer/orders/CreateOrderPage';
 import PaymentSelectionPage from './pages/customer/orders/PaymentSelectionPage';
 import PaymentSuccessPage from './pages/customer/orders/PaymentSuccessPage';
 import PaymentCancelPage from './pages/customer/orders/PaymentCancelPage';
+import PrescriptionUploadPage from './pages/customer/PrescriptionUploadPage';
+import PrescriptionReviewPage from './pages/customer/PrescriptionReviewPage';
 
 function App() {
   return (
@@ -109,6 +111,22 @@ function App() {
                   element={
                     <ProtectedRoute allowedRoles={['CUSTOMER']}>
                       <RequestDetailsPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/customer/requests/:requestId/prescription/upload" 
+                  element={
+                    <ProtectedRoute allowedRoles={['CUSTOMER']}>
+                      <PrescriptionUploadPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/customer/requests/:requestId/prescription/:prescriptionId/review" 
+                  element={
+                    <ProtectedRoute allowedRoles={['CUSTOMER']}>
+                      <PrescriptionReviewPage />
                     </ProtectedRoute>
                   } 
                 />
@@ -297,7 +315,7 @@ function App() {
                 <Route 
                   path="/notifications" 
                   element={
-                    <ProtectedRoute allowedRoles={['CUSTOMER', 'PHARMACY']}>
+                    <ProtectedRoute allowedRoles={['CUSTOMER', 'PHARMACY', 'ADMIN']}>
                       <NotificationsPage />
                     </ProtectedRoute>
                   } 
