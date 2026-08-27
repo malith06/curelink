@@ -48,7 +48,6 @@ exports.getPharmacyDashboard = async (pharmacyId, rangeDays = 30) => {
     {
       $match: {
         pharmacyId: pharmacyObjectId,
-        orderStatus: ORDER_STATUS.COMPLETED,
         paymentStatus: { $in: [PAYMENT_STATUS.PAID, PAYMENT_STATUS.COD_COLLECTED] },
       },
     },
@@ -191,13 +190,15 @@ exports.getPharmacyDashboard = async (pharmacyId, rangeDays = 30) => {
     value: o.count,
   }));
 
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - rangeDays);
+
   const fulfilledValueTrendAgg = await Order.aggregate([
     {
       $match: {
         pharmacyId: pharmacyObjectId,
-        orderStatus: ORDER_STATUS.COMPLETED,
         paymentStatus: { $in: [PAYMENT_STATUS.PAID, PAYMENT_STATUS.COD_COLLECTED] },
-        createdAt: { $gte: dateRange },
+        createdAt: { $gte: thirtyDaysAgo },
       },
     },
     {
@@ -233,4 +234,27 @@ exports.getPharmacyDashboard = async (pharmacyId, rangeDays = 30) => {
       fulfilledValueTrend,
     },
   };
+};
+
+exports.generateSalesReport = async (pharmacyId, startDate, endDate) => {
+  const pharmacyObjectId = new mongoose.Types.ObjectId(pharmacyId);
+  
+  const orders = await Order.find({
+    pharmacyId: pharmacyObjectId,
+    createdAt: { $gte: startDate, $lte: endDate }
+  }).populate('customerId', 'fullName email').sort({ createdAt: -1 });
+
+  const formattedOrders = orders.map(order => ({
+    orderNumber: order.orderNumber,
+    date: order.createdAt.toISOString().split('T')[0],
+    customerName: order.customerId?.fullName || order.customerSnapshot?.fullName || 'Unknown',
+    subtotal: (order.subtotal / 100).toFixed(2),
+    deliveryFee: (order.deliveryFee / 100).toFixed(2),
+    total: (order.total / 100).toFixed(2),
+    paymentMethod: order.paymentMethod,
+    paymentStatus: order.paymentStatus,
+    orderStatus: order.orderStatus
+  }));
+
+  return formattedOrders;
 };

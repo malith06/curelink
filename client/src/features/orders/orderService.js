@@ -56,6 +56,11 @@ const createCardSession = async (orderId) => {
   return response.data;
 };
 
+const verifyCardPayment = async (orderId) => {
+  const response = await api.post(`/orders/${orderId}/payments/card/verify`);
+  return response.data;
+};
+
 const selectCOD = async (orderId) => {
   const response = await api.post(`/orders/${orderId}/payments/cod`);
   return response.data;
@@ -77,6 +82,7 @@ export const orderService = {
   rejectOrder,
   updateOrderStatus,
   createCardSession,
+  verifyCardPayment,
   selectCOD,
   collectCOD
 };

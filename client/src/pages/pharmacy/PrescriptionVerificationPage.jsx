@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, CheckSquare, XSquare, FileText, AlertCircle } from 'lucide-react';
 import prescriptionService from '../../../features/prescriptions/prescriptionService';
 
 const PrescriptionVerificationPage = () => {
@@ -88,7 +89,24 @@ const PrescriptionVerificationPage = () => {
     }
   };
 
-  if (loading) return <div className="p-8 text-center">Loading prescription data...</div>;
+  if (loading) return (
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#0B1354] mx-auto mb-4"></div>
+        <p className="text-slate-600 font-medium">Loading prescription data...</p>
+      </div>
+    </div>
+  );
+
+  if (error && !ocrData) return (
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+      <div className="bg-red-50 text-red-700 p-6 rounded-2xl border border-red-100 max-w-md text-center">
+        <AlertCircle className="w-10 h-10 mx-auto mb-3" />
+        <p className="font-bold text-lg mb-1">Failed to Load</p>
+        <p className="text-sm">{error}</p>
+      </div>
+    </div>
+  );
 
   return (
     <div className="max-w-6xl mx-auto p-6 mt-6 grid grid-cols-1 lg:grid-cols-2 gap-8">

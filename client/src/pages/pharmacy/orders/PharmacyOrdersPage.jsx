@@ -78,46 +78,54 @@ const PharmacyOrdersPage = () => {
   });
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div className="flex items-center gap-4">
-           <div className="w-14 h-14 bg-[#0B1354]/10 rounded-2xl flex items-center justify-center">
-              <PackageSearch className="w-7 h-7 text-[#0B1354]" />
-           </div>
-           <div>
-             <h1 className="text-3xl font-bold text-[#0B1354] tracking-tight">Manage Orders</h1>
-             <p className="mt-1 text-slate-500 font-medium">Review and fulfill customer orders.</p>
-           </div>
+    <div className="animate-in fade-in duration-500 bg-slate-50 min-h-screen">
+      {/* Modern Header Section */}
+      <div className="bg-[#0B1354] pb-24 pt-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden rounded-b-[3rem] mb-[-4rem]">
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }}></div>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500 rounded-full mix-blend-screen filter blur-[80px] opacity-30 animate-pulse"></div>
+        
+        <div className="max-w-7xl mx-auto relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="flex items-center gap-4">
+             <div className="w-14 h-14 bg-white/10 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 flex items-center justify-center">
+                <PackageSearch className="w-7 h-7 text-white" />
+             </div>
+             <div>
+               <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">Manage Orders</h1>
+               <p className="mt-2 text-blue-100 font-medium">Review and fulfill customer orders.</p>
+             </div>
+          </div>
         </div>
       </div>
 
-      <div className="mb-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-5 mb-6 pb-2 custom-scrollbar overflow-x-auto">
-          <div className="flex gap-2 min-w-max">
-            {['ALL', 'ACTIVE', 'COMPLETED', 'CANCELLED'].map(status => (
-              <button
-                key={status}
-                onClick={() => setFilter(status)}
-                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                  filter === status 
-                    ? 'bg-[#0B1354] text-white shadow-sm' 
-                    : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                {status === 'ALL' ? 'All Orders' : status.charAt(0) + status.slice(1).toLowerCase()}
-              </button>
-            ))}
-          </div>
-          <div className="w-full md:w-72">
-             <Input 
+      {/* Main Content Area */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 relative z-20">
+        <div className="mb-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-5 mb-6 pb-2 custom-scrollbar overflow-x-auto">
+            <div className="flex gap-2 min-w-max">
+              {['ALL', 'ACTIVE', 'COMPLETED', 'CANCELLED'].map(status => (
+                <button
+                  key={status}
+                  onClick={() => setFilter(status)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                    filter === status 
+                      ? 'bg-primary-600 text-white shadow-sm' 
+                      : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  {status === 'ALL' ? 'All Orders' : status.charAt(0) + status.slice(1).toLowerCase()}
+                </button>
+              ))}
+            </div>
+            <div className="w-full md:w-72">
+              <Input 
                 icon={Search} 
                 placeholder="Search by Order ID..." 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-             />
+              />
+            </div>
           </div>
         </div>
-
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3].map(i => <Skeleton key={i} className="h-64 w-full" />)}

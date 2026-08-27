@@ -4,7 +4,7 @@ import availabilityApi from '../../features/availability/availabilityApi';
 import api from '../../api/axiosClient'; 
 import pharmacyService from '../../features/pharmacy/pharmacyService';
 import AvailabilityStatusBadge from '../../components/availability/AvailabilityStatusBadge';
-import { Search, Edit2, Plus, PackageX, Package, Check, X } from 'lucide-react';
+import { Search, Edit2, Plus, PackageX, Package, Check, X, Trash2 } from 'lucide-react';
 
 const STATUS_OPTIONS = [
   { value: 'AVAILABLE', label: 'Available', color: 'bg-green-100 text-green-800' },
@@ -87,7 +87,11 @@ const PharmacyAvailabilityPage = () => {
       medicineId: medicine?._id || existingRecord?.medicineId?._id,
       medicineName: medicine?.name || existingRecord?.medicineId?.name || 'Unknown Medicine',
       status: existingRecord?.status || 'AVAILABLE',
-      notes: existingRecord?.notes || ''
+      notes: existingRecord?.notes || '',
+      price: existingRecord?.price || '',
+      stockQuantity: existingRecord?.stockQuantity !== undefined ? existingRecord.stockQuantity : '',
+      dosage: existingRecord?.dosage || '',
+      isManualOverride: existingRecord?.isManualOverride || false,
     });
   };
 
@@ -96,15 +100,30 @@ const PharmacyAvailabilityPage = () => {
     try {
       await availabilityApi.updateAvailability(editingItem.medicineId, {
         status: editingItem.status,
-        notes: editingItem.notes
+        notes: editingItem.notes,
+        price: editingItem.price ? Number(editingItem.price) : null,
+        stockQuantity: editingItem.stockQuantity !== '' ? Number(editingItem.stockQuantity) : null,
+        dosage: editingItem.dosage,
+        isManualOverride: editingItem.isManualOverride,
       });
-      toast.success('Availability updated successfully');
+      toast.success('Inventory updated successfully');
       setEditingItem(null);
       setSearchQuery('');
       setSearchResults([]);
       fetchData(); 
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to update availability');
+    }
+  };
+
+  const handleDeleteAvailability = async (medicineId) => {
+    if (!window.confirm('Are you sure you want to remove this medicine from your inventory?')) return;
+    try {
+      await availabilityApi.deleteAvailability(medicineId);
+      toast.success('Medicine removed from inventory successfully');
+      fetchData(); 
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to remove medicine');
     }
   };
 
@@ -129,20 +148,33 @@ const PharmacyAvailabilityPage = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      <div className="flex items-center gap-3 mb-8">
-        <div className="bg-[#0B1354]/10 p-3 rounded-xl text-[#0B1354]">
-          <Package className="w-6 h-6" />
-        </div>
-        <h1 className="text-3xl font-bold text-[#0B1354]">Inventory Management</h1>
-      </div>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+    <div className="animate-in fade-in duration-500 bg-slate-50 min-h-screen">
+      {/* Modern Header Section */}
+      <div className="bg-[#0B1354] pb-24 pt-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden rounded-b-[3rem] mb-[-4rem]">
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }}></div>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500 rounded-full mix-blend-screen filter blur-[80px] opacity-30 animate-pulse"></div>
         
-        {/* Left Col: Search & Add */}
+        <div className="max-w-7xl mx-auto relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="flex items-center gap-4">
+             <div className="w-14 h-14 bg-white/10 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 flex items-center justify-center">
+                <Package className="w-7 h-7 text-white" />
+             </div>
+             <div>
+               <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">Inventory Management</h1>
+               <p className="mt-2 text-blue-100 font-medium">Manage and publish your medicine availability.</p>
+             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content Area */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 relative z-20">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          
+          {/* Left Col: Search & Add */}
         <div className="lg:col-span-4 space-y-6">
-          <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col h-[600px]">
-            <h2 className="text-lg font-semibold mb-4 text-gray-800 flex items-center gap-2">
+          <div className="bg-white/80 backdrop-blur-xl p-5 rounded-3xl shadow-xl border border-white/50 flex flex-col h-[600px]">
+            <h2 className="text-xl font-bold mb-4 text-[#0B1354] tracking-tight flex items-center gap-2">
               Medicine Catalog
             </h2>
             <form onSubmit={handleSearchMedicines} className="mb-4 flex flex-col gap-3">
@@ -203,8 +235,8 @@ const PharmacyAvailabilityPage = () => {
         <div className="lg:col-span-8 space-y-6">
           
           {editingItem && (
-            <div className="bg-white p-6 rounded-2xl shadow-sm border-t-4 border-t-[#0B1354] border-l border-r border-b border-gray-100">
-              <div className="flex justify-between items-start mb-4">
+            <div className="bg-white/80 backdrop-blur-xl p-6 rounded-3xl shadow-xl border-t-4 border-t-[#0B1354] border-white/50 relative overflow-hidden">
+              <div className="flex justify-between items-start mb-4 relative z-10">
                 <div>
                   <p className="text-sm font-medium text-blue-600 mb-1">Update Status For</p>
                   <h2 className="text-2xl font-bold text-gray-900">
@@ -217,42 +249,94 @@ const PharmacyAvailabilityPage = () => {
               </div>
 
               <div className="space-y-5">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Availability Status</label>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {STATUS_OPTIONS.map(opt => (
-                      <label 
-                        key={opt.value} 
-                        className={`cursor-pointer border rounded-xl p-3 flex flex-col items-center text-center transition-all ${
-                          editingItem.status === opt.value 
-                            ? 'border-[#0B1354] bg-blue-50 ring-1 ring-[#0B1354]' 
-                            : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
-                        }`}
-                      >
-                        <input 
-                          type="radio" 
-                          name="status" 
-                          value={opt.value} 
-                          checked={editingItem.status === opt.value}
-                          onChange={(e) => setEditingItem({ ...editingItem, status: e.target.value })}
-                          className="sr-only"
-                        />
-                        <span className={`text-xs font-semibold ${
-                          editingItem.status === opt.value ? 'text-[#0B1354]' : 'text-gray-600'
-                        }`}>
-                          {opt.label}
-                        </span>
-                      </label>
-                    ))}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Unit Price (Rs.)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={editingItem.price}
+                      onChange={(e) => setEditingItem({ ...editingItem, price: e.target.value })}
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0B1354]/20 focus:border-[#0B1354] outline-none transition-all"
+                      placeholder="e.g. 150.00"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Stock Quantity</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={editingItem.stockQuantity}
+                      onChange={(e) => setEditingItem({ ...editingItem, stockQuantity: e.target.value, isManualOverride: false })}
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0B1354]/20 focus:border-[#0B1354] outline-none transition-all"
+                      placeholder="e.g. 50"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Dosage / Variant</label>
+                    <input
+                      type="text"
+                      value={editingItem.dosage}
+                      onChange={(e) => setEditingItem({ ...editingItem, dosage: e.target.value })}
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0B1354]/20 focus:border-[#0B1354] outline-none transition-all"
+                      placeholder="e.g. 500mg, 10ml"
+                    />
+                  </div>
+                  <div className="flex flex-col justify-end pb-1">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={editingItem.isManualOverride}
+                        onChange={(e) => setEditingItem({ ...editingItem, isManualOverride: e.target.checked })}
+                        className="w-5 h-5 rounded border-gray-300 text-[#0B1354] focus:ring-[#0B1354]"
+                      />
+                      <span className="text-sm font-semibold text-gray-700">Manually Set Status</span>
+                    </label>
+                    <p className="text-xs text-gray-500 mt-1 pl-7">Check this to ignore stock quantity.</p>
                   </div>
                 </div>
+
+                {/* Only show status if manual override is true, or if no stock quantity is provided */}
+                {(editingItem.isManualOverride || editingItem.stockQuantity === '') && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Availability Status</label>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      {STATUS_OPTIONS.map(opt => (
+                        <label 
+                          key={opt.value} 
+                          className={`cursor-pointer border rounded-xl p-3 flex flex-col items-center text-center transition-all ${
+                            editingItem.status === opt.value 
+                              ? 'border-[#0B1354] bg-blue-50 ring-1 ring-[#0B1354]' 
+                              : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
+                          }`}
+                        >
+                          <input 
+                            type="radio" 
+                            name="status" 
+                            value={opt.value} 
+                            checked={editingItem.status === opt.value}
+                            onChange={(e) => setEditingItem({ ...editingItem, status: e.target.value })}
+                            className="sr-only"
+                          />
+                          <span className={`text-xs font-semibold ${
+                            editingItem.status === opt.value ? 'text-[#0B1354]' : 'text-gray-600'
+                          }`}>
+                            {opt.label}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Internal Notes (Optional)</label>
                   <textarea
                     value={editingItem.notes}
                     onChange={(e) => setEditingItem({ ...editingItem, notes: e.target.value })}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0B1354]/20 focus:border-[#0B1354] outline-none h-24 transition-all resize-none"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0B1354]/20 focus:border-[#0B1354] outline-none h-20 transition-all resize-none"
                     placeholder="E.g., Out of stock until Friday. Awaiting new shipment."
                     maxLength={300}
                   />
@@ -278,10 +362,10 @@ const PharmacyAvailabilityPage = () => {
             </div>
           )}
 
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col min-h-[400px]">
-            <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-              <h2 className="text-lg font-semibold text-gray-800">Current Inventory Log</h2>
-              <span className="px-3 py-1 bg-blue-50 text-blue-700 text-sm font-medium rounded-full">
+          <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white/50 overflow-hidden flex flex-col min-h-[400px]">
+            <div className="px-6 py-5 border-b border-white/50 flex justify-between items-center bg-[#0B1354]/5">
+              <h2 className="text-xl font-bold text-[#0B1354] tracking-tight">Current Inventory Log</h2>
+              <span className="px-3 py-1 bg-white shadow-sm text-[#0B1354] text-sm font-bold rounded-full">
                 {availabilities.length} Records
               </span>
             </div>
@@ -298,8 +382,10 @@ const PharmacyAvailabilityPage = () => {
                   <thead>
                     <tr className="border-b border-gray-100">
                       <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-white">Medicine</th>
+                      <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-white">Dosage</th>
+                      <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-white text-right">Price (Rs)</th>
+                      <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-white text-right">Stock</th>
                       <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-white">Status</th>
-                      <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-white">Last Updated</th>
                       <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-white text-right">Action</th>
                     </tr>
                   </thead>
@@ -311,20 +397,44 @@ const PharmacyAvailabilityPage = () => {
                             <p className="text-sm font-semibold text-gray-900">{record.medicineId?.name || 'Unknown Medicine'}</p>
                             {record.medicineId?.brand && <p className="text-xs text-gray-500">{record.medicineId.brand}</p>}
                           </td>
-                          <td className="px-6 py-4">
-                            <AvailabilityStatusBadge status={record.status} />
+                          <td className="px-6 py-4 text-sm text-gray-700">
+                            {record.dosage || <span className="text-gray-400 italic">N/A</span>}
                           </td>
-                          <td className="px-6 py-4 text-sm text-gray-500 font-medium">
-                            {new Date(record.lastUpdated || record.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                          <td className="px-6 py-4 text-sm font-medium text-gray-900 text-right">
+                            {record.price ? `Rs. ${record.price.toFixed(2)}` : <span className="text-gray-400 italic">-</span>}
+                          </td>
+                          <td className="px-6 py-4 text-sm font-medium text-gray-900 text-right">
+                            {record.stockQuantity !== null && record.stockQuantity !== undefined ? (
+                              <span className={record.stockQuantity <= 10 ? (record.stockQuantity === 0 ? 'text-red-600' : 'text-orange-600') : 'text-green-600'}>
+                                {record.stockQuantity}
+                              </span>
+                            ) : <span className="text-gray-400 italic">-</span>}
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex flex-col gap-1 items-start">
+                              <AvailabilityStatusBadge status={record.status} />
+                              {record.isManualOverride && (
+                                <span className="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-sm uppercase tracking-wider">Manual</span>
+                              )}
+                            </div>
                           </td>
                           <td className="px-6 py-4 text-right">
-                            <button
-                              onClick={() => handleStartEdit(null, record)}
-                              className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-50 text-gray-500 hover:bg-blue-100 hover:text-blue-700 transition-colors"
-                              title="Edit Availability"
-                            >
-                              <Edit2 className="w-4 h-4" />
-                            </button>
+                            <div className="flex justify-end gap-2">
+                              <button
+                                onClick={() => handleStartEdit(null, record)}
+                                className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-50 text-gray-500 hover:bg-blue-100 hover:text-blue-700 transition-colors"
+                                title="Edit Availability"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteAvailability(record._id)}
+                                className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-50 text-gray-500 hover:bg-red-100 hover:text-red-700 transition-colors"
+                                title="Remove from Inventory"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );
@@ -335,6 +445,7 @@ const PharmacyAvailabilityPage = () => {
             )}
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

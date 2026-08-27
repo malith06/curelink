@@ -4,6 +4,7 @@ import { Loader2, ArrowLeft, Send, Save, AlertCircle, FileText, Package, Clock, 
 import { toast } from 'react-toastify';
 import requestService from '../../../features/requests/requestService';
 import quotationService from '../../../features/quotations/quotationService';
+import prescriptionService from '../../../features/prescriptions/prescriptionService';
 import { QUOTATION_STATUS } from '../../../constants/quotation';
 import { Card, CardContent, CardHeader } from '../../../components/ui/Card';
 import Button from '../../../components/ui/Button';
@@ -21,6 +22,7 @@ const PharmacyRequestDetailsPage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [openingPrescription, setOpeningPrescription] = useState(false);
   
   // Editable Draft State
   const [draftItems, setDraftItems] = useState({});
@@ -153,19 +155,38 @@ const PharmacyRequestDetailsPage = () => {
     }
   };
 
+  const handleViewPrescription = async () => {
+    if (!request?.prescriptionId?._id) return;
+    try {
+      setOpeningPrescription(true);
+      const res = await prescriptionService.getPrescriptionAccessUrl(request.prescriptionId._id);
+      if (res?.data?.url) {
+        window.open(res.data.url, '_blank', 'noopener,noreferrer');
+      } else {
+        toast.error('Could not obtain access URL');
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to open prescription');
+    } finally {
+      setOpeningPrescription(false);
+    }
+  };
+
   if (loading) {
     return (
-      <div className="max-w-5xl mx-auto px-4 py-8 space-y-8">
-        <Skeleton className="h-6 w-32 mb-6" />
-        <Card>
-          <CardContent className="p-8 space-y-6">
-            <Skeleton className="h-10 w-1/3" />
-            <Skeleton className="h-4 w-1/4" />
-            <div className="mt-8 space-y-4">
-               {[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-full" />)}
-            </div>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/20 to-slate-100 animate-in fade-in duration-500">
+        <div className="max-w-5xl mx-auto px-4 py-8 space-y-8">
+          <Skeleton className="h-6 w-32 mb-6" />
+          <Card>
+            <CardContent className="p-8 space-y-6">
+              <Skeleton className="h-10 w-1/3" />
+              <Skeleton className="h-4 w-1/4" />
+              <div className="mt-8 space-y-4">
+                 {[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-full" />)}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
@@ -189,7 +210,8 @@ const PharmacyRequestDetailsPage = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/20 to-slate-100 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
       <div className="flex items-center space-x-4 mb-2">
         <button
           onClick={() => navigate('/pharmacy/inbox')}
@@ -198,12 +220,12 @@ const PharmacyRequestDetailsPage = () => {
           <ArrowLeft className="w-5 h-5 text-slate-600 group-hover:-translate-x-1 transition-transform" />
         </button>
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Review Request</h1>
+          <h1 className="text-3xl font-bold text-[#0B1354] tracking-tight">Review Request</h1>
         </div>
       </div>
 
-      <Card className="overflow-hidden">
-        <div className="p-6 md:p-8 bg-slate-50 border-b border-slate-100 flex flex-col md:flex-row justify-between md:items-center gap-4">
+      <Card className="bg-white/80 backdrop-blur-xl border border-white/50 shadow-xl rounded-3xl overflow-hidden">
+        <div className="p-6 md:p-8 bg-[#0B1354]/5 border-b border-white/50 flex flex-col md:flex-row justify-between md:items-center gap-4">
           <div className="space-y-1">
             <div className="flex items-center space-x-3">
               <h2 className="text-xl font-bold text-slate-900">{request.customerId?.fullName || 'Customer'}'s Request</h2>
@@ -212,16 +234,35 @@ const PharmacyRequestDetailsPage = () => {
               </span>
               <Badge variant="default">{request.status.replace(/_/g, ' ')}</Badge>
             </div>
-            <p className="text-slate-500 font-medium flex items-center">
-              <Clock className="w-4 h-4 mr-1.5" />
-              Received {new Date(request.createdAt).toLocaleString()}
-            </p>
-          </div>
-          {quotation && (
-            <div>
-              {renderStatusBadge(quotation.status)}
+            <div className="flex items-center space-x-4 mt-2">
+              <p className="text-slate-500 font-medium flex items-center">
+                <Clock className="w-4 h-4 mr-1.5" />
+                Received {new Date(request.createdAt).toLocaleString()}
+              </p>
+              {request.prescriptionId && (
+                <button
+                  onClick={handleViewPrescription}
+                  disabled={openingPrescription}
+                  className="inline-flex items-center px-3 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 rounded-md text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {openingPrescription ? (
+                    <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                  ) : (
+                    <FileText className="w-4 h-4 mr-1.5" />
+                  )}
+                  View Prescription
+                </button>
+              )}
             </div>
-          )}
+          </div>
+          
+          <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-2xl shadow-sm border border-slate-100">
+            {quotation && (
+              <div>
+                {renderStatusBadge(quotation.status)}
+              </div>
+            )}
+          </div>
         </div>
 
         {!quotation ? (
@@ -494,6 +535,7 @@ const PharmacyRequestDetailsPage = () => {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 };

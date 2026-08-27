@@ -15,10 +15,18 @@ const getAdminDashboard = async (params = { range: '30d' }) => {
   return response.data;
 };
 
+const generatePharmacyReport = async (startDate, endDate) => {
+  const response = await api.get('/dashboards/pharmacy/report', {
+    params: { startDate, endDate },
+  });
+  return response.data;
+};
+
 export const dashboardService = {
   getCustomerDashboard,
   getPharmacyDashboard,
   getAdminDashboard,
+  generatePharmacyReport,
 };
 
 export default dashboardService;

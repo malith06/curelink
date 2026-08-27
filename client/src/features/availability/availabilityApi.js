@@ -10,9 +10,15 @@ const updateAvailability = async (medicineId, data) => {
   return response.data;
 };
 
+const deleteAvailability = async (medicineId) => {
+  const response = await api.delete(`/availability/${medicineId}`);
+  return response.data;
+};
+
 export const availabilityApi = {
   getMyAvailability,
   updateAvailability,
+  deleteAvailability,
 };
 
 export default availabilityApi;
