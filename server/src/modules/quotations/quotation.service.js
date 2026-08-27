@@ -40,15 +40,45 @@ class QuotationService {
       throw new ApiError(400, 'This request is no longer accepting quotations');
     }
 
-    // Map request items to quotation draft items
-    const quotationItems = request.items.map(item => ({
-      requestItemId: item._id,
-      medicineId: item.medicineId,
-      medicineSnapshot: item.medicineSnapshot,
-      requestedQuantity: item.quantity,
-      availableQuantity: 0,
-      unitPrice: null,
-      subtotal: 0
+    // Require availability model to check inventory
+    const MedicineAvailability = require('../availability/availability.model');
+
+    // Map request items to quotation draft items, pre-filling from inventory if available
+    const quotationItems = await Promise.all(request.items.map(async (item) => {
+      // Find inventory record for this medicine
+      const inventoryRecord = await MedicineAvailability.findOne({
+        pharmacyId: pharmacyId,
+        medicineId: item.medicineId
+      });
+
+      // Pre-fill logic
+      let prefilledPrice = null;
+      let prefilledQty = 0;
+
+      if (inventoryRecord) {
+        if (inventoryRecord.price !== undefined && inventoryRecord.price !== null) {
+          prefilledPrice = toCents(inventoryRecord.price);
+        }
+
+        
+        if (inventoryRecord.stockQuantity !== undefined && inventoryRecord.stockQuantity !== null) {
+          // Can only offer up to what is requested, or what is in stock (whichever is lower)
+          prefilledQty = Math.min(inventoryRecord.stockQuantity, item.quantity);
+        } else if (['AVAILABLE', 'LIMITED'].includes(inventoryRecord.status)) {
+          // If no specific stock count but it is available, assume they can fulfill it fully
+          prefilledQty = item.quantity;
+        }
+      }
+
+      return {
+        requestItemId: item._id,
+        medicineId: item.medicineId,
+        medicineSnapshot: item.medicineSnapshot,
+        requestedQuantity: item.quantity,
+        availableQuantity: prefilledQty,
+        unitPrice: prefilledPrice,
+        subtotal: (prefilledPrice || 0) * prefilledQty
+      };
     }));
 
     // Create a new draft quotation

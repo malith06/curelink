@@ -336,8 +336,27 @@ const getPharmacyInbox = async (pharmacyId, queryParams = {}) => {
 
   const total = await MedicineRequest.countDocuments(filter);
 
+  // Check which requests the pharmacy has already provided a quotation for
+  const requestIds = requests.map(r => r._id);
+  const Quotation = require('../quotations/quotation.model');
+  const quotations = await Quotation.find({
+    requestId: { $in: requestIds },
+    pharmacyId: pharmacyId
+  }).lean();
+
+  const requestsWithQuotationStatus = requests.map(req => {
+    const quotation = quotations.find(q => q.requestId.toString() === req._id.toString());
+    // Only consider it "quoted" if there is a quotation AND it has been submitted (not in DRAFT state)
+    const hasQuoted = !!quotation && quotation.status !== 'DRAFT';
+    return {
+      ...req,
+      hasQuoted,
+      quotationStatus: quotation ? quotation.status : null
+    };
+  });
+
   return {
-    data: requests,
+    data: requestsWithQuotationStatus,
     pagination: {
       total,
       page,
@@ -359,7 +378,8 @@ const getPharmacyRequestById = async (requestId, pharmacyId) => {
     selectedPharmacyIds: pharmacyId
   })
     .populate('customerId', 'fullName')
-    .lean();
+    .populate('prescriptionId', 'originalFileName storagePublicId storageProvider storageResourceType storageFormat')
+    .lean({ virtuals: true });
 
   if (!request) {
     throw new ApiError(404, 'Request not found or not assigned to this pharmacy');

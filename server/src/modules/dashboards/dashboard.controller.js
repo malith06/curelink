@@ -66,3 +66,30 @@ exports.getAdminDashboard = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * @desc    Generate pharmacy sales report CSV
+ * @route   GET /api/v1/dashboards/pharmacy/report
+ * @access  Private (Pharmacy only)
+ */
+exports.generatePharmacyReport = async (req, res, next) => {
+  try {
+    const Pharmacy = require('../pharmacies/pharmacy.model');
+    const pharmacy = await Pharmacy.findOne({ ownerUserId: req.user._id }).lean();
+    
+    if (!pharmacy) {
+      return next(new ApiError('Pharmacy profile not found for this user', 404));
+    }
+
+    const { startDate, endDate } = req.query;
+
+    const reportData = await pharmacyDashboardService.generateSalesReport(pharmacy._id, new Date(startDate), new Date(endDate));
+
+    res.status(200).json({
+      success: true,
+      data: reportData,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

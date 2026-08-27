@@ -79,8 +79,8 @@ exports.createCardCheckoutSession = async (orderId, customerId) => {
       orderId: order._id.toString(),
       amount: order.total,
       currency: order.currency || env.DEFAULT_CURRENCY,
-      successUrl: env.PAYMENT_SUCCESS_URL,
-      cancelUrl: env.PAYMENT_CANCEL_URL,
+      successUrl: `${env.CLIENT_URL}/customer/orders/${order._id}/payment/success`,
+      cancelUrl: `${env.CLIENT_URL}/customer/orders/${order._id}/payment/cancel`,
       idempotencyKey,
       metadata: {
         paymentId: payment._id.toString(),
@@ -112,6 +112,85 @@ exports.createCardCheckoutSession = async (orderId, customerId) => {
 };
 
 /**
+ * Manually verify a checkout session, used as a fallback if webhooks fail or are not configured locally.
+ */
+exports.verifyCheckoutSession = async (orderId, customerId) => {
+  const session = await Order.startSession();
+  try {
+    session.startTransaction();
+
+    const order = await Order.findOne({ _id: orderId, customerId }).session(session);
+    if (!order) {
+      throw new ApiError('Order not found', 404);
+    }
+
+    if (order.paymentStatus === PAYMENT_STATUS.PAID) {
+      await session.abortTransaction();
+      session.endSession();
+      return { status: 'PAID' }; // Already processed by webhook
+    }
+
+    const payment = await Payment.findOne({ 
+      orderId, 
+      status: PAYMENT_STATUS.PROCESSING,
+      provider: PAYMENT_PROVIDER.STRIPE_SANDBOX 
+    }).sort({ createdAt: -1 }).session(session);
+
+    if (!payment || !payment.gatewaySessionId) {
+      await session.abortTransaction();
+      session.endSession();
+      return { status: 'PENDING' };
+    }
+
+    const stripeSandboxAdapter = require('../payment-gateways/stripeSandbox.adapter');
+    const stripe = stripeSandboxAdapter.stripe;
+    if (!stripe) {
+      await session.abortTransaction();
+      session.endSession();
+      return { status: 'PENDING' };
+    }
+
+    const checkoutSession = await stripe.checkout.sessions.retrieve(payment.gatewaySessionId);
+    
+    if (checkoutSession.payment_status === 'paid') {
+      // Simulate webhook processing
+      const parsedEvent = {
+        eventId: `manual_verify_${checkoutSession.id}`,
+        eventType: GATEWAY_EVENT.PAYMENT_SUCCEEDED,
+        status: 'succeeded',
+        amountPaid: checkoutSession.amount_total,
+        currency: checkoutSession.currency,
+        metadata: {
+          paymentId: payment._id.toString(),
+          orderNumber: order.orderNumber,
+          customerId: customerId.toString(),
+          attemptNumber: payment.attemptNumber.toString()
+        },
+        rawSession: checkoutSession
+      };
+
+      await session.commitTransaction();
+      session.endSession();
+
+      // Call processPaymentEvent outside of transaction
+      await exports.processPaymentEvent(parsedEvent, PAYMENT_PROVIDER.STRIPE_SANDBOX);
+      return { status: 'PAID' };
+    }
+
+    await session.commitTransaction();
+    session.endSession();
+    return { status: 'PENDING' };
+  } catch (error) {
+    if (session.inTransaction()) {
+      await session.abortTransaction();
+    }
+    session.endSession();
+    console.error('Manual verification failed:', error);
+    return { status: 'PENDING' };
+  }
+};
+
+/**
  * Handle incoming webhook events from the payment gateway.
  * Verifies the signature, deduplicates the event, and delegates processing.
  */
@@ -135,7 +214,10 @@ exports.handleWebhookEvent = async (rawBody, signature, provider = PAYMENT_PROVI
     parsedEvent = await stripeSandboxAdapter.parseWebhookEvent(rawEvent);
   }
 
-  // 3. Deduplication check using unique compound index
+  return await exports.processPaymentEvent(parsedEvent, provider);
+};
+
+exports.processPaymentEvent = async (parsedEvent, provider) => {
   let paymentEvent;
   try {
     paymentEvent = await PaymentEvent.create({
@@ -225,6 +307,10 @@ exports.handleWebhookEvent = async (rawBody, signature, provider = PAYMENT_PROVI
                 note: `Payment successful via ${provider}`
               });
               order.orderStatus = ORDER_STATUS.PAYMENT_CONFIRMED;
+
+              // Deduct stock since the order is now confirmed
+              const availabilityService = require('../availability/availability.service');
+              await availabilityService.deductStockForOrder(order, session);
             }
             order.paymentId = payment._id;
             await order.save({ session });
@@ -362,6 +448,10 @@ exports.selectCOD = async (orderId, customerId) => {
       changeSource: 'SYSTEM',
       note: 'Customer selected Cash on Delivery'
     });
+
+    // Deduct stock since the order is now confirmed
+    const availabilityService = require('../availability/availability.service');
+    await availabilityService.deductStockForOrder(order, session);
 
     await order.save({ session });
 

@@ -2,7 +2,7 @@ const express = require('express');
 const dashboardController = require('./dashboard.controller');
 const { protect, authorize } = require('../../middleware/auth.middleware');
 const { validate } = require('../../middleware/validate');
-const { dashboardRangeSchema } = require('./dashboard.validation');
+const { dashboardRangeSchema, reportDateRangeSchema } = require('./dashboard.validation');
 const { ROLES } = require('../users/user.constants');
 
 const router = express.Router();
@@ -22,6 +22,14 @@ router.get(
   '/pharmacy',
   authorize(ROLES.PHARMACY),
   dashboardController.getPharmacyDashboard
+);
+
+// Pharmacy Report
+router.get(
+  '/pharmacy/report',
+  authorize(ROLES.PHARMACY),
+  validate(reportDateRangeSchema),
+  dashboardController.generatePharmacyReport
 );
 
 // Admin Dashboard

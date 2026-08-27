@@ -28,6 +28,7 @@ const getShortId = (entity, context = {}) => {
 const createNotificationPayload = ({ type, recipient, entity, context = {} }) => {
   let title, message, actionUrl, entityType, eventKey;
   let metadata = {};
+  let entityId = entity?._id?.toString() || entity?.id || 'unknown'; // default, can be overridden
   
   const recipientRole = recipient?.role;
   const recipientUserId = recipient?._id?.toString() || recipient?.id || 'unknown';
@@ -63,15 +64,16 @@ const createNotificationPayload = ({ type, recipient, entity, context = {} }) =>
       title = 'Payment Successful';
       if (recipientRole === 'CUSTOMER') {
         message = `Payment for order ${getShortId(entity)} was confirmed successfully.`;
-        actionUrl = `/customer/orders/${entity._id}`;
+        actionUrl = `/customer/orders/${entity.orderId || entity._id}`;
       } else if (recipientRole === 'ADMIN') {
         message = `A payment of LKR ${entity.amount} was confirmed for order ${entity.orderId ? `#${entity.orderId}` : getShortId(entity)}.`;
         actionUrl = `/admin/payments`;
       } else {
         message = `Payment has been confirmed for order ${getShortId(entity)}.`;
-        actionUrl = `/pharmacy/orders/${entity._id}`;
+        actionUrl = `/pharmacy/orders/${entity.orderId || entity._id}`;
       }
       entityType = NOTIFICATION_ENTITY_TYPES.PAYMENT;
+      entityId = entity.orderId || entity._id; // ← Store orderId so frontend can navigate correctly
       eventKey = buildEventKey(type, context.paymentId || entity._id, recipientUserId);
       metadata = { orderNumber: entity.shortId || entity._id.toString() };
       break;
@@ -213,7 +215,7 @@ const createNotificationPayload = ({ type, recipient, entity, context = {} }) =>
     title,
     message,
     entityType,
-    entityId: entity?._id?.toString() || entity?.id || 'unknown',
+    entityId,
     actionUrl,
     eventKey,
     metadata,

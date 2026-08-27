@@ -1,5 +1,6 @@
 const Prescription = require("../modules/prescriptions/prescription.model");
 const MedicineRequest = require("../modules/requests/request.model");
+const Pharmacy = require("../modules/pharmacies/pharmacy.model");
 const ApiError = require("../utils/ApiError");
 const asyncHandler = require("../utils/asyncHandler");
 
@@ -25,9 +26,15 @@ exports.checkPrescriptionAccess = asyncHandler(async (req, res, next) => {
       return next(new ApiError(404, "Associated medicine request not found"));
     }
     
+    // Find the pharmacy associated with this user
+    const pharmacy = await Pharmacy.findOne({ ownerUserId: req.user._id });
+    if (!pharmacy) {
+      return next(new ApiError(404, "Your pharmacy profile was not found"));
+    }
+
     // Check if the pharmacy is in the selected pharmacies array
     const isSelected = request.selectedPharmacyIds.some(
-      id => id.toString() === req.user._id.toString()
+      id => id.toString() === pharmacy._id.toString()
     );
 
     if (!isSelected) {

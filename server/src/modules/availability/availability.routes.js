@@ -21,4 +21,10 @@ router.put(
   availabilityController.updateAvailability
 );
 
+// Delete an availability record by its own ID
+router.delete(
+  '/:id',
+  availabilityController.deleteAvailability
+);
+
 module.exports = router;

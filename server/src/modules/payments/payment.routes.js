@@ -8,6 +8,7 @@ const pharmacyPaymentRouter = express.Router({ mergeParams: true });
 
 // Customer routes (Mounted at /api/v1/orders/:orderId/payments)
 customerPaymentRouter.post('/card/session', paymentController.createCardSession);
+customerPaymentRouter.post('/card/verify', paymentController.verifyCheckout);
 customerPaymentRouter.post('/cod', paymentController.selectCOD);
 
 // Pharmacy routes (Mounted at /api/v1/pharmacy/orders/:orderId/payments)

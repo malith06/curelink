@@ -306,29 +306,34 @@ const findNearbyPharmacies = async (lng, lat, radiusKm = 10, medicineIds = null)
     pharmacyCounts[pIdStr].add(record.medicineId.toString());
   });
 
-  // Filter pharmacies that have ALL the requested medicines
-  const availablePharmacyIds = Object.keys(pharmacyCounts)
-    .filter(pId => pharmacyCounts[pId].size === idsToSearch.length);
-  
-  if (availablePharmacyIds.length === 0) {
-    return []; // No pharmacy has ALL the requested medicines
-  }
+  let nearbyPharmacies = await Pharmacy.find(query).select('-ownerUserId -verificationNote -verifiedBy -verifiedAt').lean();
 
-  query._id = { $in: availablePharmacyIds };
-
-  const nearbyPharmacies = await Pharmacy.find(query).select('-ownerUserId -verificationNote -verifiedBy -verifiedAt').lean();
-
-  // Attach availability status to each pharmacy (we'll just use the first record or a generic one since there could be multiple)
-  return nearbyPharmacies.map(pharmacy => {
+  // Attach availability status to each pharmacy
+  nearbyPharmacies = nearbyPharmacies.map(pharmacy => {
     // Get the records for this pharmacy
     const records = availabilityRecords.filter(r => r.pharmacyId.toString() === pharmacy._id.toString());
+    const availableCount = pharmacyCounts[pharmacy._id.toString()] ? pharmacyCounts[pharmacy._id.toString()].size : 0;
+    
+    let status = 'UNKNOWN';
+    if (availableCount === idsToSearch.length && idsToSearch.length > 0) {
+        status = 'AVAILABLE';
+    } else if (availableCount > 0) {
+        status = 'LIMITED'; // Partially available
+    } else {
+        status = 'UNAVAILABLE';
+    }
     
     return {
       ...pharmacy,
-      availabilityStatus: idsToSearch.length > 1 ? 'AVAILABLE' : records[0]?.status,
-      availabilityLastUpdated: records[0]?.lastUpdated
+      availabilityStatus: status,
+      availableMedicinesCount: availableCount
     };
   });
+
+  // Filter out pharmacies that don't have ANY of the requested medicines
+  nearbyPharmacies = nearbyPharmacies.filter(p => p.availableMedicinesCount > 0);
+
+  return nearbyPharmacies;
 };
 
 const updatePharmacyPhotoUrl = async (userId, photoUrl) => {

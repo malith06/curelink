@@ -51,7 +51,9 @@ class PrescriptionService {
       throw new ApiError(400, "Request status does not allow prescription upload");
     }
     if (request.prescriptionId) {
-      throw new ApiError(400, "Request already has an active prescription. Use the replace endpoint.");
+      // If there is an existing prescription, we will allow replacing it.
+      // The old prescription will remain in the DB but the request will point to the new one.
+      // We could optionally mark the old prescription's status as replaced.
     }
 
     // 2. Validate magic bytes
@@ -106,6 +108,8 @@ class PrescriptionService {
 
     const url = await cloudinaryAdapter.createAuthorisedAccessUrl(
       prescription.storagePublicId,
+      prescription.storageFormat,
+      prescription.storageResourceType,
       expirySeconds
     );
 
@@ -238,6 +242,9 @@ class PrescriptionService {
 
     if (request) {
       const Medicine = require("../medicines/medicine.model");
+
+      // Clear existing OCR items if we are replacing a prescription
+      request.items = request.items.filter(item => item.source !== 'OCR');
 
       for (const entry of prescription.extractedMedicines) {
         if (entry.matchedMedicineId) {

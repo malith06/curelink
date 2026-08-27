@@ -141,8 +141,20 @@ const prescriptionSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
   }
 );
+
+prescriptionSchema.virtual('fileUrl').get(function() {
+  if (this.storagePublicId && this.storageProvider === 'cloudinary') {
+    const cloudName = 'mdqprbm6'; // Hardcoded for simplicity based on env
+    const resourceType = this.storageResourceType || 'image';
+    const format = this.storageFormat ? `.${this.storageFormat}` : '';
+    return `https://res.cloudinary.com/${cloudName}/${resourceType}/upload/v1/${this.storagePublicId}${format}`;
+  }
+  return null;
+});
 
 prescriptionSchema.index({ customerId: 1 });
 prescriptionSchema.index({ requestId: 1 });

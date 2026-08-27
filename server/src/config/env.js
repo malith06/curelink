@@ -26,7 +26,7 @@ module.exports = {
   PAYMENT_WEBHOOK_SECRET: process.env.PAYMENT_WEBHOOK_SECRET,
   PAYMENT_SUCCESS_URL: process.env.PAYMENT_SUCCESS_URL || 'http://localhost:5173/customer/payments/success',
   PAYMENT_CANCEL_URL: process.env.PAYMENT_CANCEL_URL || 'http://localhost:5173/customer/payments/cancel',
-  PAYMENT_MAX_ATTEMPTS_PER_ORDER: parseInt(process.env.PAYMENT_MAX_ATTEMPTS_PER_ORDER, 10) || 5,
-  PAYMENT_RETRY_COOLDOWN_SECONDS: parseInt(process.env.PAYMENT_RETRY_COOLDOWN_SECONDS, 10) || 30,
+  PAYMENT_MAX_ATTEMPTS_PER_ORDER: parseInt(process.env.PAYMENT_MAX_ATTEMPTS_PER_ORDER, 10) || 50,
+  PAYMENT_RETRY_COOLDOWN_SECONDS: parseInt(process.env.PAYMENT_RETRY_COOLDOWN_SECONDS, 10) || 3,
   DEFAULT_CURRENCY: process.env.DEFAULT_CURRENCY || 'LKR'
 };

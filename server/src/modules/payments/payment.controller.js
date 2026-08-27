@@ -19,6 +19,23 @@ exports.createCardSession = asyncHandler(async (req, res, next) => {
 });
 
 /**
+ * @desc    Manually verify a checkout session status
+ * @route   POST /api/v1/orders/:orderId/payments/card/verify
+ * @access  Private (Customer only)
+ */
+exports.verifyCheckout = asyncHandler(async (req, res, next) => {
+  const { orderId } = req.params;
+  const customerId = req.user._id;
+
+  const result = await paymentService.verifyCheckoutSession(orderId, customerId);
+
+  res.status(200).json({
+    success: true,
+    data: result
+  });
+});
+
+/**
  * @desc    Handle Stripe Webhooks
  * @route   POST /api/v1/payments/webhook
  * @access  Public (Webhook)

@@ -24,7 +24,18 @@ const getPharmacyInventory = asyncHandler(async (req, res) => {
   });
 });
 
+const deleteAvailability = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  await availabilityService.deleteAvailability(req.user._id, id);
+
+  res.status(200).json({
+    success: true,
+    data: {},
+  });
+});
+
 module.exports = {
   updateAvailability,
   getPharmacyInventory,
+  deleteAvailability,
 };

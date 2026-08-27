@@ -7,6 +7,18 @@ const dashboardRangeSchema = z.object({
   }),
 });
 
+const reportDateRangeSchema = z.object({
+  query: z.object({
+    startDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
+      message: 'Invalid startDate format',
+    }),
+    endDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
+      message: 'Invalid endDate format',
+    }),
+  }),
+});
+
 module.exports = {
   dashboardRangeSchema,
+  reportDateRangeSchema,
 };

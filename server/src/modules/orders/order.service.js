@@ -152,6 +152,13 @@ const cancelOrder = async (orderId, customerId, reason) => {
 
   await order.save();
 
+  // Restock if stock was previously deducted
+  const { PAYMENT_STATUS } = require('./order.constants');
+  if (order.paymentStatus === PAYMENT_STATUS.PAID || order.paymentStatus === PAYMENT_STATUS.COD_PENDING) {
+    const availabilityService = require('../availability/availability.service');
+    await availabilityService.restockForOrder(order, null);
+  }
+
   // Notification: Customer cancelled the order
   try {
     const { createAndEmitNotification } = require('../notifications/notification.service');
@@ -185,6 +192,13 @@ const rejectOrder = async (orderId, pharmacyId, reason) => {
   order.pharmacyRejection = { reason, rejectedBy: pharmacyId, rejectedAt: new Date() };
 
   await order.save();
+
+  // Restock if stock was previously deducted
+  const { PAYMENT_STATUS } = require('./order.constants');
+  if (order.paymentStatus === PAYMENT_STATUS.PAID || order.paymentStatus === PAYMENT_STATUS.COD_PENDING) {
+    const availabilityService = require('../availability/availability.service');
+    await availabilityService.restockForOrder(order, null);
+  }
 
   // Notification: Pharmacy rejected the order
   try {
@@ -225,6 +239,16 @@ const updateOrderStatus = async (orderId, pharmacyId, newStatus, note) => {
     const { PAYMENT_STATUS } = require('./order.constants');
     if (order.paymentStatus === PAYMENT_STATUS.COD_PENDING) {
       order.paymentStatus = PAYMENT_STATUS.COD_COLLECTED;
+      
+      // Keep the corresponding Payment document in sync
+      if (order.paymentId) {
+        const Payment = require('../payments/payment.model');
+        await Payment.findByIdAndUpdate(order.paymentId, {
+          status: PAYMENT_STATUS.COD_COLLECTED,
+          codCollectedAt: new Date(),
+          codCollectedBy: pharmacyId
+        });
+      }
     }
   }
 

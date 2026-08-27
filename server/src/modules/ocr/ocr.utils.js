@@ -69,23 +69,30 @@ exports.findBestMatches = (extractedLines, allMedicines) => {
       if (bestMatch.rating >= 0.8) confidenceLevel = 'HIGH';
       else if (bestMatch.rating >= 0.6) confidenceLevel = 'MEDIUM';
 
+      const crypto = require('crypto');
+      const entryId = crypto.randomUUID ? crypto.randomUUID() : crypto.randomBytes(8).toString('hex');
+      
       matchResults.push({
-        extractedText: line,
-        medicineId: matchedMedicine._id,
-        confidenceScore: Math.round(bestMatch.rating * 100),
-        confidenceLevel: confidenceLevel,
-        isCustomerConfirmed: false,
-        quantity: 1 // Default
+        entryId: entryId,
+        rawDetectedText: line,
+        matchedMedicineId: matchedMedicine._id,
+        matchConfidence: Math.round(bestMatch.rating * 100),
+        ocrConfidence: 100, // Default since we don't have this from string-similarity
+        quantity: 1
       });
     } else {
+      const crypto = require('crypto');
+      const entryId = crypto.randomUUID ? crypto.randomUUID() : crypto.randomBytes(8).toString('hex');
+      
       // Add unmatched line as manual entry suggestion
       matchResults.push({
-        extractedText: line,
-        medicineId: null,
-        confidenceScore: 0,
-        confidenceLevel: 'LOW',
-        isCustomerConfirmed: false,
-        quantity: 1
+        entryId: entryId,
+        rawDetectedText: line,
+        matchedMedicineId: null,
+        matchConfidence: 0,
+        ocrConfidence: 100,
+        quantity: 1,
+        needsManualReview: true
       });
     }
   });

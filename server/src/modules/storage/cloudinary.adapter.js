@@ -39,13 +39,13 @@ class CloudinaryStorageAdapter extends StorageAdapter {
     });
   }
 
-  async createAuthorisedAccessUrl(fileReference, expiresInSeconds = 300) {
+  async createAuthorisedAccessUrl(fileReference, format = "", resourceType = "image", expiresInSeconds = 300) {
     // Generate a signed URL for private access
     const url = cloudinary.utils.private_download_url(
       fileReference,
-      fileReference.split(".").pop(), // format
+      format,
       {
-        resource_type: "image", // can also be 'raw' for PDFs depending on upload
+        resource_type: resourceType,
         type: "private",
         expires_at: Math.floor(Date.now() / 1000) + expiresInSeconds,
       }

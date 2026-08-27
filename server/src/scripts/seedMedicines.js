@@ -13,6 +13,22 @@ const sampleMedicines = [
     manufacturer: 'GlaxoSmithKline',
   },
   {
+    name: 'Paracetamol',
+    brand: 'Generic',
+    category: 'Pain Relief',
+    description: 'Paracetamol 500mg tablets.',
+    prescriptionRequired: false,
+    manufacturer: 'Generic',
+  },
+  {
+    name: 'Loratadine',
+    brand: 'Claritin',
+    category: 'Allergy',
+    description: 'Antihistamine used to treat allergies.',
+    prescriptionRequired: false,
+    manufacturer: 'Bayer',
+  },
+  {
     name: 'Amoxicillin',
     brand: 'Amoxil',
     category: 'Antibiotics',
