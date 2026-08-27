@@ -60,24 +60,27 @@ const PharmacyRegisterPage = () => {
   };
 
   return (
-    <div className="min-h-[80vh] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md mb-8">
-        <div className="flex justify-center mb-6">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-600 text-white shadow-sm">
-            <Store className="h-7 w-7" />
-          </div>
-        </div>
-        <h2 className="text-center text-3xl font-extrabold text-slate-900 tracking-tight">
-          Partner with CureLink
-        </h2>
-        <p className="mt-2 text-center text-sm text-slate-600">
-          Create a pharmacy account to receive medicine requests
-        </p>
-      </div>
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden bg-slate-50">
+      {/* Modern Background Elements */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary-200/50 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob"></div>
+      <div className="absolute top-[20%] right-[-10%] w-[40%] h-[40%] bg-indigo-200/50 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-2000"></div>
+      <div className="absolute bottom-[-20%] left-[20%] w-[40%] h-[40%] bg-blue-200/50 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-4000"></div>
 
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <Card className="border-slate-200 shadow-sm">
-          <CardContent className="pt-8">
+      <div className="w-full max-w-md z-10 mt-10">
+        <div className="text-center mb-8">
+          <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-600 to-indigo-700 text-white shadow-lg shadow-primary-500/30 mb-6 transform transition-transform hover:scale-105">
+            <Store className="h-8 w-8" />
+          </div>
+          <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
+            Partner with CureLink
+          </h2>
+          <p className="mt-3 text-sm text-slate-600 font-medium">
+            Create a pharmacy account to receive medicine requests
+          </p>
+        </div>
+
+        <Card className="border-0 shadow-[0_8px_30px_rgb(0,0,0,0.08)] bg-white/80 backdrop-blur-xl rounded-3xl overflow-hidden mb-8">
+          <CardContent className="p-8">
             <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
               
               <div className="space-y-2">

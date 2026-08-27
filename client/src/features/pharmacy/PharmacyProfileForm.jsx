@@ -290,6 +290,7 @@ const PharmacyProfileForm = ({ initialData, onSuccess }) => {
                   value={formData.email}
                   onChange={handleChange}
                   required
+                  disabled
                   placeholder="pharmacy@example.com"
                 />
               </div>

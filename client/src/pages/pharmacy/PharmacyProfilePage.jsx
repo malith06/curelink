@@ -142,33 +142,41 @@ const PharmacyProfilePage = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div className="flex items-center gap-4">
-           <div className="w-14 h-14 bg-[#0B1354]/10 rounded-2xl flex items-center justify-center">
-              <Store className="w-7 h-7 text-[#0B1354]" />
-           </div>
-           <div>
-             <h1 className="text-3xl font-bold text-[#0B1354] tracking-tight">Pharmacy Profile</h1>
-             <p className="mt-1 text-slate-500 font-medium">
-               Manage your pharmacy details, registration numbers, and operational settings.
-             </p>
-           </div>
+    <div className="animate-in fade-in duration-500 bg-slate-50 min-h-screen">
+      {/* Modern Header Section */}
+      <div className="bg-[#0B1354] pb-24 pt-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden rounded-b-[3rem] mb-[-4rem]">
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }}></div>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500 rounded-full mix-blend-screen filter blur-[80px] opacity-30 animate-pulse"></div>
+        
+        <div className="max-w-5xl mx-auto relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="flex items-center gap-4">
+             <div className="w-14 h-14 bg-white/10 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 flex items-center justify-center">
+                <Store className="w-7 h-7 text-white" />
+             </div>
+             <div>
+               <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">Pharmacy Profile</h1>
+               <p className="mt-2 text-blue-100 font-medium">Manage your pharmacy details, registration numbers, and operational settings.</p>
+             </div>
+          </div>
+          {profile && (
+            <Badge variant={
+              profile.verificationStatus === 'APPROVED' ? 'success' : 
+              profile.verificationStatus === 'PENDING' ? 'warning' : 'error'
+            } className="px-4 py-1.5 shadow-sm font-semibold">
+              {profile.verificationStatus}
+            </Badge>
+          )}
         </div>
-        {profile && (
-          <Badge variant={
-            profile.verificationStatus === 'APPROVED' ? 'success' : 
-            profile.verificationStatus === 'PENDING' ? 'warning' : 'error'
-          } className="px-4 py-1.5 shadow-sm font-semibold">
-            {profile.verificationStatus}
-          </Badge>
-        )}
       </div>
 
-      {getStatusAlert()}
+      {/* Main Content Area */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 relative z-20">
 
-      <div className="bg-white rounded-2xl shadow-sm border-t-4 border-t-[#0B1354] border-l border-r border-b border-gray-100 overflow-hidden mb-8">
-        <PharmacyProfileForm initialData={profile} onSuccess={handleSuccess} />
+        {getStatusAlert()}
+
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl border-t-4 border-t-[#0B1354] border-white/50 overflow-hidden mb-8">
+          <PharmacyProfileForm initialData={profile} onSuccess={handleSuccess} />
+        </div>
       </div>
     </div>
   );
