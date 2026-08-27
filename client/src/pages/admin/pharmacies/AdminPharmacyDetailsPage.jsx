@@ -19,16 +19,16 @@ const AdminPharmacyDetailsPage = () => {
     fetchPharmacy();
   }, [id]);
 
-  const fetchPharmacy = async () => {
+  const fetchPharmacy = async (showLoader = true) => {
     try {
-      setLoading(true);
+      if (showLoader) setLoading(true);
       const res = await adminService.getPharmacyById(id);
       setPharmacy(res.data);
     } catch (error) {
       toast.error('Failed to load pharmacy details');
       navigate('/admin/pharmacies');
     } finally {
-      setLoading(false);
+      if (showLoader) setLoading(false);
     }
   };
 
@@ -47,7 +47,7 @@ const AdminPharmacyDetailsPage = () => {
       setActionLoading(true);
       await adminService.updatePharmacyStatus(id, action, reason);
       toast.success(`Pharmacy successfully ${action}ed`);
-      fetchPharmacy();
+      await fetchPharmacy(false);
     } catch (error) {
       toast.error(error.response?.data?.message || `Failed to ${action} pharmacy`);
     } finally {
@@ -86,27 +86,36 @@ const AdminPharmacyDetailsPage = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 space-y-8 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
-        <div className="flex items-center gap-4">
-          <button onClick={() => navigate('/admin/pharmacies')} className="p-2 hover:bg-slate-100 rounded-full transition-colors group">
-            <ArrowLeft className="w-5 h-5 text-slate-600 group-hover:-translate-x-1 transition-transform" />
-          </button>
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-4">
-              Pharmacy Details
-            </h1>
-            <p className="text-slate-500 font-medium mt-1">Review registration and moderation actions</p>
+    <div className="animate-in fade-in duration-500 bg-slate-50 min-h-screen">
+      {/* Modern Header Section */}
+      <div className="bg-[#0B1354] pb-24 pt-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden rounded-b-[3rem] mb-[-4rem]">
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }}></div>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500 rounded-full mix-blend-screen filter blur-[80px] opacity-30 animate-pulse"></div>
+        
+        <div className="max-w-6xl mx-auto relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
+          <div className="flex items-center gap-4">
+            <button onClick={() => navigate('/admin/pharmacies')} className="p-2 hover:bg-white/10 rounded-full transition-colors group bg-white/5 border border-white/10 backdrop-blur-md">
+              <ArrowLeft className="w-5 h-5 text-white group-hover:-translate-x-1 transition-transform" />
+            </button>
+            <div>
+              <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight flex items-center gap-4">
+                Pharmacy Details
+              </h1>
+              <p className="text-blue-100 font-medium mt-1">Review registration and moderation actions</p>
+            </div>
+          </div>
+          <div className="bg-white/10 backdrop-blur-md border border-white/20 p-2 rounded-2xl flex items-center justify-center">
+            <Badge variant={getStatusVariant(pharmacy.verificationStatus)} className="text-sm px-4 py-1.5 shadow-sm bg-white text-slate-900 border-0">
+               {pharmacy.verificationStatus === 'DRAFT' ? 'PENDING' : pharmacy.verificationStatus}
+            </Badge>
           </div>
         </div>
-        <Badge variant={getStatusVariant(pharmacy.verificationStatus)} className="text-sm px-4 py-1.5 shadow-sm">
-           {pharmacy.verificationStatus === 'DRAFT' ? 'PENDING' : pharmacy.verificationStatus}
-        </Badge>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-8">
-          <Card>
+      <div className="max-w-6xl mx-auto px-4 py-8 relative z-20">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-8">
+          <Card className="border-0 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-3xl overflow-hidden">
             <CardHeader className="bg-primary-50/50 border-b border-primary-100 pb-6 pt-8">
               <div className="flex items-center gap-5">
                 <div className="w-16 h-16 rounded-2xl bg-primary-100 flex items-center justify-center text-primary-600 font-bold text-3xl shadow-inner border border-primary-200">
@@ -182,8 +191,8 @@ const AdminPharmacyDetailsPage = () => {
         </div>
 
         <div className="space-y-8">
-          <Card className="sticky top-24 shadow-lg shadow-primary-900/5 ring-1 ring-slate-200">
-            <CardHeader className="bg-slate-50 border-b border-slate-100 pb-4">
+          <Card className="sticky top-24 shadow-[0_8px_30px_rgb(0,0,0,0.04)] ring-1 ring-slate-100 border-0 rounded-3xl overflow-hidden">
+            <CardHeader className="bg-slate-50/80 border-b border-slate-100 pb-4 pt-6">
               <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                 <ShieldCheck className="w-5 h-5 text-primary-500" />
                 Moderation Panel
@@ -247,6 +256,7 @@ const AdminPharmacyDetailsPage = () => {
           </Card>
         </div>
       </div>
+    </div>
     </div>
   );
 };

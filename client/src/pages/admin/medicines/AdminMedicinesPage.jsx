@@ -122,89 +122,98 @@ const AdminMedicinesPage = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Medicine Catalogue</h1>
-          <p className="mt-2 text-slate-600 font-medium">Manage the global database of medicines available on CureLink.</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button 
-            variant="outline"
-            icon={Download}
-            onClick={handleDownloadReport}
-            disabled={medicines.length === 0}
-          >
-            Download PDF
-          </Button>
-          <Button 
-            onClick={() => handleOpenModal()}
-            icon={Plus}
-          >
-            Add Medicine
-          </Button>
+    <div className="animate-in fade-in duration-500 bg-slate-50 min-h-screen">
+      {/* Modern Header Section */}
+      <div className="bg-[#0B1354] pb-24 pt-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden rounded-b-[3rem] mb-[-4rem]">
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }}></div>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500 rounded-full mix-blend-screen filter blur-[80px] opacity-30 animate-pulse"></div>
+        
+        <div className="max-w-7xl mx-auto relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">Medicine Catalogue</h1>
+            <p className="mt-2 text-blue-100 font-medium">Manage the global database of medicines available on CureLink.</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button 
+              className="bg-white/10 hover:bg-white/20 text-white border border-white/20 shadow-lg backdrop-blur-md"
+              icon={Download}
+              onClick={handleDownloadReport}
+              disabled={medicines.length === 0}
+            >
+              Download PDF
+            </Button>
+            <Button 
+              onClick={() => handleOpenModal()}
+              icon={Plus}
+              className="bg-white text-[#0B1354] hover:bg-slate-100 shadow-lg font-bold"
+            >
+              Add Medicine
+            </Button>
+          </div>
         </div>
       </div>
 
-      <Card className="overflow-hidden mb-8">
-        {loading ? (
-          <div className="p-6 space-y-4">
-            {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-16 w-full" />)}
-          </div>
-        ) : medicines.length === 0 ? (
-          <EmptyState
-            icon={Pill}
-            title="No medicines found"
-            message="Your medicine catalogue is currently empty. Add medicines to get started."
-          />
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead className="bg-slate-50/80 text-slate-500 border-b border-slate-100 text-xs uppercase font-bold tracking-wider">
-                <tr>
-                  <th className="px-6 py-4 whitespace-nowrap">Generic Name</th>
-                  <th className="px-6 py-4 whitespace-nowrap">Brand Name</th>
-                  <th className="px-6 py-4 whitespace-nowrap">Category</th>
-                  <th className="px-6 py-4 whitespace-nowrap">Prescription</th>
-                  <th className="px-6 py-4 whitespace-nowrap text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-slate-50">
-                {medicines.map((med) => (
-                  <tr key={med._id} className="hover:bg-slate-50/80 transition-colors group">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-bold text-slate-900">{med.name}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-slate-600">{med.brand || '-'}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-slate-600">{med.category || '-'}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {med.prescriptionRequired ? (
-                        <Badge variant="destructive" className="bg-red-50 text-red-700 border-red-200">Required</Badge>
-                      ) : (
-                        <Badge variant="success" className="bg-green-50 text-green-700 border-green-200">No</Badge>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex justify-end gap-3 transition-opacity">
-                         <button onClick={() => handleOpenModal(med)} className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors" title="Edit">
-                           <Edit2 className="w-4 h-4" />
-                         </button>
-                         <button onClick={() => handleDelete(med._id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
-                           <Trash2 className="w-4 h-4" />
-                         </button>
-                      </div>
-                    </td>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 relative z-20">
+        <Card className="overflow-hidden mb-8 border-0 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-3xl">
+          {loading ? (
+            <div className="p-6 space-y-4">
+              {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-16 w-full" />)}
+            </div>
+          ) : medicines.length === 0 ? (
+            <EmptyState
+              icon={Pill}
+              title="No medicines found"
+              message="Your medicine catalogue is currently empty. Add medicines to get started."
+            />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead className="bg-slate-50/80 text-slate-500 border-b border-slate-100 text-xs uppercase font-bold tracking-wider">
+                  <tr>
+                    <th className="px-6 py-4 whitespace-nowrap">Generic Name</th>
+                    <th className="px-6 py-4 whitespace-nowrap">Brand Name</th>
+                    <th className="px-6 py-4 whitespace-nowrap">Category</th>
+                    <th className="px-6 py-4 whitespace-nowrap">Prescription</th>
+                    <th className="px-6 py-4 whitespace-nowrap text-right">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Card>
+                </thead>
+                <tbody className="bg-white divide-y divide-slate-50">
+                  {medicines.map((med) => (
+                    <tr key={med._id} className="hover:bg-slate-50/80 transition-colors group">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-bold text-slate-900 group-hover:text-primary-600 transition-colors">{med.name}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-slate-600">{med.brand || '-'}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-slate-600">{med.category || '-'}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {med.prescriptionRequired ? (
+                          <Badge variant="destructive" className="bg-red-50 text-red-700 border-red-200 shadow-sm">Required</Badge>
+                        ) : (
+                          <Badge variant="success" className="bg-green-50 text-green-700 border-green-200 shadow-sm">No</Badge>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex justify-end gap-3 transition-opacity">
+                           <button onClick={() => handleOpenModal(med)} className="p-2 text-primary-600 hover:bg-primary-50 hover:scale-110 rounded-lg transition-all shadow-sm" title="Edit">
+                             <Edit2 className="w-4 h-4" />
+                           </button>
+                           <button onClick={() => handleDelete(med._id)} className="p-2 text-red-600 hover:bg-red-50 hover:scale-110 rounded-lg transition-all shadow-sm" title="Delete">
+                             <Trash2 className="w-4 h-4" />
+                           </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
+      </div>
 
       {/* Modal */}
       {isModalOpen && (

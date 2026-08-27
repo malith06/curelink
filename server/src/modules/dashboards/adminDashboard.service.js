@@ -1,7 +1,8 @@
 const User = require('../users/user.model');
 const Pharmacy = require('../pharmacies/pharmacy.model');
 const Order = require('../orders/order.model');
-const PaymentEvent = require('../payment-events/paymentEvent.model');
+const Payment = require('../payments/payment.model');
+
 const Prescription = require('../prescriptions/prescription.model');
 const MedicineRequest = require('../requests/request.model');
 const { ROLES } = require('../users/user.constants');
@@ -23,13 +24,11 @@ exports.getAdminDashboard = async (rangeDays = 30) => {
   const dateRange = new Date();
   dateRange.setDate(dateRange.getDate() - rangeDays);
 
-  // 1. Summaries
-  const totalCustomers = await User.countDocuments({ role: ROLES.CUSTOMER, createdAt: { $gte: dateRange } });
-  const totalPharmacies = await Pharmacy.countDocuments({ createdAt: { $gte: dateRange } });
-  const approvedPharmacies = await Pharmacy.countDocuments({ verificationStatus: PHARMACY_VERIFICATION_STATUS.APPROVED, createdAt: { $gte: dateRange } });
+  // 1. Summaries - ALL-TIME platform totals (not date filtered)
+  const totalCustomers = await User.countDocuments({ role: ROLES.CUSTOMER });
+  const totalPharmacies = await Pharmacy.countDocuments();
   const pendingPharmacyApprovals = await Pharmacy.countDocuments({ 
     verificationStatus: { $in: [PHARMACY_VERIFICATION_STATUS.PENDING, PHARMACY_VERIFICATION_STATUS.DRAFT] }, 
-    createdAt: { $gte: dateRange } 
   });
   
   const totalOrders = await Order.countDocuments({ createdAt: { $gte: dateRange } });
@@ -42,22 +41,23 @@ exports.getAdminDashboard = async (rangeDays = 30) => {
   ]);
   const totalPayments = totalPaymentsAgg.length > 0 ? parseFloat((totalPaymentsAgg[0].totalValue / 100).toFixed(2)) : 0;
 
-  const failedPayments = await Order.countDocuments({ paymentStatus: PAYMENT_STATUS.FAILED, createdAt: { $gte: dateRange } });
+  // We count failed payment *attempts* from the Payment collection, since Orders don't stay in FAILED status
+  const failedPayments = await Payment.countDocuments({ status: PAYMENT_STATUS.FAILED, createdAt: { $gte: dateRange } });
 
   const ocrFailures = await Prescription.countDocuments({ ocrStatus: 'FAILED', createdAt: { $gte: dateRange } }); // OCR_STATUSES.FAILED
 
-  // 2. Pending Pharmacies
+  // 2. Pending Pharmacies (all pending, no date filter)
   const pendingPharmacies = await Pharmacy.find({ verificationStatus: { $in: [PHARMACY_VERIFICATION_STATUS.PENDING, PHARMACY_VERIFICATION_STATUS.DRAFT] } })
     .sort({ createdAt: 1 })
     .limit(RECENT_ITEMS_LIMIT)
-    .select('name licenseNumber contactEmail phone createdAt');
+    .select('name registrationNumber email phone createdAt');
 
   // 3. Popular Medicines
   const popularMedicinesAgg = await MedicineRequest.aggregate([
     { $match: { createdAt: { $gte: dateRange } } },
     { $unwind: '$items' },
     { $group: {
-        _id: { $cond: [{ $ifNull: ['$items.medicineId', false] }, '$items.medicineId', '$items.medicineSnapshot.name'] },
+        _id: { $toLower: '$items.medicineSnapshot.name' },
         count: { $sum: '$items.quantity' },
         name: { $first: '$items.medicineSnapshot.name' }
       }
@@ -101,7 +101,6 @@ exports.getAdminDashboard = async (rangeDays = 30) => {
     summary: {
       totalCustomers,
       totalPharmacies,
-      approvedPharmacies,
       pendingPharmacyApprovals,
       totalOrders,
       activeOrders,

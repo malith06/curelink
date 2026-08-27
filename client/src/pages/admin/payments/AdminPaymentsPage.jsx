@@ -73,44 +73,50 @@ const AdminPaymentsPage = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
-            <DollarSign className="w-8 h-8 text-green-600" />
-            Payment Monitoring
-          </h1>
-          <p className="mt-2 text-slate-600">Monitor all system payments and transactions.</p>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 bg-white rounded-xl shadow-sm border border-slate-200 p-1">
-            {['ALL', 'CARD', 'COD'].map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilterMethod(f)}
-                className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors ${
-                  filterMethod === f
-                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
-                    : 'text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                {f}
-              </button>
-            ))}
+    <div className="animate-in fade-in duration-500 bg-slate-50 min-h-screen">
+      {/* Modern Header Section */}
+      <div className="bg-[#0B1354] pb-24 pt-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden rounded-b-[3rem] mb-[-4rem]">
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }}></div>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500 rounded-full mix-blend-screen filter blur-[80px] opacity-30 animate-pulse"></div>
+        
+        <div className="max-w-7xl mx-auto relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">
+              Payment Monitoring
+            </h1>
+            <p className="mt-2 text-blue-100 font-medium">Monitor all system payments and transactions.</p>
           </div>
-          <Button 
-            variant="outline"
-            icon={Download}
-            onClick={handleDownloadReport}
-            disabled={payments.length === 0}
-          >
-            Download PDF
-          </Button>
+
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 p-1.5">
+              {['ALL', 'CARD', 'COD'].map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setFilterMethod(f)}
+                  className={`px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-sm outline-none ${
+                    filterMethod === f
+                      ? 'bg-white text-slate-900 shadow-md'
+                      : 'text-white hover:bg-white/20'
+                  }`}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+            <Button 
+              className="bg-white/10 hover:bg-white/20 text-white border border-white/20 shadow-lg backdrop-blur-md"
+              icon={Download}
+              onClick={handleDownloadReport}
+              disabled={payments.length === 0}
+            >
+              Download PDF
+            </Button>
+          </div>
         </div>
       </div>
 
-      <Card className="overflow-hidden mb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 relative z-20">
+        <Card className="overflow-hidden mb-8 border-0 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-3xl">
         {loading ? (
           <div className="p-6 space-y-4">
             {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-16 w-full" />)}
@@ -173,6 +179,7 @@ const AdminPaymentsPage = () => {
           </div>
         )}
       </Card>
+      </div>
     </div>
   );
 };

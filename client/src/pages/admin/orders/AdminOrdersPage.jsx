@@ -75,42 +75,50 @@ const AdminOrdersPage = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
-            <ShoppingBag className="w-8 h-8 text-indigo-600" />
-            Platform Orders
-          </h1>
-          <p className="mt-2 text-slate-600">Monitor all orders placed through the platform.</p>
-        </div>
-
-        <div className="flex flex-col sm:flex-row items-center gap-4">
-          <div className="flex items-center gap-2 bg-white rounded-xl shadow-sm border border-slate-200 p-1">
-            <select 
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-4 py-2 rounded-lg text-sm font-medium border-0 focus:ring-0 cursor-pointer"
-            >
-              <option value="ALL">All Orders</option>
-              <option value="PENDING">Pending</option>
-              <option value="PROCESSING">Processing</option>
-              <option value="COMPLETED">Completed</option>
-              <option value="REJECTED">Rejected</option>
-            </select>
+    <div className="animate-in fade-in duration-500 bg-slate-50 min-h-screen">
+      {/* Modern Header Section */}
+      <div className="bg-[#0B1354] pb-24 pt-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden rounded-b-[3rem] mb-[-4rem]">
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }}></div>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500 rounded-full mix-blend-screen filter blur-[80px] opacity-30 animate-pulse"></div>
+        
+        <div className="max-w-7xl mx-auto relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">
+              Platform Orders
+            </h1>
+            <p className="mt-2 text-blue-100 font-medium">Monitor all orders placed through the platform.</p>
           </div>
-          <Button 
-            variant="outline"
-            icon={Download}
-            onClick={handleDownloadReport}
-            disabled={orders.length === 0}
-          >
-            Download PDF
-          </Button>
+
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <div className="flex flex-wrap items-center gap-2 bg-white/10 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 p-1.5">
+              {['ALL', 'PENDING', 'PROCESSING', 'COMPLETED', 'CANCELLED'].map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setFilterStatus(f)}
+                  className={`px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-sm outline-none ${
+                    filterStatus === f
+                      ? 'bg-white text-slate-900 shadow-md'
+                      : 'text-white hover:bg-white/20'
+                  }`}
+                >
+                  {f === 'ALL' ? 'All Orders' : f.charAt(0) + f.slice(1).toLowerCase()}
+                </button>
+              ))}
+            </div>
+            <Button 
+              className="bg-white/10 hover:bg-white/20 text-white border border-white/20 shadow-lg backdrop-blur-md"
+              icon={Download}
+              onClick={handleDownloadReport}
+              disabled={orders.length === 0}
+            >
+              Download PDF
+            </Button>
+          </div>
         </div>
       </div>
 
-      <Card className="overflow-hidden mb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 relative z-20">
+        <Card className="overflow-hidden mb-8 border-0 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-3xl">
         {loading ? (
           <div className="p-6 space-y-4">
              {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-16 w-full" />)}
@@ -172,6 +180,7 @@ const AdminOrdersPage = () => {
           </div>
         )}
       </Card>
+      </div>
     </div>
   );
 };

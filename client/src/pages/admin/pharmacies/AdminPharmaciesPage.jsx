@@ -82,113 +82,122 @@ const AdminPharmaciesPage = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Manage Pharmacies</h1>
-          <p className="mt-2 text-slate-600 font-medium">Review and verify pharmacy registrations across the platform.</p>
+    <div className="animate-in fade-in duration-500 bg-slate-50 min-h-screen">
+      {/* Modern Header Section */}
+      <div className="bg-[#0B1354] pb-24 pt-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden rounded-b-[3rem] mb-[-4rem]">
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }}></div>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500 rounded-full mix-blend-screen filter blur-[80px] opacity-30 animate-pulse"></div>
+        
+        <div className="max-w-7xl mx-auto relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">Manage Pharmacies</h1>
+            <p className="mt-2 text-blue-100 font-medium">Review and verify pharmacy registrations across the platform.</p>
+          </div>
+          <Button 
+            className="bg-white/10 hover:bg-white/20 text-white border border-white/20 shadow-lg backdrop-blur-md"
+            icon={Download} 
+            onClick={handleDownloadReport}
+            disabled={filteredPharmacies.length === 0}
+          >
+            Download PDF Report
+          </Button>
         </div>
-        <Button 
-          variant="outline" 
-          icon={Download} 
-          onClick={handleDownloadReport}
-          disabled={filteredPharmacies.length === 0}
-        >
-          Download PDF Report
-        </Button>
       </div>
 
-      <Card className="overflow-hidden mb-8">
-        <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex flex-col md:flex-row justify-between items-center gap-5">
-           <div className="flex flex-wrap gap-2">
-            {['ALL', 'PENDING', 'APPROVED', 'SUSPENDED', 'REJECTED'].map(status => (
-              <button
-                key={status}
-                onClick={() => setFilter(status)}
-                className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-                  filter === status 
-                    ? 'bg-primary-600 text-white shadow-md shadow-primary-600/20' 
-                    : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                }`}
-              >
-                {status}
-              </button>
-            ))}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 relative z-20">
+        <Card className="overflow-hidden border-0 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-3xl mb-8">
+          <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex flex-col md:flex-row justify-between items-center gap-5">
+             <div className="flex flex-wrap gap-2">
+              {['ALL', 'PENDING', 'APPROVED', 'SUSPENDED', 'REJECTED'].map(status => (
+                <button
+                  key={status}
+                  onClick={() => setFilter(status)}
+                  className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+                    filter === status 
+                      ? 'bg-primary-600 text-white shadow-md shadow-primary-600/20' 
+                      : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                  }`}
+                >
+                  {status}
+                </button>
+              ))}
+            </div>
+            <div className="w-full md:w-80">
+              <Input
+                icon={Search}
+                placeholder="Search by name, reg number, or email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="bg-white"
+              />
+            </div>
           </div>
-          <div className="w-full md:w-80">
-            <Input
-              icon={Search}
-              placeholder="Search by name, reg number, or email..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-        </div>
 
-        {loading ? (
-          <div className="p-6 space-y-4">
-            {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-16 w-full" />)}
-          </div>
-        ) : filteredPharmacies.length === 0 ? (
-          <EmptyState
-            icon={Store}
-            title="No pharmacies found"
-            message="There are no pharmacies matching your search or filter criteria."
-          />
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead className="bg-slate-50/80 text-slate-500 border-b border-slate-100 text-xs uppercase font-bold tracking-wider">
-                <tr>
-                  <th className="px-6 py-4 whitespace-nowrap">Business Info</th>
-                  <th className="px-6 py-4 whitespace-nowrap">Reg Number</th>
-                  <th className="px-6 py-4 whitespace-nowrap">Location</th>
-                  <th className="px-6 py-4 whitespace-nowrap">Status</th>
-                  <th className="px-6 py-4 whitespace-nowrap text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-slate-50">
-                {filteredPharmacies.map((pharmacy) => (
-                  <tr key={pharmacy._id} className="hover:bg-slate-50/80 transition-colors group cursor-pointer" onClick={() => navigate(`/admin/pharmacies/${pharmacy._id}`)}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 font-bold">
-                          {pharmacy.name?.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <div className="text-sm font-bold text-slate-900">{pharmacy.name}</div>
-                          <div className="text-xs font-medium text-slate-500">{pharmacy.email}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                       <span className="font-mono text-sm font-bold text-slate-900 bg-slate-100 px-2 py-1 rounded border border-slate-200">
-                          {pharmacy.registrationNumber || 'N/A'}
-                       </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-slate-700 flex items-center gap-1.5">
-                        <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                        {pharmacy.address?.city || 'Not set'}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                       <Badge variant={getStatusVariant(pharmacy.verificationStatus)}>
-                         {pharmacy.verificationStatus === 'DRAFT' ? 'PENDING' : pharmacy.verificationStatus}
-                       </Badge>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="text-primary-600 hover:text-primary-800 font-bold flex items-center justify-end transition-colors">
-                        Review <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
-                      </div>
-                    </td>
+          {loading ? (
+            <div className="p-6 space-y-4">
+              {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-16 w-full" />)}
+            </div>
+          ) : filteredPharmacies.length === 0 ? (
+            <EmptyState
+              icon={Store}
+              title="No pharmacies found"
+              message="There are no pharmacies matching your search or filter criteria."
+            />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead className="bg-slate-50/80 text-slate-500 border-b border-slate-100 text-xs uppercase font-bold tracking-wider">
+                  <tr>
+                    <th className="px-6 py-4 whitespace-nowrap">Business Info</th>
+                    <th className="px-6 py-4 whitespace-nowrap">Reg Number</th>
+                    <th className="px-6 py-4 whitespace-nowrap">Location</th>
+                    <th className="px-6 py-4 whitespace-nowrap">Status</th>
+                    <th className="px-6 py-4 whitespace-nowrap text-right">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Card>
+                </thead>
+                <tbody className="bg-white divide-y divide-slate-50">
+                  {filteredPharmacies.map((pharmacy) => (
+                    <tr key={pharmacy._id} className="hover:bg-slate-50/80 transition-colors group cursor-pointer" onClick={() => navigate(`/admin/pharmacies/${pharmacy._id}`)}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 font-bold">
+                            {pharmacy.name?.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <div className="text-sm font-bold text-slate-900 group-hover:text-primary-600 transition-colors">{pharmacy.name}</div>
+                            <div className="text-xs font-medium text-slate-500">{pharmacy.email}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                         <span className="font-mono text-sm font-bold text-slate-900 bg-slate-100 px-2 py-1 rounded border border-slate-200">
+                            {pharmacy.registrationNumber || 'N/A'}
+                         </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-slate-700 flex items-center gap-1.5">
+                          <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                          {pharmacy.address?.city || 'Not set'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                         <Badge variant={getStatusVariant(pharmacy.verificationStatus)}>
+                           {pharmacy.verificationStatus === 'DRAFT' ? 'PENDING' : pharmacy.verificationStatus}
+                         </Badge>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="text-primary-600 hover:text-primary-800 font-bold flex items-center justify-end transition-colors">
+                          Review <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
+      </div>
     </div>
   );
 };
