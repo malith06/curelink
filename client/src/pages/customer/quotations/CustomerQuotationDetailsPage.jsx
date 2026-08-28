@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Check, AlertCircle, FileText } from 'lucide-react';
+import { ArrowLeft, Check, AlertCircle, FileText, X } from 'lucide-react';
 import { toast } from 'react-toastify';
 import requestService from '../../../features/requests/requestService';
 import quotationService from '../../../features/quotations/quotationService';
@@ -48,6 +48,22 @@ const CustomerQuotationDetailsPage = () => {
       navigate(`/customer/orders/create/${quotationId}`, { state: { quotation } });
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to accept quotation');
+      setProcessing(false);
+    }
+  };
+
+  const handleDeclineQuotation = async () => {
+    if (!window.confirm('Are you sure you want to decline this quotation? This action cannot be undone.')) {
+      return;
+    }
+    
+    try {
+      setProcessing(true);
+      await quotationService.declineQuotation(requestId, quotationId);
+      toast.success('Quotation declined successfully.');
+      navigate(`/customer/requests/${requestId}`);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to decline quotation');
       setProcessing(false);
     }
   };
@@ -216,16 +232,29 @@ const CustomerQuotationDetailsPage = () => {
 
               <div className="mt-8 pt-4">
                 {request.status === 'QUOTATIONS_RECEIVED' && quotation.status === 'SUBMITTED' && (
-                  <Button 
-                    onClick={handleAcceptQuotation}
-                    disabled={processing}
-                    isLoading={processing}
-                    icon={Check}
-                    size="lg"
-                    fullWidth
-                  >
-                    Accept & Pay
-                  </Button>
+                  <div className="flex flex-col gap-3">
+                    <Button 
+                      onClick={handleAcceptQuotation}
+                      disabled={processing}
+                      isLoading={processing}
+                      icon={Check}
+                      size="lg"
+                      fullWidth
+                    >
+                      Accept & Pay
+                    </Button>
+                    <Button 
+                      onClick={handleDeclineQuotation}
+                      disabled={processing}
+                      variant="outline"
+                      className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                      icon={X}
+                      size="lg"
+                      fullWidth
+                    >
+                      Decline Quotation
+                    </Button>
+                  </div>
                 )}
                 
                 {quotation.status === 'ACCEPTED' && request.paymentStatus === 'PAID' && (
