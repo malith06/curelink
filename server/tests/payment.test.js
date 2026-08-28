@@ -7,11 +7,13 @@ const Pharmacy = require('../src/modules/pharmacies/pharmacy.model');
 const stripeSandboxAdapter = require('../src/modules/payment-gateways/stripeSandbox.adapter');
 const { ORDER_STATUS, PAYMENT_METHOD, PAYMENT_STATUS } = require('../src/modules/orders/order.constants');
 const { PAYMENT_PROVIDER, GATEWAY_EVENT } = require('../src/modules/payments/payment.constants');
+const User = require('../src/modules/users/user.model');
 
 jest.mock('../src/modules/orders/order.model');
 jest.mock('../src/modules/payments/payment.model');
 jest.mock('../src/modules/payment-events/paymentEvent.model');
 jest.mock('../src/modules/pharmacies/pharmacy.model');
+jest.mock('../src/modules/users/user.model');
 jest.mock('../src/modules/payment-gateways/stripeSandbox.adapter');
 jest.mock('../src/modules/notifications/notification.service');
 
@@ -91,6 +93,7 @@ describe('Payment Service Business Rules', () => {
         orderStatus: ORDER_STATUS.PENDING_PAYMENT,
         paymentStatus: PAYMENT_STATUS.PENDING,
         statusHistory: [],
+        items: [],
         save: jest.fn()
       };
       Order.findById.mockReturnValue({ session: jest.fn().mockResolvedValue(mockOrder) });
@@ -100,6 +103,8 @@ describe('Payment Service Business Rules', () => {
         ownerUserId: 'owner1'
       };
       Pharmacy.findById.mockReturnValue({ session: jest.fn().mockResolvedValue(mockPharmacy) });
+
+      User.find.mockReturnValue({ session: jest.fn().mockResolvedValue([{ _id: 'admin1' }]) });
 
       const result = await paymentService.handleWebhookEvent('rawBody', 'good-sig');
 
@@ -150,6 +155,7 @@ describe('Payment Service Business Rules', () => {
         pharmacyId: 'p1',
         total: 1000,
         statusHistory: [],
+        items: [],
         save: jest.fn()
       };
       Order.findOne.mockReturnValue({ session: jest.fn().mockResolvedValue(mockOrder) });

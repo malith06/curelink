@@ -149,7 +149,7 @@ describe('Location & Geospatial APIs', () => {
         .query({
           lat: 6.0535,
           lng: 80.2210,
-          radius: 10000 // 10km
+          radiusKm: 10 // 10km
         });
         
       expect(res.statusCode).toBe(200);

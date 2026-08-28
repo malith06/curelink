@@ -1,6 +1,7 @@
 const request = require('supertest');
 const app = require('../../app');
 const User = require('../users/user.model');
+const Pharmacy = require('../pharmacies/pharmacy.model');
 const customerDashboardService = require('./customerDashboard.service');
 const pharmacyDashboardService = require('./pharmacyDashboard.service');
 const adminDashboardService = require('./adminDashboard.service');
@@ -8,6 +9,7 @@ const { generateToken } = require('../../utils/jwt');
 const { ROLES } = require('../users/user.constants');
 
 jest.mock('../users/user.model');
+jest.mock('../pharmacies/pharmacy.model');
 jest.mock('./customerDashboard.service');
 jest.mock('./pharmacyDashboard.service');
 jest.mock('./adminDashboard.service');
@@ -27,6 +29,10 @@ describe('Dashboard Endpoints', () => {
       if (id === 'p1') return Promise.resolve({ _id: 'p1', role: ROLES.PHARMACY, isActive: true, pharmacyId: 'pharm1' });
       if (id === 'a1') return Promise.resolve({ _id: 'a1', role: ROLES.ADMIN, isActive: true });
       return Promise.resolve(null);
+    });
+
+    Pharmacy.findOne.mockReturnValue({
+      lean: jest.fn().mockResolvedValue({ _id: 'pharm1', ownerUserId: 'p1' })
     });
   });
 

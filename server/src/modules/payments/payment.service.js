@@ -153,9 +153,9 @@ exports.verifyCheckoutSession = async (orderId, customerId) => {
     const checkoutSession = await stripe.checkout.sessions.retrieve(payment.gatewaySessionId);
     
     if (checkoutSession.payment_status === 'paid') {
-      // Simulate webhook processing
+      // Simulate webhook processing with a unique eventId to bypass previous stuck attempts
       const parsedEvent = {
-        eventId: `manual_verify_${checkoutSession.id}`,
+        eventId: `manual_verify_${checkoutSession.id}_${Date.now()}`,
         eventType: GATEWAY_EVENT.PAYMENT_SUCCEEDED,
         status: 'succeeded',
         amountPaid: checkoutSession.amount_total,
@@ -231,8 +231,9 @@ exports.processPaymentEvent = async (parsedEvent, provider) => {
     if (error.code === 11000) {
       // Duplicate key error - event already received
       paymentEvent = await PaymentEvent.findOne({ provider, eventId: parsedEvent.eventId });
-      if (paymentEvent && paymentEvent.processed) {
-        // Already successfully processed, just acknowledge
+      if (paymentEvent) {
+        // Whether already processed or currently being processed by another thread,
+        // we acknowledge to avoid concurrent double execution and WriteConflicts.
         return { acknowledged: true, alreadyProcessed: true };
       }
     } else {
