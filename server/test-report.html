@@ -1,0 +1,277 @@
+<html><head><meta charset="utf-8"/><title>Test Report</title><style type="text/css">:root {
+  --text-primary: #111;
+  --text-secondary: #4f4f4f;
+  --success: #006633;
+  --success-bright: #80ffbf;
+  --danger: #cc071e;
+  --danger-bright: #fbdfe0;
+  --warning: #995c00;
+  --warning-bright: #ffeea8;
+  --panel: #eee;
+  --border: #949494;
+  --disabled: #6b6b6b;
+}
+
+html,
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  margin: 0;
+  padding: 0;
+  color: var(--text-primary);
+}
+body {
+  padding: 2rem 1rem;
+}
+.jesthtml-content {
+  margin: 0 auto;
+  max-width: 70rem;
+}
+header {
+  display: flex;
+  align-items: center;
+}
+#title {
+  margin: 0;
+  flex-grow: 1;
+}
+#logo {
+  height: 4rem;
+}
+#timestamp {
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+}
+
+#metadata-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.additional-information-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+}
+
+/** SUMMARY */
+#summary {
+  color: var(--text-primary);
+  display: flex;
+  font-family: monospace;
+  font-size: 1rem;
+}
+#summary > div {
+  margin-right: 0.5rem;
+  background: var(--panel);
+  padding: 1rem;
+  min-width: 15rem;
+}
+#summary > div:last-child {
+  margin-right: 0;
+}
+@media only screen and (max-width: 720px) {
+  #summary {
+    flex-direction: column;
+  }
+  #summary > div {
+    margin-right: 0;
+    margin-top: 1rem;
+  }
+  #summary > div:first-child {
+    margin-top: 0;
+  }
+}
+
+.summary-total {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+.summary-passed {
+  color: var(--success);
+  border-left: 0.4rem solid var(--success);
+  padding-left: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+.summary-failed,
+.summary-obsolete-snapshots {
+  color: var(--danger);
+  border-left: 0.4rem solid var(--danger);
+  padding-left: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+.summary-pending {
+  color: var(--warning);
+  border-left: 0.4rem solid var(--warning);
+  padding-left: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+.summary-empty {
+  color: var(--disabled);
+  border-left: 0.4rem solid var(--disabled);
+  margin-bottom: 0.15rem;
+}
+
+.test-result {
+  padding: 1rem;
+  margin-bottom: 0.25rem;
+}
+.test-result:last-child {
+  border: 0;
+}
+.test-result.passed {
+  background-color: var(--success-bright);
+  color: var(--success);
+}
+.test-result.failed {
+  background-color: var(--danger-bright);
+  color: var(--danger);
+}
+.test-result.pending {
+  background-color: var(--warning-bright);
+  color: var(--warning);
+}
+
+.test-info {
+  display: flex;
+  justify-content: space-between;
+}
+.test-suitename {
+  width: 20%;
+  text-align: left;
+  font-weight: bold;
+  word-break: break-word;
+}
+.test-title {
+  width: 40%;
+  text-align: left;
+  font-style: italic;
+}
+.test-status {
+  width: 20%;
+  text-align: right;
+}
+.test-duration {
+  width: 10%;
+  text-align: right;
+  font-size: 0.85rem;
+}
+
+.failureMessages {
+  padding: 0 1rem;
+  margin-top: 1rem;
+  border-top: 1px dashed var(--danger);
+}
+.failureMessages.suiteFailure {
+  border-top: none;
+}
+.failureMsg {
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
+}
+
+.suite-container {
+  margin-bottom: 1rem;
+}
+.suite-info {
+  padding: 1rem;
+  background-color: var(--panel);
+  color: var(--text-secondary);
+  border: 0.15rem solid;
+  border-color: var(--panel);
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+.suite-info:hover {
+  border-color: var(--border);
+  cursor: pointer;
+}
+.suite-info .suite-path {
+  word-break: break-all;
+  flex-grow: 1;
+  font-family: monospace;
+  font-size: 1rem;
+}
+.suite-info .suite-time {
+  margin-left: 1rem;
+  padding: 0.2rem 0.3rem;
+  font-size: 0.85rem;
+}
+.suite-info .suite-time.warn {
+  background-color: var(--danger);
+  color: #fff;
+}
+.suite-info:before {
+  content: "\2303";
+  display: inline-block;
+  margin-right: 1rem;
+  transform: rotate(180deg) translateY(0.15rem);
+}
+.suite-container[open] .suite-info:before {
+  transform: rotate(0deg) translateY(0.15rem);
+}
+
+/* CONSOLE LOGS */
+.suite-consolelog {
+  margin-bottom: 0.25rem;
+  padding: 1rem;
+  background-color: var(--panel);
+}
+.suite-consolelog-header {
+  font-weight: bold;
+}
+.suite-consolelog-item {
+  padding: 0.5rem;
+}
+.suite-consolelog-item pre {
+  margin: 0.5rem 0;
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
+}
+.suite-consolelog-item-origin {
+  color: var(--text-secondary);
+  font-weight: bold;
+}
+.suite-consolelog-item-message {
+  color: var(--text-primary);
+  font-size: 1rem;
+  padding: 0 0.5rem;
+}
+
+/* OBSOLETE SNAPSHOTS */
+.suite-obsolete-snapshots {
+  margin-bottom: 0.25rem;
+  padding: 1rem;
+  background-color: var(--danger-bright);
+  color: var(--danger);
+}
+.suite-obsolete-snapshots-header {
+  font-weight: bold;
+}
+.suite-obsolete-snapshots-item {
+  padding: 0.5rem;
+}
+.suite-obsolete-snapshots-item pre {
+  margin: 0.5rem 0;
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
+}
+.suite-obsolete-snapshots-item-message {
+  color: var(--text-primary);
+  font-size: 1rem;
+  padding: 0 0.5rem;
+}
+</style></head><body><main class="jesthtml-content"><header><h1 id="title">Test Report</h1></header><section id="metadata-container"><div id="timestamp">Started: 2026-08-30 17:39:04</div><div id="summary"><div id="suite-summary"><div class="summary-total">Suites (8)</div><div class="summary-passed ">8 passed</div><div class="summary-failed  summary-empty">0 failed</div><div class="summary-pending  summary-empty">0 pending</div></div><div id="test-summary"><div class="summary-total">Tests (48)</div><div class="summary-passed ">48 passed</div><div class="summary-failed  summary-empty">0 failed</div><div class="summary-pending  summary-empty">0 pending</div></div></div></section><details id="suite-1" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\CHAMA COMPUTERS\Documents\Final-Year-Project\CureLink\server\tests\location.test.js</div><div class="suite-time warn">12.038s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">Location &amp; Geospatial APIs &gt; PATCH /api/v1/pharmacies/me/location</div><div class="test-title">should update pharmacy location with valid coordinates</div><div class="test-status">passed</div><div class="test-duration">2.259s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Location &amp; Geospatial APIs &gt; PATCH /api/v1/pharmacies/me/location</div><div class="test-title">should reject invalid coordinates</div><div class="test-status">passed</div><div class="test-duration">0.647s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Location &amp; Geospatial APIs &gt; GET /api/v1/pharmacies/nearby</div><div class="test-title">should find nearby pharmacies within radius</div><div class="test-status">passed</div><div class="test-duration">1.116s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Location &amp; Geospatial APIs &gt; GET /api/v1/pharmacies/nearby</div><div class="test-title">should not find pharmacies outside the radius</div><div class="test-status">passed</div><div class="test-duration">1.095s</div></div></div></div></details><details id="suite-2" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\CHAMA COMPUTERS\Documents\Final-Year-Project\CureLink\server\tests\availability.test.js</div><div class="suite-time warn">8.298s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">Availability APIs &gt; PUT /api/v1/availability/:medicineId</div><div class="test-title">should allow approved pharmacy to update availability</div><div class="test-status">passed</div><div class="test-duration">2.887s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Availability APIs &gt; PUT /api/v1/availability/:medicineId</div><div class="test-title">should reject unapproved pharmacy from updating availability</div><div class="test-status">passed</div><div class="test-duration">1.203s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Availability APIs &gt; PUT /api/v1/availability/:medicineId</div><div class="test-title">should validate status enum</div><div class="test-status">passed</div><div class="test-duration">1.115s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Availability APIs &gt; GET /api/v1/availability/inventory</div><div class="test-title">should fetch availability list for the logged-in pharmacy</div><div class="test-status">passed</div><div class="test-duration">1.491s</div></div></div></div></details><details id="suite-3" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\CHAMA COMPUTERS\Documents\Final-Year-Project\CureLink\server\src\modules\dashboards\dashboard.test.js</div><div class="suite-time">1.02s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">Dashboard Endpoints &gt; GET /api/v1/dashboards/customer</div><div class="test-title">should return customer dashboard data successfully</div><div class="test-status">passed</div><div class="test-duration">0.011s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Dashboard Endpoints &gt; GET /api/v1/dashboards/customer</div><div class="test-title">should block non-customers</div><div class="test-status">passed</div><div class="test-duration">0.006s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Dashboard Endpoints &gt; GET /api/v1/dashboards/pharmacy</div><div class="test-title">should return pharmacy dashboard data successfully</div><div class="test-status">passed</div><div class="test-duration">0.005s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Dashboard Endpoints &gt; GET /api/v1/dashboards/pharmacy</div><div class="test-title">should block non-pharmacies</div><div class="test-status">passed</div><div class="test-duration">0.005s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Dashboard Endpoints &gt; GET /api/v1/dashboards/admin</div><div class="test-title">should return admin dashboard data successfully</div><div class="test-status">passed</div><div class="test-duration">0.005s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Dashboard Endpoints &gt; GET /api/v1/dashboards/admin</div><div class="test-title">should block non-admins</div><div class="test-status">passed</div><div class="test-duration">0.005s</div></div></div></div></details><details id="suite-4" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\CHAMA COMPUTERS\Documents\Final-Year-Project\CureLink\server\tests\payment.test.js</div><div class="suite-time">0.837s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">Payment Service Business Rules &gt; handleWebhookEvent</div><div class="test-title">should throw error on invalid signature</div><div class="test-status">passed</div><div class="test-duration">0.016s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Payment Service Business Rules &gt; handleWebhookEvent</div><div class="test-title">should acknowledge duplicate event without processing</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Payment Service Business Rules &gt; handleWebhookEvent</div><div class="test-title">should process PAYMENT_SUCCEEDED and update payment and order</div><div class="test-status">passed</div><div class="test-duration">0.074s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Payment Service Business Rules &gt; selectCOD</div><div class="test-title">should fail if order state is not PENDING_PAYMENT</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Payment Service Business Rules &gt; selectCOD</div><div class="test-title">should fail if pharmacy does not allow COD</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Payment Service Business Rules &gt; selectCOD</div><div class="test-title">should successfully select COD</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Payment Service Business Rules &gt; collectCOD</div><div class="test-title">should fail if unauthorized pharmacy user tries to collect</div><div class="test-status">passed</div><div class="test-duration"> </div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Payment Service Business Rules &gt; collectCOD</div><div class="test-title">should fail if order is not pending COD collection</div><div class="test-status">passed</div><div class="test-duration"> </div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Payment Service Business Rules &gt; collectCOD</div><div class="test-title">should successfully mark COD as collected</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div></div></details><details id="suite-5" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\CHAMA COMPUTERS\Documents\Final-Year-Project\CureLink\server\tests\order.test.js</div><div class="suite-time">0.802s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">Order Service Business Rules &gt; createOrderFromQuotation</div><div class="test-title">should return existing order if idempotency key matches</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Order Service Business Rules &gt; createOrderFromQuotation</div><div class="test-title">should block if quotation is not ACCEPTED</div><div class="test-status">passed</div><div class="test-duration">0.011s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Order Service Business Rules &gt; createOrderFromQuotation</div><div class="test-title">should successfully create order and update request status</div><div class="test-status">passed</div><div class="test-duration">0.002s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Order Service Business Rules &gt; cancelOrder</div><div class="test-title">should block cancellation if state does not allow it</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Order Service Business Rules &gt; cancelOrder</div><div class="test-title">should cancel successfully in PENDING_PAYMENT state</div><div class="test-status">passed</div><div class="test-duration">0.077s</div></div></div></div></details><details id="suite-6" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\CHAMA COMPUTERS\Documents\Final-Year-Project\CureLink\server\tests\auth.test.js</div><div class="suite-time">0.598s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">Auth API Endpoints &gt; POST /api/v1/auth/register/customer</div><div class="test-title">should return 400 if required fields are missing</div><div class="test-status">passed</div><div class="test-duration">0.027s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Auth API Endpoints &gt; POST /api/v1/auth/register/customer</div><div class="test-title">should return 400 if passwords do not match</div><div class="test-status">passed</div><div class="test-duration">0.006s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Auth API Endpoints &gt; POST /api/v1/auth/register/customer</div><div class="test-title">should successfully register a customer</div><div class="test-status">passed</div><div class="test-duration">0.006s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Auth API Endpoints &gt; POST /api/v1/auth/login</div><div class="test-title">should return 400 if required fields are missing</div><div class="test-status">passed</div><div class="test-duration">0.004s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Auth API Endpoints &gt; POST /api/v1/auth/login</div><div class="test-title">should successfully login a user</div><div class="test-status">passed</div><div class="test-duration">0.006s</div></div></div></div></details><details id="suite-7" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\CHAMA COMPUTERS\Documents\Final-Year-Project\CureLink\server\tests\quotation.test.js</div><div class="suite-time">0.86s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">Quotation Calculator and Business Rules &gt; Money Conversion</div><div class="test-title">should correctly convert standard decimal to cents (toCents)</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Quotation Calculator and Business Rules &gt; Money Conversion</div><div class="test-title">should correctly convert cents to standard decimal (fromCents)</div><div class="test-status">passed</div><div class="test-duration">0.002s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Quotation Calculator and Business Rules &gt; Subtotals and Totals</div><div class="test-title">should calculate item subtotal in cents</div><div class="test-status">passed</div><div class="test-duration"> </div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Quotation Calculator and Business Rules &gt; Subtotals and Totals</div><div class="test-title">should calculate overall quotation total in cents</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Quotation Calculator and Business Rules &gt; Item Availability and Completeness</div><div class="test-title">should determine correct availability result</div><div class="test-status">passed</div><div class="test-duration"> </div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Quotation Calculator and Business Rules &gt; Item Availability and Completeness</div><div class="test-title">should calculate overall completeness metrics correctly for full availability</div><div class="test-status">passed</div><div class="test-duration"> </div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Quotation Calculator and Business Rules &gt; Item Availability and Completeness</div><div class="test-title">should calculate overall completeness metrics correctly for partial availability</div><div class="test-status">passed</div><div class="test-duration"> </div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Quotation Calculator and Business Rules &gt; Item Availability and Completeness</div><div class="test-title">should handle empty items array</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Quotation Business Rules &gt; submitQuotation (Pharmacy)</div><div class="test-title">should block submission if total is 0</div><div class="test-status">passed</div><div class="test-duration">0.018s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Quotation Business Rules &gt; submitQuotation (Pharmacy)</div><div class="test-title">should block submission if prescription is required but not verified</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Quotation Business Rules &gt; submitQuotation (Pharmacy)</div><div class="test-title">should successfully submit quotation and update request status</div><div class="test-status">passed</div><div class="test-duration">0.102s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Quotation Business Rules &gt; acceptQuotation (Customer)</div><div class="test-title">should accept a quotation and decline others atomically</div><div class="test-status">passed</div><div class="test-duration">0.003s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Quotation Business Rules &gt; acceptQuotation (Customer)</div><div class="test-title">should block acceptance if request is not QUOTATIONS_RECEIVED</div><div class="test-status">passed</div><div class="test-duration">0.008s</div></div></div></div></details><details id="suite-8" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\CHAMA COMPUTERS\Documents\Final-Year-Project\CureLink\server\tests\health.test.js</div><div class="suite-time">0.605s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">Health API Endpoints &gt; GET /api/v1/health</div><div class="test-title">should return 200 OK and health status</div><div class="test-status">passed</div><div class="test-duration">0.019s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Health API Endpoints &gt; Undefined Routes handling</div><div class="test-title">should return 404 for undefined routes</div><div class="test-status">passed</div><div class="test-duration">0.005s</div></div></div></div></details></main></body></html>

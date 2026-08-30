@@ -7,6 +7,7 @@
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
     "test": "jest --runInBand",
+    "test:report": "jest --runInBand --reporters=default --reporters=jest-html-reporter",
     "seed": "node src/scripts/seed.js",
     "seed:medicines": "node src/scripts/seedMedicines.js"
   },
@@ -36,6 +37,7 @@
   },
   "devDependencies": {
     "jest": "^30.4.2",
+    "jest-html-reporter": "^4.4.0",
     "nodemon": "^3.1.14",
     "supertest": "^7.2.2"
   }
