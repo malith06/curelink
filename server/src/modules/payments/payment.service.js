@@ -528,6 +528,28 @@ exports.collectCOD = async (orderId, pharmacyUserId) => {
 };
 
 /**
+ * Refund a payment
+ */
+exports.refundPayment = async (paymentId, reason) => {
+  const payment = await Payment.findById(paymentId);
+  if (!payment) throw new ApiError('Payment not found', 404);
+
+  if (payment.status !== PAYMENT_STATUS.PAID) {
+    throw new ApiError('Can only refund a PAID payment', 400);
+  }
+
+  if (payment.provider === PAYMENT_PROVIDER.STRIPE_SANDBOX && payment.gatewayPaymentReference) {
+    await stripeSandboxAdapter.processRefund(payment.gatewayPaymentReference, payment.amount);
+  }
+
+  payment.status = PAYMENT_STATUS.REFUNDED;
+  payment.metadata = { ...payment.metadata, refundReason: reason, refundedAt: new Date() };
+  await payment.save();
+
+  return payment;
+};
+
+/**
  * Get all payments for admin monitoring
  */
 exports.getAllPayments = async (query = {}) => {

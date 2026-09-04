@@ -50,10 +50,9 @@ class PrescriptionService {
     if (![REQUEST_STATUS.DRAFT, REQUEST_STATUS.SUBMITTED].includes(request.status)) {
       throw new ApiError(400, "Request status does not allow prescription upload");
     }
-    if (request.prescriptionId) {
-      // If there is an existing prescription, we will allow replacing it.
-      // The old prescription will remain in the DB but the request will point to the new one.
-      // We could optionally mark the old prescription's status as replaced.
+    if (request.prescriptionIds && request.prescriptionIds.length > 0) {
+      // If there are existing prescriptions, we will allow adding more.
+      // We could optionally limit the maximum number of prescriptions here (e.g., max 5).
     }
 
     // 2. Validate magic bytes
@@ -88,7 +87,10 @@ class PrescriptionService {
     });
 
     // 5. Link prescription to request (Temporarily link directly since OCR UI is bypassed)
-    request.prescriptionId = prescription._id;
+    if (!request.prescriptionIds) {
+      request.prescriptionIds = [];
+    }
+    request.prescriptionIds.push(prescription._id);
     await request.save();
 
     return prescription;
@@ -243,8 +245,14 @@ class PrescriptionService {
     if (request) {
       const Medicine = require("../medicines/medicine.model");
 
-      // Clear existing OCR items if we are replacing a prescription
-      request.items = request.items.filter(item => item.source !== 'OCR');
+      // Clear existing OCR items if they came from THIS prescription, 
+      // OR if they have NO sourcePrescriptionId (legacy, assume they belong to this one since we only had one before).
+      request.items = request.items.filter(item => {
+        if (item.source !== 'OCR') return true;
+        if (!item.sourcePrescriptionId) return false; // Remove legacy OCR items
+        if (item.sourcePrescriptionId.toString() === prescription._id.toString()) return false; // Remove this prescription's OCR items
+        return true; // Keep other prescriptions' OCR items
+      });
 
       for (const entry of prescription.extractedMedicines) {
         if (entry.matchedMedicineId) {
@@ -255,18 +263,28 @@ class PrescriptionService {
               medicineSnapshot: {
                 name: med.name,
                 brand: med.brand,
+                dosage: med.dosage,
                 category: med.category,
                 manufacturer: med.manufacturer
               },
               quantity: entry.quantity || 1,
-              source: 'OCR'
+              unit: entry.unit || 'UNIT',
+              notes: entry.notes || '',
+              prescriptionRequired: med.prescriptionRequired,
+              source: 'OCR',
+              sourcePrescriptionId: prescription._id
             });
           }
         }
       }
 
       // Also ensure the request knows about the prescription ID
-      request.prescriptionId = prescription._id;
+      if (!request.prescriptionIds) {
+        request.prescriptionIds = [];
+      }
+      if (!request.prescriptionIds.includes(prescription._id)) {
+        request.prescriptionIds.push(prescription._id);
+      }
       request.requiresPrescription = true;
 
       await request.save();

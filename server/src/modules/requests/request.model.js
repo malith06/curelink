@@ -21,11 +21,10 @@ const medicineRequestSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  prescriptionId: {
+  prescriptionIds: [{
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Prescription',
-    default: null
-  },
+    ref: 'Prescription'
+  }],
   customerLocation: {
     type: {
       type: String,
@@ -89,9 +88,15 @@ const medicineRequestSchema = new mongoose.Schema({
 
 medicineRequestSchema.pre('validate', async function() {
   if (this.isNew && !this.requestNumber) {
-    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-    const randomStr = crypto.randomBytes(3).toString('hex').toUpperCase();
-    this.requestNumber = `REQ-${dateStr}-${randomStr}`;
+    let isUnique = false;
+    while (!isUnique) {
+      const randomNum = Math.floor(100000 + Math.random() * 900000).toString();
+      const existing = await mongoose.models.MedicineRequest.findOne({ requestNumber: randomNum });
+      if (!existing) {
+        this.requestNumber = randomNum;
+        isUnique = true;
+      }
+    }
   }
 });
 

@@ -145,7 +145,7 @@ const RequestDetailsPage = () => {
     if (selectedPharmacyIds.length === 0) {
       return toast.error('Please select at least one pharmacy.');
     }
-    if (request.prescriptionRequired && !request.prescriptionId) {
+    if (request.prescriptionRequired && (!request.prescriptionIds || request.prescriptionIds.length === 0)) {
       return toast.error('Please upload a prescription first.');
     }
     try {
@@ -172,6 +172,22 @@ const RequestDetailsPage = () => {
       navigate(`/customer/orders/create/${quotationId}`, { state: { quotation: acceptedQuotation } });
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to accept quotation');
+      setProcessing(false);
+    }
+  };
+
+  const handleCancelRequest = async () => {
+    const reason = window.prompt("Please enter a reason for cancelling this request (optional):");
+    if (reason === null) return; // User clicked Cancel in prompt
+
+    try {
+      setProcessing(true);
+      await requestService.cancelRequest(id, reason);
+      toast.success('Request cancelled successfully');
+      fetchRequest();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to cancel request');
+    } finally {
       setProcessing(false);
     }
   };
@@ -213,13 +229,24 @@ const RequestDetailsPage = () => {
                </div>
                <div>
                  <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight flex items-center gap-3">
-                   Request #{request._id.substring(request._id.length - 6).toUpperCase()}
+                   Request #{request.requestNumber || request._id.substring(request._id.length - 6).toUpperCase()}
                    <div className="hidden sm:block"><StatusBadge status={request.status} /></div>
                  </h1>
                  <p className="mt-1 text-blue-100 font-medium">Created on {new Date(request.createdAt).toLocaleString()}</p>
                </div>
             </div>
-            <div className="sm:hidden"><StatusBadge status={request.status} /></div>
+            <div className="flex items-center gap-3">
+              <div className="sm:hidden"><StatusBadge status={request.status} /></div>
+              {['DRAFT', 'SUBMITTED', 'QUOTATIONS_RECEIVED', 'QUOTATION_ACCEPTED'].includes(request.status) && (
+                <button 
+                  onClick={handleCancelRequest}
+                  disabled={processing}
+                  className="px-4 py-2 text-sm font-medium rounded-lg border border-white/30 text-white hover:bg-white/10 hover:border-white/50 transition-colors disabled:opacity-50"
+                >
+                  Cancel Request
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -241,7 +268,12 @@ const RequestDetailsPage = () => {
                 return (
                   <li key={idx} className="p-4 flex flex-col sm:flex-row sm:justify-between sm:items-center bg-white hover:bg-slate-50 transition-colors gap-4">
                     <div className="flex items-center gap-3">
-                      <span className="font-semibold text-slate-900">{item.medicineSnapshot?.name || item.medicineId?.name || 'Medicine'}</span>
+                      <span className="font-semibold text-slate-900">
+                        {item.medicineSnapshot?.name || item.medicineId?.name || 'Medicine'}
+                        {(item.medicineSnapshot?.dosage || item.medicineId?.dosage) && (
+                          <span className="text-slate-500 font-normal ml-1">({item.medicineSnapshot?.dosage || item.medicineId?.dosage})</span>
+                        )}
+                      </span>
                       {item.prescriptionRequired && (
                         <span className="text-xs bg-rose-50 text-rose-700 px-2 py-1 rounded-md border border-rose-100 font-medium whitespace-nowrap">Rx Required</span>
                       )}
@@ -257,7 +289,38 @@ const RequestDetailsPage = () => {
                           >
                             <Minus className="w-4 h-4" />
                           </button>
-                          <span className="w-10 text-center font-medium text-slate-900 text-sm">{item.quantity}</span>
+                          <input 
+                            type="number"
+                            min="1"
+                            value={item.quantity === '' ? '' : item.quantity}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setRequest(prev => ({
+                                ...prev,
+                                items: prev.items.map(i => 
+                                  (i.medicineId?._id === medId || i.medicineId === medId) 
+                                    ? { ...i, quantity: val === '' ? '' : (parseInt(val, 10) || '') } 
+                                    : i
+                                )
+                              }));
+                            }}
+                            onBlur={(e) => {
+                              const val = parseInt(e.target.value, 10);
+                              if (!isNaN(val) && val > 0) {
+                                // Only call API if we have a valid number
+                                handleUpdateQuantity(medId, val);
+                              } else {
+                                // Fallback to 1 if empty or invalid
+                                handleUpdateQuantity(medId, 1);
+                              }
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.target.blur();
+                              }
+                            }}
+                            className="w-12 text-center font-medium text-slate-900 text-sm focus:outline-none focus:ring-0 bg-transparent border-none p-0"
+                          />
                           <button 
                             onClick={() => handleUpdateQuantity(medId, item.quantity + 1)}
                             className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
@@ -310,7 +373,7 @@ const RequestDetailsPage = () => {
                           onClick={() => { setSelectedMedicine(med); setSearchQuery(med.name); setMedicineResults([]); }}
                           className="px-4 py-2 hover:bg-slate-50 cursor-pointer text-sm font-medium text-slate-900 transition-colors"
                         >
-                          {med.name} {med.prescriptionRequired ? <span className="text-rose-500 text-xs ml-1">(Rx)</span> : ''}
+                          {med.name} {med.dosage && <span className="text-slate-500 font-normal ml-1">({med.dosage})</span>} {med.prescriptionRequired ? <span className="text-rose-500 text-xs ml-1">(Rx)</span> : ''}
                         </li>
                       ))}
                     </ul>
@@ -347,7 +410,7 @@ const RequestDetailsPage = () => {
               <h3 className="text-lg font-semibold text-slate-900">Prescription</h3>
             </div>
             
-            {isDraft && !request.prescriptionId && (
+            {isDraft && (!request.prescriptionIds || request.prescriptionIds.length === 0) && (
               <div className={`${request.prescriptionRequired ? 'bg-rose-50 border-rose-100' : 'bg-primary-50 border-primary-100'} border rounded-xl p-6 mb-8 mt-4`}>
                 <h4 className={`font-semibold ${request.prescriptionRequired ? 'text-rose-900' : 'text-primary-900'} mb-2`}>
                   {request.prescriptionRequired ? 'Prescription Required' : 'Upload Prescription (Optional)'}
@@ -369,25 +432,50 @@ const RequestDetailsPage = () => {
               </div>
             )}
 
-            {request.prescriptionId && (
-              <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-6 mb-8 mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <h4 className="font-semibold text-emerald-900 mb-1 flex items-center gap-2">
-                    Prescription Attached
-                    <span className="bg-emerald-200 text-emerald-800 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">Verified</span>
-                  </h4>
-                  <p className="text-emerald-700 text-sm">Your prescription has been securely uploaded and will be sent to pharmacies.</p>
+            {request.prescriptionIds && request.prescriptionIds.length > 0 && (
+              <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-6 mb-8 mt-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                  <div>
+                    <h4 className="font-semibold text-emerald-900 mb-1 flex items-center gap-2">
+                      {request.prescriptionIds.length} {request.prescriptionIds.length === 1 ? 'Prescription' : 'Prescriptions'} Attached
+                      <span className="bg-emerald-200 text-emerald-800 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">Verified</span>
+                    </h4>
+                    <p className="text-emerald-700 text-sm">Your prescriptions have been securely uploaded and will be sent to pharmacies.</p>
+                  </div>
+                  {isDraft && (
+                    <Button 
+                      variant="outline" 
+                      onClick={() => navigate(`/customer/requests/${id}/prescription/upload`)}
+                      className="border-emerald-200 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800 shrink-0"
+                      size="sm"
+                    >
+                      Add More Prescriptions
+                    </Button>
+                  )}
                 </div>
-                {isDraft && (
-                  <Button 
-                    variant="outline" 
-                    onClick={() => navigate(`/customer/requests/${id}/prescription/upload`)}
-                    className="border-emerald-200 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800 shrink-0"
-                    size="sm"
-                  >
-                    Replace Prescription
-                  </Button>
-                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {request.prescriptionIds.map((presc, idx) => (
+                    <div key={presc._id || idx} className="bg-white border border-emerald-100 rounded-lg p-4 flex flex-col justify-between shadow-sm">
+                      <div className="flex justify-between items-start mb-3">
+                         <span className="text-sm font-medium text-emerald-900 truncate pr-2" title={presc.originalFileName}>{presc.originalFileName || 'Prescription Document'}</span>
+                         <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${presc.ocrStatus === 'COMPLETED' ? 'bg-emerald-100 text-emerald-700' : presc.ocrStatus === 'PROCESSING' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-700'}`}>
+                           {presc.ocrStatus || 'UPLOADED'}
+                         </span>
+                      </div>
+                      {isDraft && (presc.ocrStatus === 'COMPLETED' || presc.ocrStatus === 'MANUAL_ENTRY_REQUIRED') && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                          onClick={() => navigate(`/customer/requests/${id}/prescription/${presc._id}/review`)}
+                        >
+                          Review Extraction
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>

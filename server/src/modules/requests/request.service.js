@@ -4,7 +4,7 @@ const Pharmacy = require('../pharmacies/pharmacy.model');
 const Quotation = require('../quotations/quotation.model');
 const PrescriptionVerification = require('../prescription-verifications/verification.model');
 const { REQUEST_STATUS } = require('./request.constants');
-const { QUOTATION_STATUS } = require('../quotations/quotation.constants');
+const { QUOTATION_STATUS, CLOSED_REASON } = require('../quotations/quotation.constants');
 const ApiError = require('../../utils/ApiError');
 const mongoose = require('mongoose');
 
@@ -17,6 +17,7 @@ const buildMedicineSnapshot = (medicine) => {
   return {
     name: medicine.name,
     brand: medicine.brand,
+    dosage: medicine.dosage,
     category: medicine.category,
     manufacturer: medicine.manufacturer
   };
@@ -181,7 +182,7 @@ const submitRequest = async (requestId, customerId, pharmacyIds, customerLocatio
   if (request.items.length === 0) {
     throw new ApiError(400, 'Cannot submit an empty request');
   }
-  if (request.prescriptionRequired && !request.prescriptionId) {
+  if (request.prescriptionRequired && (!request.prescriptionIds || request.prescriptionIds.length === 0)) {
     throw new ApiError(400, 'A prescription is required for one or more items in this request');
   }
 
@@ -286,8 +287,8 @@ const getCustomerRequests = async (customerId, queryParams = {}) => {
 const getCustomerRequestById = async (requestId, customerId) => {
   const request = await MedicineRequest.findOne({ _id: requestId, customerId })
     .populate('selectedPharmacyIds', 'name address phone city')
-    .populate('items.medicineId', 'name prescriptionRequired')
-    .populate('prescriptionId', 'fileUrl originalFileName ocrStatus')
+    .populate('items.medicineId', 'name prescriptionRequired dosage brand')
+    .populate('prescriptionIds', 'fileUrl originalFileName ocrStatus storagePublicId storageProvider storageResourceType storageFormat')
     .lean();
 
   if (!request) {
@@ -378,7 +379,8 @@ const getPharmacyRequestById = async (requestId, pharmacyId) => {
     selectedPharmacyIds: pharmacyId
   })
     .populate('customerId', 'fullName')
-    .populate('prescriptionId', 'originalFileName storagePublicId storageProvider storageResourceType storageFormat')
+    .populate('items.medicineId', 'name prescriptionRequired dosage brand')
+    .populate('prescriptionIds', 'originalFileName storagePublicId storageProvider storageResourceType storageFormat')
     .lean({ virtuals: true });
 
   if (!request) {
@@ -405,8 +407,17 @@ const cancelCustomerRequest = async (requestId, customerId, reason) => {
     throw new ApiError(404, 'Request not found');
   }
 
-  if (request.status === REQUEST_STATUS.CANCELLED || request.status === REQUEST_STATUS.COMPLETED) {
-    throw new ApiError(400, `Cannot cancel a request that is already ${request.status.toLowerCase()}`);
+  const uncancelableStatuses = [
+    REQUEST_STATUS.CANCELLED,
+    REQUEST_STATUS.COMPLETED,
+    REQUEST_STATUS.CONVERTED_TO_ORDER,
+    REQUEST_STATUS.PROCESSING,
+    REQUEST_STATUS.READY_FOR_PICKUP,
+    REQUEST_STATUS.DISPATCHED
+  ];
+
+  if (uncancelableStatuses.includes(request.status)) {
+    throw new ApiError(400, `Cannot cancel a request that is in ${request.status.toLowerCase()} status`);
   }
 
   request.status = REQUEST_STATUS.CANCELLED;
@@ -417,6 +428,22 @@ const cancelCustomerRequest = async (requestId, customerId, reason) => {
   }
 
   await request.save();
+
+  // Close any associated quotations
+  await Quotation.updateMany(
+    { 
+      requestId: request._id, 
+      status: { $in: [QUOTATION_STATUS.DRAFT, QUOTATION_STATUS.SUBMITTED, QUOTATION_STATUS.ACCEPTED] } 
+    },
+    { 
+      $set: { 
+        status: QUOTATION_STATUS.CLOSED, 
+        closedReason: CLOSED_REASON.REQUEST_CANCELLED, 
+        closedAt: new Date() 
+      } 
+    }
+  );
+
   return request;
 };
 
@@ -462,10 +489,16 @@ const acceptQuotation = async (requestId, quotationId, customerId) => {
     // 2. Mark this quotation as ACCEPTED
     quotation.status = QUOTATION_STATUS.ACCEPTED;
 
-    // 3. Mark all other competing SUBMITTED quotations as DECLINED
+    // 3. Mark all other competing SUBMITTED quotations as CLOSED
     await Quotation.updateMany(
-      { requestId, _id: { $ne: quotationId }, status: QUOTATION_STATUS.SUBMITTED },
-      { $set: { status: QUOTATION_STATUS.DECLINED } },
+      { requestId, _id: { $ne: quotationId }, status: 'SUBMITTED' },
+      { 
+        $set: { 
+          status: 'CLOSED',
+          closedReason: 'ANOTHER_QUOTATION_ACCEPTED',
+          closedAt: new Date()
+        } 
+      },
       { session }
     );
 
@@ -527,7 +560,7 @@ const declineQuotation = async (requestId, quotationId, customerId) => {
     throw new ApiError(400, `Cannot decline a quotation with status ${quotation.status}`);
   }
 
-  quotation.status = QUOTATION_STATUS.DECLINED;
+  quotation.status = 'REJECTED';
   await quotation.save();
 
   // Optionally, if all quotations are declined, you could move the request status back to SUBMITTED or CANCELLED,

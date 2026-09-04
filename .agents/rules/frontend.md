@@ -1,3 +1,7 @@
+---
+trigger: manual
+---
+
 # Frontend Architecture Rules
 
 - React + Vite + Tailwind CSS.

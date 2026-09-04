@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, MapPin, Plus, Box, Bell, ShoppingBag, FileSignature, Home } from 'lucide-react';
+import { FileText, MapPin, Plus, Box, Bell, ShoppingBag, FileSignature, Home, Clock, Truck, ChevronRight, FileScan } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import dashboardService from '../../features/dashboards/dashboardService';
 import StatCard from '../../components/dashboard/StatCard';
@@ -15,6 +15,20 @@ const CustomerDashboardPage = () => {
   const { user } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '—';
+    return new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  };
+
+  const formatExpiry = (dateStr) => {
+    if (!dateStr) return null;
+    const diff = Math.ceil((new Date(dateStr) - Date.now()) / (1000 * 60 * 60 * 24));
+    if (diff < 0) return { text: 'Expired', urgent: true };
+    if (diff === 0) return { text: 'Expires today', urgent: true };
+    if (diff <= 2) return { text: `Expires in ${diff}d`, urgent: true };
+    return { text: `Expires in ${diff}d`, urgent: false };
+  };
 
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -112,15 +126,28 @@ const CustomerDashboardPage = () => {
                 <ul className="divide-y divide-slate-100">
                   {data.activeOrders.map(order => (
                     <li key={order.id}>
-                      <Link to={`/customer/orders/${order.id}`} className="block p-5 hover:bg-slate-50 transition-colors">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <p className="font-semibold text-slate-900">{order.orderNumber}</p>
-                            <p className="text-sm text-slate-500">From {order.pharmacyName}</p>
+                      <Link to={`/customer/orders/${order.id}`} className="block p-5 hover:bg-slate-50 transition-colors group">
+                        <div className="flex justify-between items-start gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="font-semibold text-slate-900">#{order.orderNumber}</p>
+                              <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-primary-500 transition-colors" />
+                            </div>
+                            <p className="text-sm text-slate-500 mt-0.5">From {order.pharmacyName || '—'}</p>
+                            <div className="flex items-center gap-3 mt-1.5">
+                              <span className="flex items-center gap-1 text-xs text-slate-400">
+                                <Clock className="w-3 h-3" />{formatDate(order.createdAt)}
+                              </span>
+                              {order.fulfilmentMethod && (
+                                <span className="flex items-center gap-1 text-xs text-slate-400">
+                                  <Truck className="w-3 h-3" />{order.fulfilmentMethod.replace('_', ' ')}
+                                </span>
+                              )}
+                            </div>
                           </div>
-                          <div className="text-right flex flex-col items-end">
+                          <div className="text-right flex flex-col items-end shrink-0">
                             <StatusBadge status={order.orderStatus} />
-                            <p className="text-sm font-medium text-slate-900 mt-2">{order.currency} {order.total}</p>
+                            <p className="text-sm font-bold text-slate-900 mt-2">{order.currency} {order.total}</p>
                           </div>
                         </div>
                       </Link>
@@ -141,22 +168,43 @@ const CustomerDashboardPage = () => {
             <Card className="border-0 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-3xl overflow-hidden">
               {data?.recentQuotations?.length > 0 ? (
                 <ul className="divide-y divide-slate-100">
-                  {data.recentQuotations.map(quote => (
-                    <li key={quote.id}>
-                      <Link to={`/customer/requests/${quote.requestId}/quotations/${quote.id}`} className="block p-5 hover:bg-slate-50 transition-colors">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <p className="font-semibold text-slate-900">{quote.pharmacyName}</p>
-                            <p className="text-sm text-slate-500">Ref: {quote.requestNumber}</p>
+                  {data.recentQuotations.map(quote => {
+                    const expiry = formatExpiry(quote.expiresAt);
+                    return (
+                      <li key={quote.id}>
+                        <Link to={`/customer/requests/${quote.requestId}/quotations/${quote.id}`} className="block p-5 hover:bg-slate-50 transition-colors group">
+                          <div className="flex justify-between items-start gap-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <p className="font-semibold text-slate-900">{quote.pharmacyName || '—'}</p>
+                                <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-primary-500 transition-colors" />
+                              </div>
+                              <p className="text-sm text-slate-500 mt-0.5">Ref #{quote.requestNumber}</p>
+                              <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+                                {quote.quotationNumber && (
+                                  <span className="text-xs text-slate-400">Quote #{quote.quotationNumber}</span>
+                                )}
+                                {quote.coveragePercentage != null && (
+                                  <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                                    {quote.coveragePercentage}% covered
+                                  </span>
+                                )}
+                                {expiry && (
+                                  <span className={`text-xs flex items-center gap-1 ${expiry.urgent ? 'text-red-500 font-semibold' : 'text-slate-400'}`}>
+                                    <Clock className="w-3 h-3" />{expiry.text}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="text-right flex flex-col items-end shrink-0">
+                              <StatusBadge status={quote.status} />
+                              <p className="text-sm font-bold text-slate-900 mt-2">{quote.currency} {quote.total}</p>
+                            </div>
                           </div>
-                          <div className="text-right flex flex-col items-end">
-                            <StatusBadge status={quote.status} />
-                            <p className="text-sm font-medium text-slate-900 mt-2">{quote.currency} {quote.total}</p>
-                          </div>
-                        </div>
-                      </Link>
-                    </li>
-                  ))}
+                        </Link>
+                      </li>
+                    );
+                  })}
                 </ul>
               ) : (
                 <EmptyState 
@@ -207,11 +255,27 @@ const CustomerDashboardPage = () => {
                   <ul className="divide-y divide-slate-100">
                     {data.recentPrescriptions.map(px => (
                       <li key={px._id}>
-                        <Link to={`/customer/requests/${px.requestId || px._id}`} className="p-4 flex justify-between items-center hover:bg-slate-50 transition-colors">
-                          <span className="text-sm font-medium text-slate-900">
-                            {new Date(px.createdAt).toLocaleDateString()}
-                          </span>
-                          <StatusBadge status={px.ocrStatus} />
+                        <Link to={`/customer/requests/${px.requestId || px._id}`} className="p-4 flex items-center gap-3 hover:bg-slate-50 transition-colors group">
+                          <div className="p-2 bg-slate-100 rounded-lg shrink-0">
+                            <FileScan className="w-4 h-4 text-slate-500" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-slate-800 truncate">
+                              {px.requestNumber ? `Request #${px.requestNumber}` : 'Prescription'}
+                            </p>
+                            <p className="text-xs text-slate-400 mt-0.5">
+                              {formatDate(px.createdAt)}
+                              {px.originalFileName && (
+                                <span className="ml-2 truncate max-w-[120px] inline-block align-bottom">· {px.originalFileName}</span>
+                              )}
+                            </p>
+                          </div>
+                          <div className="flex flex-col items-end gap-1 shrink-0">
+                            <StatusBadge status={px.ocrStatus} />
+                            {px.customerReviewStatus && px.customerReviewStatus !== 'NOT_REVIEWED' && (
+                              <StatusBadge status={px.customerReviewStatus} />
+                            )}
+                          </div>
                         </Link>
                       </li>
                     ))}

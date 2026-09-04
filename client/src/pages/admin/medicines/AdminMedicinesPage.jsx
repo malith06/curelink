@@ -21,6 +21,7 @@ const AdminMedicinesPage = () => {
   const [formData, setFormData] = useState({
     name: '',
     brand: '',
+    dosage: '',
     category: '',
     description: '',
     manufacturer: '',
@@ -51,6 +52,7 @@ const AdminMedicinesPage = () => {
       setFormData({
         name: medicine.name || '',
         brand: medicine.brand || '',
+        dosage: medicine.dosage || '',
         category: medicine.category || '',
         description: medicine.description || '',
         manufacturer: medicine.manufacturer || '',
@@ -62,6 +64,7 @@ const AdminMedicinesPage = () => {
       setFormData({
         name: '',
         brand: '',
+        dosage: '',
         category: '',
         description: '',
         manufacturer: '',
@@ -104,10 +107,11 @@ const AdminMedicinesPage = () => {
   };
 
   const handleDownloadReport = () => {
-    const columns = ['Generic Name', 'Brand Name', 'Category', 'Manufacturer', 'Prescription Required'];
+    const columns = ['Generic Name', 'Brand Name', 'Dosage', 'Category', 'Manufacturer', 'Prescription Required'];
     const rows = medicines.map(med => [
       med.name,
       med.brand || '-',
+      med.dosage || '-',
       med.category || '-',
       med.manufacturer || '-',
       med.prescriptionRequired ? 'Yes' : 'No'
@@ -172,6 +176,7 @@ const AdminMedicinesPage = () => {
                   <tr>
                     <th className="px-6 py-4 whitespace-nowrap">Generic Name</th>
                     <th className="px-6 py-4 whitespace-nowrap">Brand Name</th>
+                    <th className="px-6 py-4 whitespace-nowrap">Dosage</th>
                     <th className="px-6 py-4 whitespace-nowrap">Category</th>
                     <th className="px-6 py-4 whitespace-nowrap">Prescription</th>
                     <th className="px-6 py-4 whitespace-nowrap text-right">Actions</th>
@@ -185,6 +190,9 @@ const AdminMedicinesPage = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-slate-600">{med.brand || '-'}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-slate-600">{med.dosage || '-'}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-slate-600">{med.category || '-'}</div>
@@ -253,6 +261,14 @@ const AdminMedicinesPage = () => {
               
               <div className="grid grid-cols-2 gap-5 mb-5">
                  <div>
+                   <label className="block text-sm font-bold text-slate-700 mb-2">Dosage</label>
+                   <Input
+                     placeholder="e.g. 500mg, 10mg, Syrup"
+                     value={formData.dosage}
+                     onChange={(e) => setFormData({...formData, dosage: e.target.value})}
+                   />
+                 </div>
+                 <div>
                    <label className="block text-sm font-bold text-slate-700 mb-2">Category <span className="text-red-500">*</span></label>
                    <Input
                      required
@@ -261,6 +277,9 @@ const AdminMedicinesPage = () => {
                      onChange={(e) => setFormData({...formData, category: e.target.value})}
                    />
                  </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-5 mb-5">
                  <div>
                    <label className="block text-sm font-bold text-slate-700 mb-2">Manufacturer <span className="text-red-500">*</span></label>
                    <Input

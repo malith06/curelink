@@ -79,7 +79,8 @@ exports.getCustomerDashboard = async (customerId) => {
   const recentPrescriptions = await Prescription.find({ customerId })
     .sort({ createdAt: -1 })
     .limit(RECENT_ITEMS_LIMIT)
-    .select('requestId uploadStatus ocrStatus customerReviewStatus createdAt');
+    .populate('requestId', 'requestNumber')
+    .select('requestId uploadStatus ocrStatus customerReviewStatus originalFileName createdAt');
 
   // Format quotations array
   const formattedQuotations = recentQuotations.map((q) => ({
@@ -110,6 +111,18 @@ exports.getCustomerDashboard = async (customerId) => {
     createdAt: o.createdAt,
   }));
 
+  // Format prescriptions array
+  const formattedPrescriptions = recentPrescriptions.map((p) => ({
+    _id: p._id,
+    id: p._id,
+    requestId: p.requestId?._id,
+    requestNumber: p.requestId?.requestNumber,
+    ocrStatus: p.ocrStatus,
+    customerReviewStatus: p.customerReviewStatus,
+    originalFileName: p.originalFileName,
+    createdAt: p.createdAt,
+  }));
+
   return {
     summary: {
       activeRequests: activeRequestsCount,
@@ -120,6 +133,6 @@ exports.getCustomerDashboard = async (customerId) => {
     activeRequests,
     recentQuotations: formattedQuotations,
     activeOrders: formattedOrders,
-    recentPrescriptions,
+    recentPrescriptions: formattedPrescriptions,
   };
 };

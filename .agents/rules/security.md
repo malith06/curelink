@@ -1,3 +1,7 @@
+---
+trigger: model_decision
+---
+
 # Security Rules
 
 - **No public prices**: Exact medicine prices must NEVER be displayed publicly. Use `AVAILABLE`, `LIMITED`, `UNAVAILABLE`, or `CONFIRMATION_REQUIRED`.

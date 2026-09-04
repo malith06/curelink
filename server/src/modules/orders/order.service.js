@@ -66,6 +66,7 @@ const createOrderFromQuotation = async (customerId, quotationId, payload) => {
         customerId,
         pharmacyId: pharmacy._id,
         requestId: request._id,
+        orderNumber: request.requestNumber,
         quotationId: quotation._id,
         prescriptionId: request.prescriptionId,
         items,
@@ -159,6 +160,14 @@ const cancelOrder = async (orderId, customerId, reason) => {
     await availabilityService.restockForOrder(order, null);
   }
 
+  // Refund if already paid
+  if (order.paymentStatus === PAYMENT_STATUS.PAID && order.paymentId) {
+    const paymentService = require('../payments/payment.service');
+    await paymentService.refundPayment(order.paymentId, reason);
+    order.paymentStatus = PAYMENT_STATUS.REFUNDED;
+    await order.save();
+  }
+
   // Notification: Customer cancelled the order
   try {
     const { createAndEmitNotification } = require('../notifications/notification.service');
@@ -198,6 +207,14 @@ const rejectOrder = async (orderId, pharmacyId, reason) => {
   if (order.paymentStatus === PAYMENT_STATUS.PAID || order.paymentStatus === PAYMENT_STATUS.COD_PENDING) {
     const availabilityService = require('../availability/availability.service');
     await availabilityService.restockForOrder(order, null);
+  }
+
+  // Refund if already paid
+  if (order.paymentStatus === PAYMENT_STATUS.PAID && order.paymentId) {
+    const paymentService = require('../payments/payment.service');
+    await paymentService.refundPayment(order.paymentId, reason);
+    order.paymentStatus = PAYMENT_STATUS.REFUNDED;
+    await order.save();
   }
 
   // Notification: Pharmacy rejected the order
@@ -292,3 +309,4 @@ module.exports = {
   rejectOrder,
   updateOrderStatus
 };
+

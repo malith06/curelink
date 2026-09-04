@@ -9,7 +9,14 @@ import Input from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
 
 const NearbyPharmacySearchPage = () => {
-  const { status, latitude, longitude, error, requestLocation } = useGeolocation();
+  const { status: geoStatus, latitude: geoLat, longitude: geoLng, error: geoError, requestLocation } = useGeolocation();
+  const [customLocation, setCustomLocation] = useState(null);
+  
+  const latitude = customLocation?.lat || geoLat;
+  const longitude = customLocation?.lng || geoLng;
+  const status = customLocation ? 'success' : geoStatus;
+  const error = customLocation ? null : geoError;
+
   const [pharmacies, setPharmacies] = useState([]);
   const [selectedPharmacyId, setSelectedPharmacyId] = useState(null);
   
@@ -33,7 +40,7 @@ const NearbyPharmacySearchPage = () => {
       const params = {
         lat: latitude,
         lng: longitude,
-        radius: radius * 1000 // Convert to meters
+        radius: radius // Send in km, backend expects km
       };
       if (selectedMedicines.length > 0) {
         params.medicineIds = selectedMedicines.map(m => m._id).join(',');
@@ -151,7 +158,9 @@ const NearbyPharmacySearchPage = () => {
                       onClick={() => handleSelectMedicine(med)}
                       className="px-4 py-2 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-b-0 transition-colors"
                     >
-                      <p className="font-medium text-slate-900 text-sm">{med.name}</p>
+                      <p className="font-medium text-slate-900 text-sm">
+                        {med.name} {med.dosage && <span className="text-slate-500 font-normal">({med.dosage})</span>}
+                      </p>
                       {med.brand && <p className="text-xs text-slate-500 mt-0.5">{med.brand}</p>}
                     </li>
                   ))}
@@ -165,7 +174,7 @@ const NearbyPharmacySearchPage = () => {
             <div className="flex flex-wrap gap-2 px-1 z-0">
               {selectedMedicines.map(med => (
                 <span key={med._id} className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary-100 text-primary-800">
-                  {med.name}
+                  {med.name} {med.dosage && `(${med.dosage})`}
                   <button
                     type="button"
                     onClick={() => handleRemoveMedicine(med._id)}
@@ -215,6 +224,7 @@ const NearbyPharmacySearchPage = () => {
                 pharmacies={pharmacies}
                 selectedPharmacyId={selectedPharmacyId}
                 onSelectPharmacy={setSelectedPharmacyId}
+                onLocationChange={(lat, lng) => setCustomLocation({ lat, lng })}
               />
             </div>
           </div>

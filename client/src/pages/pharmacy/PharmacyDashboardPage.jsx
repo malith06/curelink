@@ -258,21 +258,46 @@ const PharmacyDashboardPage = () => {
             <Card className="bg-white/80 backdrop-blur-xl border border-white/50 shadow-xl rounded-3xl overflow-hidden">
               {data?.incomingRequests?.length > 0 ? (
                 <ul className="divide-y divide-slate-100">
-                  {data.incomingRequests.map(req => (
-                    <li key={req.id} className="p-5 hover:bg-white transition-colors flex justify-between items-center group cursor-pointer" onClick={() => window.location.href = `/pharmacy/requests/${req.id}`}>
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-                          <Inbox className="w-5 h-5" />
+                  {data.incomingRequests.map(req => {
+                    const expiresAt = req.expiresAt ? new Date(req.expiresAt) : null;
+                    const hoursLeft = expiresAt ? Math.max(0, Math.round((expiresAt - Date.now()) / 3600000)) : null;
+                    const isUrgent = hoursLeft !== null && hoursLeft <= 3;
+                    return (
+                      <li
+                        key={req.id}
+                        className="p-5 hover:bg-slate-50 transition-colors flex justify-between items-center group cursor-pointer"
+                        onClick={() => window.location.href = `/pharmacy/requests/${req.id}`}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform ${isUrgent ? 'bg-rose-50 text-rose-600' : 'bg-blue-50 text-blue-600'}`}>
+                            <Inbox className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <span className="font-bold text-slate-900 group-hover:text-[#0B1354] transition-colors text-base">
+                              #{req.requestNumber}
+                            </span>
+                            <div className="flex flex-wrap items-center gap-2 mt-1">
+                              <span className="text-xs text-slate-500 font-medium">{req.medicineCount} item{req.medicineCount !== 1 ? 's' : ''}</span>
+                              {req.requiresPrescription && (
+                                <span className="text-[10px] font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full uppercase tracking-wide">Rx</span>
+                              )}
+                              {expiresAt && (
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide ${
+                                  isUrgent ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-600'
+                                }`}>
+                                  {hoursLeft === 0 ? 'Expiring soon' : `${hoursLeft}h left`}
+                                </span>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                        <div>
-                          <span className="font-bold text-slate-900 group-hover:text-[#0B1354] transition-colors text-lg">
-                            {req.requestNumber}
-                          </span>
-                          <p className="text-sm font-medium text-slate-500 mt-0.5">{req.medicineCount} items • {new Date(req.submittedAt).toLocaleDateString()}</p>
+                        <div className="text-right shrink-0">
+                          <span className="text-xs text-slate-400 font-medium">{new Date(req.submittedAt).toLocaleDateString()}</span>
+                          <div className="mt-1 text-xs font-semibold text-[#0B1354] group-hover:underline">View →</div>
                         </div>
-                      </div>
-                    </li>
-                  ))}
+                      </li>
+                    );
+                  })}
                 </ul>
               ) : (
                 <EmptyState
@@ -288,24 +313,40 @@ const PharmacyDashboardPage = () => {
             <Card className="bg-white/80 backdrop-blur-xl border border-white/50 shadow-xl rounded-3xl overflow-hidden">
               {data?.activeOrders?.length > 0 ? (
                 <ul className="divide-y divide-slate-100">
-                  {data.activeOrders.map(order => (
-                    <li key={order.id} className="p-5 hover:bg-white transition-colors flex justify-between items-center group cursor-pointer" onClick={() => window.location.href = `/pharmacy/orders/${order.id}`}>
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-                          <ShoppingBag className="w-5 h-5" />
+                  {data.activeOrders.map(order => {
+                    const fulfilLabel = order.fulfilmentMethod === 'DELIVERY' ? '🚚 Delivery' : order.fulfilmentMethod === 'PICKUP' ? '🏪 Pickup' : order.fulfilmentMethod;
+                    return (
+                      <li
+                        key={order.id}
+                        className="p-5 hover:bg-slate-50 transition-colors flex justify-between items-center group cursor-pointer"
+                        onClick={() => window.location.href = `/pharmacy/orders/${order.id}`}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <ShoppingBag className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <span className="font-bold text-slate-900 group-hover:text-emerald-700 transition-colors text-base">
+                              #{order.orderNumber}
+                            </span>
+                            <div className="flex flex-wrap items-center gap-2 mt-1">
+                              <span className="text-xs text-slate-500 font-medium">{order.safeCustomerName}</span>
+                              {fulfilLabel && (
+                                <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">{fulfilLabel}</span>
+                              )}
+                              {order.total > 0 && (
+                                <span className="text-[10px] font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full">Rs. {order.total.toFixed(2)}</span>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                        <div>
-                          <span className="font-bold text-slate-900 group-hover:text-emerald-700 transition-colors text-lg">
-                            {order.orderNumber}
-                          </span>
-                          <p className="text-sm font-medium text-slate-500 mt-0.5">{order.safeCustomerName}</p>
+                        <div className="text-right shrink-0">
+                          <StatusBadge status={order.orderStatus} />
+                          <div className="mt-1 text-xs font-semibold text-emerald-700 group-hover:underline">View →</div>
                         </div>
-                      </div>
-                      <div className="text-right">
-                        <StatusBadge status={order.orderStatus} />
-                      </div>
-                    </li>
-                  ))}
+                      </li>
+                    );
+                  })}
                 </ul>
               ) : (
                 <EmptyState

@@ -13,6 +13,11 @@ const medicineSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    dosage: {
+      type: String,
+      trim: true,
+      default: '',
+    },
     category: {
       type: String,
       required: true,
@@ -52,7 +57,7 @@ const medicineSchema = new mongoose.Schema(
 );
 
 // Compound index for better search
-medicineSchema.index({ name: 'text', brand: 'text', category: 'text' });
+medicineSchema.index({ name: 'text', brand: 'text', category: 'text', dosage: 'text' });
 
 const Medicine = mongoose.model('Medicine', medicineSchema);
 

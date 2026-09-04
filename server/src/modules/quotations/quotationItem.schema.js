@@ -4,6 +4,7 @@ const { AVAILABILITY_RESULT } = require('./quotation.constants');
 const medicineSnapshotSchema = new mongoose.Schema({
   name: { type: String, required: true },
   brand: { type: String },
+  dosage: { type: String },
   category: { type: String },
   manufacturer: { type: String }
 }, { _id: false });

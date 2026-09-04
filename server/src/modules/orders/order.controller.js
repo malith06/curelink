@@ -1,5 +1,7 @@
 const catchAsync = require('../../utils/asyncHandler');
 const orderService = require('./order.service');
+const ApiError = require('../../utils/ApiError');
+const { formatCentsToDollars } = require('../quotations/quotation.calculator');
 
 const createOrder = catchAsync(async (req, res) => {
   const { quotationId } = req.params;
@@ -26,8 +28,6 @@ const createOrder = catchAsync(async (req, res) => {
     }
   });
 });
-
-const { formatCentsToDollars } = require('../quotations/quotation.calculator');
 
 const getCustomerOrders = catchAsync(async (req, res) => {
   const customerId = req.user._id;
@@ -62,7 +62,6 @@ const getPharmacyOrders = catchAsync(async (req, res) => {
   const pharmacy = await Pharmacy.findOne({ ownerUserId: req.user._id }).lean();
   if (!pharmacy) throw new ApiError('Pharmacy profile not found', 404);
   
-  const pharmacyId = pharmacy._id;
   const orders = await orderService.getPharmacyOrders(pharmacy._id, req.query);
 
   const formattedOrders = orders.map(order => {
