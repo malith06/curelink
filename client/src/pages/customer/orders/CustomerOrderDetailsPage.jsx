@@ -15,6 +15,7 @@ const CustomerOrderDetailsPage = () => {
 
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     fetchOrderDetails();
@@ -33,6 +34,29 @@ const CustomerOrderDetailsPage = () => {
       setLoading(false);
     }
   };
+
+  const handleCancelOrder = async () => {
+    const reason = window.prompt("Please provide a reason for cancelling this order (required):");
+    if (reason === null) return;
+    
+    if (reason.trim().length < 5) {
+      toast.error("Cancellation reason must be at least 5 characters");
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      await orderService.cancelOrder(orderId, reason);
+      toast.success('Order cancelled successfully');
+      fetchOrderDetails();
+    } catch (error) {
+      console.error('Failed to cancel order', error);
+      toast.error(error.response?.data?.message || 'Failed to cancel order');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
 
   if (loading) {
     return (
@@ -107,14 +131,27 @@ const CustomerOrderDetailsPage = () => {
                  <p className="mt-1 text-blue-100 font-medium">Placed on {new Date(order.createdAt).toLocaleString()}</p>
                </div>
             </div>
-            {isPendingPayment && (
-              <Button 
-                onClick={() => navigate(`/customer/orders/${order._id}/payment`)}
-                className="w-full sm:w-auto shadow-lg bg-white text-[#0B1354] hover:bg-slate-100"
-              >
-                Pay Now
-              </Button>
-            )}
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              {[ORDER_STATUS.PENDING_PAYMENT, ORDER_STATUS.PAYMENT_CONFIRMED, ORDER_STATUS.PHARMACY_ACCEPTED].includes(order.orderStatus) && (
+                <Button 
+                  onClick={handleCancelOrder}
+                  disabled={actionLoading}
+                  isLoading={actionLoading}
+                  variant="outline"
+                  className="w-full sm:w-auto border-white/30 text-white hover:bg-red-500/20 hover:text-red-100 hover:border-red-500/50"
+                >
+                  Cancel Order
+                </Button>
+              )}
+              {isPendingPayment && (
+                <Button 
+                  onClick={() => navigate(`/customer/orders/${order._id}/payment`)}
+                  className="w-full sm:w-auto shadow-lg bg-white text-[#0B1354] hover:bg-slate-100"
+                >
+                  Pay Now
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -162,6 +199,7 @@ const CustomerOrderDetailsPage = () => {
                     <div className="flex-1">
                       <h3 className="font-bold text-slate-900 text-lg">
                         {item.medicineSnapshot.name}
+                        {item.medicineSnapshot.dosage && <span className="text-slate-500 font-normal ml-1 text-sm">({item.medicineSnapshot.dosage})</span>}
                       </h3>
                       {item.medicineSnapshot.brand && (
                         <p className="text-sm text-slate-500 font-medium mt-0.5">Brand: {item.medicineSnapshot.brand}</p>

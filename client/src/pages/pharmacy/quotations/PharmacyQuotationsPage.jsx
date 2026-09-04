@@ -33,7 +33,7 @@ const PharmacyQuotationsPage = () => {
   };
 
   const filteredQuotations = quotations.filter(q => {
-    const matchesFilter = filter === 'ALL' || q.status === filter;
+    const matchesFilter = filter === 'ALL' || q.status === filter || (filter === 'REJECTED' && q.status === 'CLOSED');
     
     // Safely get the request ID as a string, handling both populated objects and raw ObjectIds
     const reqIdString = q.requestId?._id ? String(q.requestId._id) : String(q.requestId || '');
@@ -45,7 +45,8 @@ const PharmacyQuotationsPage = () => {
   const getStatusVariant = (status) => {
     switch (status) {
       case 'ACCEPTED': return 'success';
-      case 'REJECTED': return 'error';
+      case 'REJECTED': 
+      case 'CLOSED': return 'error';
       case 'SUBMITTED': return 'info';
       case 'DRAFT': return 'warning';
       default: return 'default';
@@ -125,6 +126,7 @@ const PharmacyQuotationsPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredQuotations.map((quotation) => {
               const reqId = quotation.requestId?._id ? String(quotation.requestId._id) : String(quotation.requestId || '');
+              const displayId = quotation.requestId?.requestNumber || reqId.substring(Math.max(0, reqId.length - 6)).toUpperCase();
               
               return (
                 <Card 
@@ -136,14 +138,16 @@ const PharmacyQuotationsPage = () => {
                     <div className="flex justify-between items-start mb-4">
                       <div>
                         <h3 className="font-bold text-slate-900 text-lg group-hover:text-primary-700 transition-colors uppercase">
-                          #{reqId.substring(Math.max(0, reqId.length - 6))}
+                          #{displayId}
                         </h3>
                         <div className="flex items-center text-xs text-slate-500 mt-1 gap-1">
                           <Clock className="w-3.5 h-3.5" />
                           {new Date(quotation.createdAt).toLocaleDateString()}
                         </div>
                       </div>
-                      <Badge variant={getStatusVariant(quotation.status)}>{quotation.status.replace(/_/g, ' ')}</Badge>
+                      <Badge variant={getStatusVariant(quotation.status)}>
+                        {quotation.status === 'CLOSED' ? 'REJECTED' : quotation.status.replace(/_/g, ' ')}
+                      </Badge>
                     </div>
                     
                     <div className="space-y-3 mt-6">

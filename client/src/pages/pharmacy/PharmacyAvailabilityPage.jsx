@@ -150,7 +150,7 @@ const PharmacyAvailabilityPage = () => {
   return (
     <div className="animate-in fade-in duration-500 bg-slate-50 min-h-screen">
       {/* Modern Header Section */}
-      <div className="bg-[#0B1354] pb-24 pt-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden rounded-b-[3rem] mb-[-4rem]">
+      <div className="bg-[#0B1354] pb-10 pt-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden rounded-b-[3rem]">
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }}></div>
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500 rounded-full mix-blend-screen filter blur-[80px] opacity-30 animate-pulse"></div>
         
@@ -168,7 +168,7 @@ const PharmacyAvailabilityPage = () => {
       </div>
 
       {/* Main Content Area */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 relative z-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 pt-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
           {/* Left Col: Search & Add */}
@@ -206,7 +206,9 @@ const PharmacyAvailabilityPage = () => {
                   {(searchQuery.trim() ? searchResults : allMedicines).map((med) => (
                     <li key={med._id} className="p-3 flex justify-between items-center rounded-xl hover:bg-gray-50 border border-transparent hover:border-gray-100 transition-all group">
                       <div className="flex-1 min-w-0 pr-3">
-                        <p className="font-medium text-gray-900 truncate">{med.name}</p>
+                        <p className="font-medium text-gray-900 truncate">
+                          {med.name} {med.dosage && <span className="text-gray-500 font-normal">({med.dosage})</span>}
+                        </p>
                         {med.brand && <p className="text-xs text-gray-500 truncate">{med.brand}</p>}
                       </div>
                       <button
@@ -398,7 +400,7 @@ const PharmacyAvailabilityPage = () => {
                             {record.medicineId?.brand && <p className="text-xs text-gray-500">{record.medicineId.brand}</p>}
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-700">
-                            {record.dosage || <span className="text-gray-400 italic">N/A</span>}
+                            {record.medicineId?.dosage || record.dosage || <span className="text-gray-400 italic">N/A</span>}
                           </td>
                           <td className="px-6 py-4 text-sm font-medium text-gray-900 text-right">
                             {record.price ? `Rs. ${record.price.toFixed(2)}` : <span className="text-gray-400 italic">-</span>}

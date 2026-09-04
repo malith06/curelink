@@ -17,6 +17,7 @@ const orderItemSchema = new mongoose.Schema({
   medicineSnapshot: {
     name: { type: String, required: true },
     brand: { type: String },
+    dosage: { type: String },
     category: { type: String },
     manufacturer: { type: String }
   },
@@ -56,6 +57,7 @@ const orderItemSchema = new mongoose.Schema({
   substitutionSnapshot: {
     name: { type: String },
     brand: { type: String },
+    dosage: { type: String },
     category: { type: String },
     manufacturer: { type: String }
   },

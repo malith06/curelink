@@ -16,7 +16,8 @@ const CreateOrderPage = () => {
   // If we navigated here from quotation acceptance, we might have the data in state
   const { quotation } = location.state || {};
 
-  const [fulfilmentMethod, setFulfilmentMethod] = useState(FULFILMENT_METHOD.DELIVERY);
+  const initialMethod = quotation?.deliveryAvailable ? FULFILMENT_METHOD.DELIVERY : (quotation?.pickupAvailable ? FULFILMENT_METHOD.PICKUP : FULFILMENT_METHOD.DELIVERY);
+  const [fulfilmentMethod, setFulfilmentMethod] = useState(initialMethod);
   const [deliveryAddress, setDeliveryAddress] = useState({
     fullName: '',
     phone: '',
@@ -88,43 +89,47 @@ const CreateOrderPage = () => {
             <CardContent className="p-8">
               <h2 className="text-xl font-bold text-slate-900 mb-6">Fulfilment Method</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <button
-                  type="button"
-                  onClick={() => setFulfilmentMethod(FULFILMENT_METHOD.DELIVERY)}
-                  className={`p-5 rounded-2xl border-2 text-left transition-all relative overflow-hidden group ${
-                    fulfilmentMethod === FULFILMENT_METHOD.DELIVERY
-                      ? 'border-primary-600 bg-primary-50 ring-4 ring-primary-500/10'
-                      : 'border-slate-200 hover:border-primary-300 hover:bg-slate-50'
-                  }`}
-                >
-                  <div className="flex justify-between items-start mb-3">
-                    <div className={`p-3 rounded-xl ${fulfilmentMethod === FULFILMENT_METHOD.DELIVERY ? 'bg-primary-100 text-primary-700' : 'bg-slate-100 text-slate-500 group-hover:bg-primary-50 group-hover:text-primary-500 transition-colors'}`}>
-                      <MapPin className="w-6 h-6" />
+                {quotation?.deliveryAvailable && (
+                  <button
+                    type="button"
+                    onClick={() => setFulfilmentMethod(FULFILMENT_METHOD.DELIVERY)}
+                    className={`p-5 rounded-2xl border-2 text-left transition-all relative overflow-hidden group ${
+                      fulfilmentMethod === FULFILMENT_METHOD.DELIVERY
+                        ? 'border-primary-600 bg-primary-50 ring-4 ring-primary-500/10'
+                        : 'border-slate-200 hover:border-primary-300 hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="flex justify-between items-start mb-3">
+                      <div className={`p-3 rounded-xl ${fulfilmentMethod === FULFILMENT_METHOD.DELIVERY ? 'bg-primary-100 text-primary-700' : 'bg-slate-100 text-slate-500 group-hover:bg-primary-50 group-hover:text-primary-500 transition-colors'}`}>
+                        <MapPin className="w-6 h-6" />
+                      </div>
+                      {fulfilmentMethod === FULFILMENT_METHOD.DELIVERY && <Check className="w-6 h-6 text-primary-600" />}
                     </div>
-                    {fulfilmentMethod === FULFILMENT_METHOD.DELIVERY && <Check className="w-6 h-6 text-primary-600" />}
-                  </div>
-                  <div className="font-bold text-slate-900 text-lg">Delivery</div>
-                  <div className="text-sm text-slate-500 mt-1 font-medium">Get it delivered to your address</div>
-                </button>
+                    <div className="font-bold text-slate-900 text-lg">Delivery</div>
+                    <div className="text-sm text-slate-500 mt-1 font-medium">Get it delivered to your address</div>
+                  </button>
+                )}
                 
-                <button
-                  type="button"
-                  onClick={() => setFulfilmentMethod(FULFILMENT_METHOD.PICKUP)}
-                  className={`p-5 rounded-2xl border-2 text-left transition-all relative overflow-hidden group ${
-                    fulfilmentMethod === FULFILMENT_METHOD.PICKUP
-                      ? 'border-primary-600 bg-primary-50 ring-4 ring-primary-500/10'
-                      : 'border-slate-200 hover:border-primary-300 hover:bg-slate-50'
-                  }`}
-                >
-                  <div className="flex justify-between items-start mb-3">
-                    <div className={`p-3 rounded-xl ${fulfilmentMethod === FULFILMENT_METHOD.PICKUP ? 'bg-primary-100 text-primary-700' : 'bg-slate-100 text-slate-500 group-hover:bg-primary-50 group-hover:text-primary-500 transition-colors'}`}>
-                      <Package className="w-6 h-6" />
+                {quotation?.pickupAvailable !== false && (
+                  <button
+                    type="button"
+                    onClick={() => setFulfilmentMethod(FULFILMENT_METHOD.PICKUP)}
+                    className={`p-5 rounded-2xl border-2 text-left transition-all relative overflow-hidden group ${
+                      fulfilmentMethod === FULFILMENT_METHOD.PICKUP
+                        ? 'border-primary-600 bg-primary-50 ring-4 ring-primary-500/10'
+                        : 'border-slate-200 hover:border-primary-300 hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="flex justify-between items-start mb-3">
+                      <div className={`p-3 rounded-xl ${fulfilmentMethod === FULFILMENT_METHOD.PICKUP ? 'bg-primary-100 text-primary-700' : 'bg-slate-100 text-slate-500 group-hover:bg-primary-50 group-hover:text-primary-500 transition-colors'}`}>
+                        <Package className="w-6 h-6" />
+                      </div>
+                      {fulfilmentMethod === FULFILMENT_METHOD.PICKUP && <Check className="w-6 h-6 text-primary-600" />}
                     </div>
-                    {fulfilmentMethod === FULFILMENT_METHOD.PICKUP && <Check className="w-6 h-6 text-primary-600" />}
-                  </div>
-                  <div className="font-bold text-slate-900 text-lg">Pickup</div>
-                  <div className="text-sm text-slate-500 mt-1 font-medium">Collect from the pharmacy directly</div>
-                </button>
+                    <div className="font-bold text-slate-900 text-lg">Pickup</div>
+                    <div className="text-sm text-slate-500 mt-1 font-medium">Collect from the pharmacy directly</div>
+                  </button>
+                )}
               </div>
             </CardContent>
           </Card>

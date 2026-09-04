@@ -45,6 +45,11 @@ const acceptQuotation = async (requestId, pharmacyId) => {
   return response.data;
 };
 
+const cancelRequest = async (requestId, reason) => {
+  const response = await api.post(`/requests/${requestId}/cancel`, { reason });
+  return response.data;
+};
+
 
 // --- PHARMACY ENDPOINTS ---
 
@@ -77,6 +82,7 @@ export const requestService = {
   removeRequestItem,
   submitRequest,
   acceptQuotation,
+  cancelRequest,
   getPharmacyInbox,
   getPharmacyRequestById,
   submitQuotation,

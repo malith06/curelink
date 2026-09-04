@@ -8,34 +8,36 @@ import { UploadCloud, FileText, CheckCircle } from 'lucide-react';
 const PrescriptionUploadPage = () => {
   const { requestId } = useParams();
   const navigate = useNavigate();
-  const [file, setFile] = useState(null);
+  const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const handleFileChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
+    if (e.target.files && e.target.files.length > 0) {
+      setFiles(Array.from(e.target.files));
     }
   };
 
   const handleUpload = async (e) => {
     e.preventDefault();
-    if (!file) {
-      setError("Please select a file first.");
+    if (files.length === 0) {
+      setError("Please select at least one file first.");
       return;
     }
 
     setLoading(true);
     setError(null);
     try {
-      const result = await prescriptionService.uploadPrescription(requestId, file);
-      const prescriptionId = result.data.prescriptionId;
+      // Upload all files concurrently
+      const uploadPromises = files.map(file => prescriptionService.uploadPrescription(requestId, file));
+      const results = await Promise.all(uploadPromises);
       
-      // After upload, trigger OCR processing
-      await prescriptionService.processOcr(prescriptionId);
+      // Trigger OCR processing for all
+      const ocrPromises = results.map(result => prescriptionService.processOcr(result.data.prescriptionId));
+      await Promise.allSettled(ocrPromises); // We don't want one failure to stop the redirect
       
-      // Navigate to review page
-      navigate(`/customer/requests/${requestId}/prescription/${prescriptionId}/review`);
+      // Navigate back to request details to view all uploaded prescriptions
+      navigate(`/customer/requests/${requestId}`);
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Upload failed');
       setLoading(false);
@@ -50,9 +52,9 @@ const PrescriptionUploadPage = () => {
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500 rounded-full mix-blend-screen filter blur-[80px] opacity-30 animate-pulse"></div>
         
         <div className="max-w-2xl mx-auto relative z-10 text-center">
-          <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">Upload Prescription</h1>
+          <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">Upload Prescriptions</h1>
           <p className="mt-3 text-blue-100 font-medium max-w-lg mx-auto">
-            Upload a clear image or PDF for request #{requestId}. Our AI will automatically extract the medicine details.
+            Upload clear images or PDFs for request #{requestId}. You can upload multiple pages.
           </p>
         </div>
       </div>
@@ -68,25 +70,30 @@ const PrescriptionUploadPage = () => {
               <input 
                 type="file" 
                 accept=".jpg,.jpeg,.png,.pdf" 
+                multiple
                 onChange={handleFileChange}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               />
               <div className="flex flex-col items-center justify-center space-y-3">
-                {file ? (
+                {files.length > 0 ? (
                   <>
                     <div className="p-3 bg-emerald-100 text-emerald-600 rounded-full">
                       <CheckCircle className="w-8 h-8" />
                     </div>
-                    <p className="text-sm font-medium text-[#0B1354]">{file.name}</p>
-                    <p className="text-xs text-slate-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                    <p className="text-sm font-medium text-[#0B1354]">{files.length} file(s) selected</p>
+                    <ul className="text-xs text-slate-500 flex flex-col items-center max-h-24 overflow-y-auto w-full px-4">
+                      {files.map((f, i) => (
+                        <li key={i} className="truncate w-full text-center">{f.name}</li>
+                      ))}
+                    </ul>
                   </>
                 ) : (
                   <>
                     <div className="p-3 bg-[#0B1354]/10 text-[#0B1354] rounded-full group-hover:scale-110 transition-transform">
                       <UploadCloud className="w-8 h-8" />
                     </div>
-                    <p className="text-sm font-medium text-slate-900">Click or drag file to upload</p>
-                    <p className="text-xs text-slate-500">Supports JPG, PNG, PDF</p>
+                    <p className="text-sm font-medium text-slate-900">Click or drag files to upload</p>
+                    <p className="text-xs text-slate-500">Supports JPG, PNG, PDF (Multiple files allowed)</p>
                   </>
                 )}
               </div>
@@ -95,11 +102,11 @@ const PrescriptionUploadPage = () => {
             <Button 
               type="submit" 
               fullWidth 
-              disabled={loading || !file}
+              disabled={loading || files.length === 0}
               isLoading={loading}
               icon={FileText}
             >
-              {loading ? 'Processing OCR (This may take a moment)...' : 'Upload and Scan'}
+              {loading ? 'Uploading & Scanning (This may take a moment)...' : 'Upload and Scan'}
             </Button>
             </form>
           </CardContent>

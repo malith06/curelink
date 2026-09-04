@@ -66,7 +66,7 @@ const createNotificationPayload = ({ type, recipient, entity, context = {} }) =>
         message = `Payment for order ${getShortId(entity)} was confirmed successfully.`;
         actionUrl = `/customer/orders/${entity.orderId || entity._id}`;
       } else if (recipientRole === 'ADMIN') {
-        message = `A payment of LKR ${entity.amount} was confirmed for order ${entity.orderId ? `#${entity.orderId}` : getShortId(entity)}.`;
+        message = `A payment of LKR ${(entity.amount / 100).toFixed(2)} was confirmed for order ${entity.orderId ? `#${entity.orderId}` : getShortId(entity)}.`;
         actionUrl = `/admin/payments`;
       } else {
         message = `Payment has been confirmed for order ${getShortId(entity)}.`;

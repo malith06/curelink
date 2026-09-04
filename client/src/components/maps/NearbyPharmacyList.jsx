@@ -72,22 +72,36 @@ const NearbyPharmacyList = ({
                 </span>
               </p>
 
-              {/* If we queried for a specific medicine, the availability status is included in the aggregation */}
-              {pharmacy.availabilityStatus && (
+              {/* Per-medicine availability status rows */}
+              {pharmacy.medicineStatuses?.length > 0 ? (
+                <div className="mt-3 pt-3 border-t border-gray-100 space-y-1.5">
+                  {pharmacy.medicineStatuses.map(ms => (
+                    <div key={ms.medicineId} className="flex items-center justify-between gap-2">
+                      <span className="text-xs text-gray-600 truncate flex-1">{ms.name}</span>
+                      <AvailabilityStatusBadge status={ms.status} />
+                    </div>
+                  ))}
+                </div>
+              ) : pharmacy.availabilityStatus ? (
+                /* Fallback: single overall badge (when only 1 medicine searched or old API) */
                 <div className="mt-3 pt-3 border-t border-gray-100">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-medium text-gray-500">Stock Status:</span>
                     <AvailabilityStatusBadge status={pharmacy.availabilityStatus} />
                   </div>
                 </div>
-              )}
+              ) : null}
 
               {/* Action Button when Selected */}
               {isSelected && (
                 <div className="mt-4">
                   <Link 
                     to={`/customer/requests/new`}
-                    state={{ preselectedPharmacyId: pharmacy._id, preselectedMedicines: selectedMedicines || [] }}
+                    state={{ 
+                      preselectedPharmacyId: pharmacy._id, 
+                      preselectedMedicines: selectedMedicines || [],
+                      medicineStatuses: pharmacy.medicineStatuses || []
+                    }}
                     className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors"
                   >
                     Send Request

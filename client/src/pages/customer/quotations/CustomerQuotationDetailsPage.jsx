@@ -106,7 +106,7 @@ const CustomerQuotationDetailsPage = () => {
                  <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">
                    {quotation.pharmacyId?.name || quotation.pharmacyId?.businessName || 'Pharmacy Quotation'}
                  </h1>
-                 <p className="mt-1 text-blue-100 font-medium">Quotation for Request #{request._id.substring(request._id.length - 6).toUpperCase()}</p>
+                 <p className="mt-1 text-blue-100 font-medium">Quotation for Request #{request.requestNumber || request._id.substring(request._id.length - 6).toUpperCase()}</p>
                </div>
             </div>
             <div className="hidden sm:block"><StatusBadge status={quotation.status} /></div>
@@ -149,6 +149,7 @@ const CustomerQuotationDetailsPage = () => {
                             ) : (
                               reqItem?.medicineId?.name || item.medicineSnapshot?.name || 'Medicine'
                             )}
+                            {(item.medicineSnapshot?.dosage || reqItem?.medicineId?.dosage) && <span className="text-slate-500 font-normal ml-1">({item.medicineSnapshot?.dosage || reqItem?.medicineId?.dosage})</span>}
                           </div>
                           {isSubstitute && item.substitutionNote && (
                             <p className="text-xs text-slate-500 mt-1 font-medium">Note: {item.substitutionNote}</p>

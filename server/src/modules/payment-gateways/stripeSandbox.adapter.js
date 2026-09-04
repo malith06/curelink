@@ -46,6 +46,18 @@ class StripeSandboxAdapter extends PaymentGatewayAdapter {
     };
   }
 
+  async processRefund(paymentIntentId, amount) {
+    if (!this.stripe) throw new Error('Stripe is not configured in this environment');
+    try {
+      const refund = await this.stripe.refunds.create({
+        payment_intent: paymentIntentId,
+      });
+      return refund;
+    } catch (error) {
+      throw new Error(`Refund failed: ${error.message}`);
+    }
+  }
+
   async verifyWebhookSignature(rawBody, signature, headers) {
     if (!this.stripe) throw new Error('Stripe is not configured in this environment');
     

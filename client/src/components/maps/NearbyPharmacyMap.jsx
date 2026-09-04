@@ -110,7 +110,8 @@ const NearbyPharmacyMap = ({
   userLocation, 
   pharmacies, 
   selectedPharmacyId, 
-  onSelectPharmacy 
+  onSelectPharmacy,
+  onLocationChange
 }) => {
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
@@ -153,6 +154,11 @@ const NearbyPharmacyMap = ({
       zoom={zoom}
       onLoad={onLoad}
       onUnmount={onUnmount}
+      onClick={(e) => {
+        if (onLocationChange && e.latLng) {
+          onLocationChange(e.latLng.lat(), e.latLng.lng());
+        }
+      }}
       options={{
         mapTypeControl: false,
         streetViewControl: false,
@@ -166,6 +172,12 @@ const NearbyPharmacyMap = ({
       {userLocation && (
         <Marker 
           position={userLocation} 
+          draggable={true}
+          onDragEnd={(e) => {
+            if (onLocationChange && e.latLng) {
+              onLocationChange(e.latLng.lat(), e.latLng.lng());
+            }
+          }}
           icon={{
             path: window.google.maps.SymbolPath.CIRCLE,
             scale: 8,
@@ -174,7 +186,7 @@ const NearbyPharmacyMap = ({
             strokeWeight: 2,
             strokeColor: '#ffffff'
           }}
-          title="Your Location"
+          title="Your Location (Drag to change)"
         />
       )}
 

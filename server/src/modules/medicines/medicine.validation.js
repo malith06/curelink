@@ -4,6 +4,7 @@ const createMedicineSchema = z.object({
   body: z.object({
     name: z.string().min(2, 'Name is required'),
     brand: z.string().min(2, 'Brand is required'),
+    dosage: z.string().optional(),
     category: z.string().min(2, 'Category is required'),
     description: z.string().min(10, 'Description must be at least 10 characters'),
     prescriptionRequired: z.boolean().optional(),
@@ -17,6 +18,7 @@ const updateMedicineSchema = z.object({
   body: z.object({
     name: z.string().min(2, 'Name is required').optional(),
     brand: z.string().min(2, 'Brand is required').optional(),
+    dosage: z.string().optional(),
     category: z.string().min(2, 'Category is required').optional(),
     description: z.string().min(10, 'Description must be at least 10 characters').optional(),
     prescriptionRequired: z.boolean().optional(),

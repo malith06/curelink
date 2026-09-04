@@ -4,6 +4,7 @@ const { MEDICINE_SOURCE, REQUEST_UNITS } = require('./request.constants');
 const medicineSnapshotSchema = new mongoose.Schema({
   name: { type: String, required: true },
   brand: { type: String },
+  dosage: { type: String },
   category: { type: String },
   manufacturer: { type: String }
 }, { _id: false });
@@ -46,6 +47,10 @@ const requestItemSchema = new mongoose.Schema({
     type: String,
     enum: Object.values(MEDICINE_SOURCE),
     default: MEDICINE_SOURCE.MANUAL_SEARCH
+  },
+  sourcePrescriptionId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Prescription'
   }
 }, { _id: true, timestamps: { createdAt: true, updatedAt: false } });
 

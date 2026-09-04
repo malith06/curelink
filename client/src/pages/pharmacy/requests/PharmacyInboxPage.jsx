@@ -146,7 +146,7 @@ const PharmacyInboxPage = () => {
                 <div className="space-y-3 mt-6">
                   <div className="flex items-center gap-3 text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-100">
                     <div className="bg-white p-1.5 rounded-md shadow-sm border border-slate-100">
-                      <span className="font-bold text-slate-900">#{req._id.substring(req._id.length - 6).toUpperCase()}</span>
+                      <span className="font-bold text-slate-900">#{req.requestNumber || req._id.substring(req._id.length - 6).toUpperCase()}</span>
                     </div>
                     <div>
                       <span className="font-semibold text-slate-900">{req.items?.length || 0}</span>

@@ -118,7 +118,7 @@ const CustomerRequestsPage = () => {
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <h3 className="font-bold text-slate-900 text-lg group-hover:text-primary-700 transition-colors">
-                      #{req._id.substring(req._id.length - 6).toUpperCase()}
+                      #{req.requestNumber || req._id.substring(req._id.length - 6).toUpperCase()}
                     </h3>
                     <div className="flex items-center text-xs text-slate-500 mt-1 gap-1">
                       <Clock className="w-3.5 h-3.5" />

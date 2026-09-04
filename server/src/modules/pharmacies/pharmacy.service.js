@@ -1,5 +1,6 @@
 const Pharmacy = require('./pharmacy.model');
 const MedicineAvailability = require('../availability/availability.model');
+const Medicine = require('../medicines/medicine.model');
 const User = require('../users/user.model');
 const ApiError = require('../../utils/ApiError');
 const { PHARMACY_VERIFICATION_STATUS } = require('./pharmacy.constants');
@@ -296,6 +297,15 @@ const findNearbyPharmacies = async (lng, lat, radiusKm = 10, medicineIds = null)
     status: { $in: ['AVAILABLE', 'LIMITED', 'CONFIRMATION_REQUIRED'] }
   }).select('pharmacyId medicineId status lastUpdated');
 
+  // Fetch medicine names/dosages for display labels
+  const medicineDetails = await Medicine.find({ _id: { $in: idsToSearch } })
+    .select('name dosage')
+    .lean();
+  const medicineMap = {};
+  medicineDetails.forEach(med => {
+    medicineMap[med._id.toString()] = med.dosage ? `${med.name} (${med.dosage})` : med.name;
+  });
+
   // Count how many of the requested medicines each pharmacy has
   const pharmacyCounts = {};
   availabilityRecords.forEach(record => {
@@ -306,13 +316,23 @@ const findNearbyPharmacies = async (lng, lat, radiusKm = 10, medicineIds = null)
     pharmacyCounts[pIdStr].add(record.medicineId.toString());
   });
 
+  // Build a per-pharmacy lookup: pharmacyId -> { medicineId -> status }
+  const pharmacyMedicineStatus = {};
+  availabilityRecords.forEach(record => {
+    const pIdStr = record.pharmacyId.toString();
+    const mIdStr = record.medicineId.toString();
+    if (!pharmacyMedicineStatus[pIdStr]) {
+      pharmacyMedicineStatus[pIdStr] = {};
+    }
+    pharmacyMedicineStatus[pIdStr][mIdStr] = record.status;
+  });
+
   let nearbyPharmacies = await Pharmacy.find(query).select('-ownerUserId -verificationNote -verifiedBy -verifiedAt').lean();
 
   // Attach availability status to each pharmacy
   nearbyPharmacies = nearbyPharmacies.map(pharmacy => {
-    // Get the records for this pharmacy
-    const records = availabilityRecords.filter(r => r.pharmacyId.toString() === pharmacy._id.toString());
-    const availableCount = pharmacyCounts[pharmacy._id.toString()] ? pharmacyCounts[pharmacy._id.toString()].size : 0;
+    const pIdStr = pharmacy._id.toString();
+    const availableCount = pharmacyCounts[pIdStr] ? pharmacyCounts[pIdStr].size : 0;
     
     let status = 'UNKNOWN';
     if (availableCount === idsToSearch.length && idsToSearch.length > 0) {
@@ -322,11 +342,23 @@ const findNearbyPharmacies = async (lng, lat, radiusKm = 10, medicineIds = null)
     } else {
         status = 'UNAVAILABLE';
     }
+
+    // Build per-medicine status list
+    const medicineStatuses = idsToSearch.map(mId => {
+      const mIdStr = mId.toString();
+      const medStatus = pharmacyMedicineStatus[pIdStr]?.[mIdStr] || 'UNAVAILABLE';
+      return {
+        medicineId: mIdStr,
+        name: medicineMap[mIdStr] || mIdStr,
+        status: medStatus,
+      };
+    });
     
     return {
       ...pharmacy,
       availabilityStatus: status,
-      availableMedicinesCount: availableCount
+      availableMedicinesCount: availableCount,
+      medicineStatuses,
     };
   });
 

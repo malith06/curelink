@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import pharmacyService from './pharmacyService';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
-import { Store, Hash, Phone, Mail, MapPin, Truck, Package, Save, Camera, Loader2, Navigation } from 'lucide-react';
+import { Store, Phone, Mail, MapPin, Truck, Package, Save, Camera, Loader2, Navigation, Map, X, Check } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '../../components/ui/Card';
 import { useAuth } from '../../context/AuthContext';
 import useGeolocation from '../../hooks/useGeolocation';
+import LocationPickerMap from '../../components/maps/LocationPickerMap';
 
 const PharmacyProfileForm = ({ initialData, onSuccess }) => {
   const { user } = useAuth();
@@ -40,6 +41,8 @@ const PharmacyProfileForm = ({ initialData, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [error, setError] = useState(null);
+  const [showMapPicker, setShowMapPicker] = useState(false);
+  const [tempCoords, setTempCoords] = useState({ lat: '', lng: '' });
 
   const { status: geoStatus, latitude: geoLat, longitude: geoLng, error: geoError, requestLocation } = useGeolocation();
 
@@ -51,6 +54,37 @@ const PharmacyProfileForm = ({ initialData, onSuccess }) => {
           coordinates: [geoLng, geoLat]
         }
       }));
+
+      // Auto-fill address using Reverse Geocoding
+      const fetchAddress = async () => {
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${geoLat}&lon=${geoLng}`);
+          const data = await res.json();
+          if (data && data.address) {
+            setFormData(prev => {
+              const city = data.address.city || data.address.town || data.address.village || data.address.county || prev.address.city;
+              const state = data.address.state || data.address.region || prev.address.state;
+              const road = data.address.road || '';
+              const house = data.address.house_number || '';
+              const street = [house, road].filter(Boolean).join(' ') || data.display_name.split(',')[0] || prev.address.street;
+
+              return {
+                ...prev,
+                address: {
+                  ...prev.address,
+                  street: street,
+                  city: city,
+                  state: state
+                }
+              };
+            });
+          }
+        } catch (err) {
+          console.error("Failed to reverse geocode:", err);
+        }
+      };
+      
+      fetchAddress();
     }
   }, [geoLat, geoLng]);
 
@@ -349,18 +383,33 @@ const PharmacyProfileForm = ({ initialData, onSuccess }) => {
                   <h4 className="font-bold text-slate-800 text-sm">GPS Coordinates</h4>
                   <p className="text-xs font-medium text-slate-500">Helps customers find you on the map accurately.</p>
                 </div>
-                <div className="flex flex-col items-end shrink-0">
-                  <Button 
-                    type="button" 
-                    onClick={requestLocation} 
-                    variant="outline" 
-                    size="sm" 
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      setTempCoords({
+                        lat: formData.location.coordinates[1],
+                        lng: formData.location.coordinates[0],
+                      });
+                      setShowMapPicker(true);
+                    }}
+                    variant="outline"
+                    size="sm"
+                    icon={Map}
+                  >
+                    Pick on Map
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={requestLocation}
+                    variant="outline"
+                    size="sm"
                     icon={Navigation}
                     isLoading={geoStatus === 'loading'}
                   >
                     Get Current Location
                   </Button>
-                  {geoError && <p className="text-xs text-red-500 mt-2 font-medium max-w-[200px] text-right">{geoError}</p>}
+                  {geoError && <p className="text-xs text-red-500 mt-1 font-medium w-full text-right">{geoError}</p>}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -398,6 +447,105 @@ const PharmacyProfileForm = ({ initialData, onSuccess }) => {
                 </div>
               </div>
             </div>
+
+            {/* Map Picker Modal */}
+            {showMapPicker && (
+              <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl flex flex-col overflow-hidden" style={{ maxHeight: '90vh' }}>
+
+                  {/* Modal Header */}
+                  <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-[#0B1354]/10 flex items-center justify-center">
+                        <MapPin className="w-5 h-5 text-[#0B1354]" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-slate-900 text-base">Pick Your Pharmacy Location</h3>
+                        <p className="text-xs text-slate-500">Click anywhere on the map to place a pin on your location</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowMapPicker(false)}
+                      className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  {/* Map Area */}
+                  <div style={{ height: '460px' }}>
+                    <LocationPickerMap
+                      initialLat={tempCoords.lat || null}
+                      initialLng={tempCoords.lng || null}
+                      onLocationSelect={(lat, lng) => {
+                        setTempCoords({ lat, lng });
+                      }}
+                    />
+                  </div>
+
+                  {/* Selected Coords Preview */}
+                  <div className="px-5 py-3 bg-slate-50 border-t border-slate-100">
+                    {tempCoords.lat && tempCoords.lng ? (
+                      <div className="flex items-center gap-2 text-sm text-slate-700">
+                        <MapPin className="w-4 h-4 text-green-600 shrink-0" />
+                        <span className="font-medium">Selected:</span>
+                        <span className="font-mono text-slate-600">
+                          {parseFloat(tempCoords.lat).toFixed(6)}, {parseFloat(tempCoords.lng).toFixed(6)}
+                        </span>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-slate-400">Click on the map to set your pharmacy location.</p>
+                    )}
+                  </div>
+
+                  {/* Modal Actions */}
+                  <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-slate-100">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowMapPicker(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="button"
+                      icon={Check}
+                      disabled={!tempCoords.lat || !tempCoords.lng}
+                      onClick={async () => {
+                        const lat = tempCoords.lat;
+                        const lng = tempCoords.lng;
+                        setFormData(prev => ({
+                          ...prev,
+                          location: { coordinates: [lng, lat] }
+                        }));
+                        setShowMapPicker(false);
+
+                        // Auto reverse geocode
+                        try {
+                          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+                          const data = await res.json();
+                          if (data && data.address) {
+                            setFormData(prev => {
+                              const city = data.address.city || data.address.town || data.address.village || data.address.county || prev.address.city;
+                              const state = data.address.state || data.address.region || prev.address.state;
+                              const road = data.address.road || '';
+                              const house = data.address.house_number || '';
+                              const street = [house, road].filter(Boolean).join(' ') || data.display_name.split(',')[0] || prev.address.street;
+                              return { ...prev, address: { ...prev.address, street, city, state } };
+                            });
+                          }
+                        } catch (err) {
+                          console.error('Reverse geocode failed:', err);
+                        }
+                      }}
+                    >
+                      Confirm Location
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
          </div>
       </div>
 
