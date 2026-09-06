@@ -258,22 +258,33 @@ class PrescriptionService {
         if (entry.matchedMedicineId) {
           const med = await Medicine.findById(entry.matchedMedicineId);
           if (med) {
-            request.items.push({
-              medicineId: med._id,
-              medicineSnapshot: {
-                name: med.name,
-                brand: med.brand,
-                dosage: med.dosage,
-                category: med.category,
-                manufacturer: med.manufacturer
-              },
-              quantity: entry.quantity || 1,
-              unit: entry.unit || 'UNIT',
-              notes: entry.notes || '',
-              prescriptionRequired: med.prescriptionRequired,
-              source: 'OCR',
-              sourcePrescriptionId: prescription._id
-            });
+            const existingItemIndex = request.items.findIndex(
+              item => item.medicineId.toString() === med._id.toString()
+            );
+
+            if (existingItemIndex > -1) {
+              request.items[existingItemIndex].quantity += entry.quantity || 1;
+              if (med.prescriptionRequired) {
+                request.items[existingItemIndex].prescriptionRequired = true;
+              }
+            } else {
+              request.items.push({
+                medicineId: med._id,
+                medicineSnapshot: {
+                  name: med.name,
+                  brand: med.brand,
+                  dosage: med.dosage,
+                  category: med.category,
+                  manufacturer: med.manufacturer
+                },
+                quantity: entry.quantity || 1,
+                unit: entry.unit || 'UNIT',
+                notes: entry.notes || '',
+                prescriptionRequired: med.prescriptionRequired,
+                source: 'OCR',
+                sourcePrescriptionId: prescription._id
+              });
+            }
           }
         }
       }
